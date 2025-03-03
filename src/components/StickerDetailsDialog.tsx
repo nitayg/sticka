@@ -4,11 +4,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
-import { Image, Share2, PlusCircle, FileImage, XCircle, Upload } from "lucide-react";
+import { Image, Share2, PlusCircle, FileImage, XCircle, Upload, Pencil } from "lucide-react";
 import { Sticker } from "@/lib/types";
 import { useToast } from "./ui/use-toast";
 import { toggleStickerOwned, toggleStickerDuplicate, updateSticker } from "@/lib/sticker-operations";
 import { getAlbumById } from "@/lib/album-operations";
+import EditStickerForm from "./EditStickerForm";
 
 interface StickerDetailsDialogProps {
   sticker: Sticker | null;
@@ -23,6 +24,7 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
   
   useEffect(() => {
     if (imageFile) {
@@ -45,6 +47,7 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+      setShowEditForm(false);
     }
   }, [sticker]);
   
@@ -131,154 +134,178 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
       setImageFile(file);
     }
   };
+
+  const handleEditClick = () => {
+    setShowEditForm(true);
+  };
+
+  const handleEditComplete = () => {
+    setShowEditForm(false);
+    onUpdate();
+  };
   
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>פרטי מדבקה</DialogTitle>
-          <DialogDescription>
-            מדבקה מספר {sticker.number} - {sticker.name}
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col space-y-2 order-2 md:order-1">
-              <div className="space-y-1">
-                <Label className="text-base font-medium">מידע</Label>
-                <div className="bg-secondary rounded-md p-3 space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">מספר:</span>
-                    <span className="font-medium">{sticker.number}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">שם:</span>
-                    <span className="font-medium">{sticker.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">קבוצה:</span>
-                    <span className="font-medium">{sticker.team}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">קטגוריה:</span>
-                    <span className="font-medium">{sticker.category}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">סטטוס:</span>
-                    <span className="font-medium">{sticker.isOwned ? "נאספה" : "חסרה"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">כפולה:</span>
-                    <span className="font-medium">{sticker.isDuplicate ? "כן" : "לא"}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-1">
-                <Label className="text-base font-medium">עדכון תמונה מקישור URL</Label>
-                <div className="flex space-x-2">
-                  <Input 
-                    placeholder="הכנס כתובת URL לתמונה" 
-                    value={imageUrl} 
-                    onChange={(e) => setImageUrl(e.target.value)}
-                  />
-                  <Button size="sm" onClick={handleImageUrlUpdate}>
-                    <FileImage className="h-4 w-4 mr-2" />
-                    עדכן
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="space-y-1">
-                <Label className="text-base font-medium">העלאת תמונה מהמכשיר</Label>
-                <div className="space-y-2">
-                  <Input 
-                    type="file" 
-                    accept="image/*" 
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                  />
-                  {imageFile && (
-                    <Button size="sm" onClick={handleImageFileUpload}>
-                      <Upload className="h-4 w-4 mr-2" />
-                      העלה תמונה
-                    </Button>
-                  )}
-                  {imagePreview && (
-                    <div className="mt-2 relative w-full max-w-[150px] aspect-square rounded-lg overflow-hidden border">
-                      <img 
-                        src={imagePreview} 
-                        alt="Preview" 
-                        className="w-full h-full object-cover" 
-                      />
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>פרטי מדבקה</DialogTitle>
+            <DialogDescription>
+              מדבקה מספר {sticker.number} - {sticker.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col space-y-2 order-2 md:order-1">
+                <div className="space-y-1">
+                  <Label className="text-base font-medium">מידע</Label>
+                  <div className="bg-secondary rounded-md p-3 space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">מספר:</span>
+                      <span className="font-medium">{sticker.number}</span>
                     </div>
-                  )}
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">שם:</span>
+                      <span className="font-medium">{sticker.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">קבוצה:</span>
+                      <span className="font-medium">{sticker.team}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">קטגוריה:</span>
+                      <span className="font-medium">{sticker.category}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">סטטוס:</span>
+                      <span className="font-medium">{sticker.isOwned ? "נאספה" : "חסרה"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">כפולה:</span>
+                      <span className="font-medium">{sticker.isDuplicate ? "כן" : "לא"}</span>
+                    </div>
+                  </div>
                 </div>
+                
+                <div className="space-y-1">
+                  <Label className="text-base font-medium">עדכון תמונה מקישור URL</Label>
+                  <div className="flex space-x-2">
+                    <Input 
+                      placeholder="הכנס כתובת URL לתמונה" 
+                      value={imageUrl} 
+                      onChange={(e) => setImageUrl(e.target.value)}
+                    />
+                    <Button size="sm" onClick={handleImageUrlUpdate}>
+                      <FileImage className="h-4 w-4 mr-2" />
+                      עדכן
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="space-y-1">
+                  <Label className="text-base font-medium">העלאת תמונה מהמכשיר</Label>
+                  <div className="space-y-2">
+                    <Input 
+                      type="file" 
+                      accept="image/*" 
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                    />
+                    {imageFile && (
+                      <Button size="sm" onClick={handleImageFileUpload}>
+                        <Upload className="h-4 w-4 mr-2" />
+                        העלה תמונה
+                      </Button>
+                    )}
+                    {imagePreview && (
+                      <div className="mt-2 relative w-full max-w-[150px] aspect-square rounded-lg overflow-hidden border">
+                        <img 
+                          src={imagePreview} 
+                          alt="Preview" 
+                          className="w-full h-full object-cover" 
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="relative aspect-square rounded-lg overflow-hidden border order-1 md:order-2">
+                {sticker.imageUrl ? (
+                  <img 
+                    src={sticker.imageUrl} 
+                    alt={sticker.name} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : fallbackImage ? (
+                  <img 
+                    src={fallbackImage} 
+                    alt={sticker.name} 
+                    className="w-full h-full object-cover opacity-60"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-muted">
+                    <Image className="h-12 w-12 text-muted-foreground" />
+                  </div>
+                )}
               </div>
             </div>
             
-            <div className="relative aspect-square rounded-lg overflow-hidden border order-1 md:order-2">
-              {sticker.imageUrl ? (
-                <img 
-                  src={sticker.imageUrl} 
-                  alt={sticker.name} 
-                  className="w-full h-full object-cover"
-                />
-              ) : fallbackImage ? (
-                <img 
-                  src={fallbackImage} 
-                  alt={sticker.name} 
-                  className="w-full h-full object-cover opacity-60"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-muted">
-                  <Image className="h-12 w-12 text-muted-foreground" />
-                </div>
-              )}
+            <div className="space-y-1">
+              <Label className="text-base font-medium">פעולות</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant={sticker.isOwned ? "destructive" : "default"} onClick={handleToggleOwned}>
+                  {sticker.isOwned ? (
+                    <>
+                      <XCircle className="h-4 w-4 mr-2" />
+                      הסר מהאוסף
+                    </>
+                  ) : (
+                    <>
+                      <PlusCircle className="h-4 w-4 mr-2" />
+                      הוסף לאוסף
+                    </>
+                  )}
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  onClick={handleToggleDuplicate}
+                  disabled={!sticker.isOwned}
+                >
+                  {sticker.isDuplicate ? "הסר סימון כפול" : "סמן ככפולה"}
+                </Button>
+                
+                <Button variant="secondary" onClick={shareSticker}>
+                  <Share2 className="h-4 w-4 mr-2" />
+                  הצע החלפה
+                </Button>
+                
+                <Button variant="secondary" onClick={handleEditClick}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  ערוך מדבקה
+                </Button>
+              </div>
             </div>
           </div>
           
-          <div className="space-y-1">
-            <Label className="text-base font-medium">פעולות</Label>
-            <div className="grid grid-cols-3 gap-2">
-              <Button variant={sticker.isOwned ? "destructive" : "default"} onClick={handleToggleOwned}>
-                {sticker.isOwned ? (
-                  <>
-                    <XCircle className="h-4 w-4 mr-2" />
-                    הסר מהאוסף
-                  </>
-                ) : (
-                  <>
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    הוסף לאוסף
-                  </>
-                )}
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                onClick={handleToggleDuplicate}
-                disabled={!sticker.isOwned}
-              >
-                {sticker.isDuplicate ? "הסר סימון כפול" : "סמן ככפולה"}
-              </Button>
-              
-              <Button variant="secondary" onClick={shareSticker}>
-                <Share2 className="h-4 w-4 mr-2" />
-                הצע החלפה
-              </Button>
-            </div>
-          </div>
-        </div>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            סגור
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>
+              סגור
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit sticker form dialog */}
+      <EditStickerForm 
+        sticker={sticker}
+        isOpen={showEditForm}
+        onClose={() => setShowEditForm(false)}
+        onUpdate={handleEditComplete}
+      />
+    </>
   );
 };
 

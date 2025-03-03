@@ -15,9 +15,10 @@ interface ImportExcelDialogProps {
   albums: Album[];
   selectedAlbum: string;
   setSelectedAlbum: (albumId: string) => void;
+  onImportComplete?: () => void; // Add callback for refreshing the view
 }
 
-const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum }: ImportExcelDialogProps) => {
+const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum, onImportComplete }: ImportExcelDialogProps) => {
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -156,6 +157,11 @@ const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum }: ImportEx
       
       setIsOpen(false);
       resetForm();
+      
+      // Call the onImportComplete callback to refresh the view
+      if (onImportComplete) {
+        onImportComplete();
+      }
     } catch (error) {
       console.error("Import completion error:", error);
       toast({
@@ -186,7 +192,7 @@ const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum }: ImportEx
             ייבוא אקסל
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent dir="rtl">
           <DialogHeader>
             <DialogTitle>ייבוא מדבקות מקובץ CSV</DialogTitle>
             <DialogDescription>

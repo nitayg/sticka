@@ -45,6 +45,23 @@ export const toggleStickerDuplicate = (id: string) => {
   });
 };
 
+export const updateTeamNameAcrossStickers = (oldTeamName: string, newTeamName: string, newLogo?: string) => {
+  const stickersToUpdate = stickerData.filter(s => s.team === oldTeamName);
+  
+  setStickerData(stickerData.map(sticker => {
+    if (sticker.team === oldTeamName) {
+      return {
+        ...sticker,
+        team: newTeamName,
+        teamLogo: newLogo || sticker.teamLogo
+      };
+    }
+    return sticker;
+  }));
+  
+  return stickersToUpdate.length;
+};
+
 export const importStickersFromCSV = (albumId: string, csvData: Array<[number, string, string]>) => {
   const newStickers = csvData.map(([number, name, team], index) => ({
     id: `sticker${stickerData.length + index + 1}`,

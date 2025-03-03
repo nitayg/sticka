@@ -1,10 +1,10 @@
 
-import Header from "../Header";
+import { Album } from "@/lib/types";
+import { Button } from "../ui/button";
+import { Plus, RefreshCw } from "lucide-react";
 import AddStickerForm from "../AddStickerForm";
-import AddAlbumForm from "../AddAlbumForm";
 import ViewModeToggle from "../ViewModeToggle";
 import ImportExcelDialog from "../ImportExcelDialog";
-import { Album } from "@/lib/types";
 
 interface AlbumHeaderProps {
   albums: Album[];
@@ -12,41 +12,47 @@ interface AlbumHeaderProps {
   viewMode: "grid" | "list";
   setViewMode: (mode: "grid" | "list") => void;
   onRefresh: () => void;
+  onImportComplete?: () => void;
 }
 
-const AlbumHeader = ({
-  albums,
-  selectedAlbum,
-  viewMode,
-  setViewMode,
+const AlbumHeader = ({ 
+  albums, 
+  selectedAlbum, 
+  viewMode, 
+  setViewMode, 
   onRefresh,
+  onImportComplete
 }: AlbumHeaderProps) => {
   return (
-    <Header 
-      title="אלבום דיגיטלי" 
-      subtitle="צפייה וארגון אוסף המדבקות שלך"
-      action={
-        <div className="flex gap-2 flex-wrap justify-end">
-          <ImportExcelDialog 
-            albums={albums}
-            selectedAlbum={selectedAlbum}
-            setSelectedAlbum={() => {}}
-          />
-          
-          <AddAlbumForm onAlbumAdded={onRefresh} />
-          
+    <div className="flex flex-wrap justify-between items-center gap-2" dir="rtl">
+      <h1 className="text-2xl font-bold">אלבום המדבקות</h1>
+      
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" onClick={onRefresh}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          רענון
+        </Button>
+        
+        <ImportExcelDialog 
+          albums={albums} 
+          selectedAlbum={selectedAlbum} 
+          setSelectedAlbum={() => {}} // This is a no-op because we don't want to change the album
+          onImportComplete={onImportComplete}
+        />
+        
+        <AddStickerForm 
+          onStickerAdded={onRefresh}
+          defaultAlbumId={selectedAlbum}
+        />
+        
+        <div className="mr-2">
           <ViewModeToggle 
             viewMode={viewMode} 
-            setViewMode={setViewMode} 
-          />
-          
-          <AddStickerForm 
-            onStickerAdded={onRefresh} 
-            defaultAlbumId={selectedAlbum}
+            setViewMode={setViewMode}
           />
         </div>
-      }
-    />
+      </div>
+    </div>
   );
 };
 

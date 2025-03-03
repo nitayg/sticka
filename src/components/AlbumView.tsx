@@ -121,6 +121,7 @@ const AlbumView = () => {
         viewMode={viewMode}
         setViewMode={setViewMode}
         onRefresh={handleRefresh}
+        onImportComplete={handleRefresh}
       />
       
       <FilterControls
