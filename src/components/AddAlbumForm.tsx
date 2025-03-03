@@ -1,10 +1,10 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Plus, FileInput } from "lucide-react";
+import { Plus, FileInput, Upload } from "lucide-react";
 import { addAlbum } from "@/lib/data";
 import { useToast } from "./ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
@@ -22,8 +22,23 @@ const AddAlbumForm = ({ onAlbumAdded }: AddAlbumFormProps) => {
   const [year, setYear] = useState("");
   const [totalStickers, setTotalStickers] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [albumImage, setAlbumImage] = useState<File | null>(null);
+  const [albumImagePreview, setAlbumImagePreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  
+  useEffect(() => {
+    if (albumImage) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAlbumImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(albumImage);
+    } else {
+      setAlbumImagePreview(null);
+    }
+  }, [albumImage]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,13 +55,22 @@ const AddAlbumForm = ({ onAlbumAdded }: AddAlbumFormProps) => {
     setIsLoading(true);
     
     try {
+      // Process the album image if it exists
+      let coverImageUrl = "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=300&auto=format&fit=crop";
+      
+      if (albumImage) {
+        // In a real app, we would upload the image to a server and get back a URL
+        // For now, we'll use the local data URL as a demonstration
+        coverImageUrl = albumImagePreview || coverImageUrl;
+      }
+      
       // Add the album first
       const newAlbum = addAlbum({
         name,
         description,
         year,
         totalStickers: parseInt(totalStickers),
-        coverImage: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=300&auto=format&fit=crop"
+        coverImage: coverImageUrl
       });
       
       // If a file was uploaded, import its contents
@@ -136,8 +160,13 @@ const AddAlbumForm = ({ onAlbumAdded }: AddAlbumFormProps) => {
       setYear("");
       setTotalStickers("");
       setFile(null);
+      setAlbumImage(null);
+      setAlbumImagePreview(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
+      }
+      if (imageInputRef.current) {
+        imageInputRef.current.value = "";
       }
       
       setOpen(false);
@@ -170,6 +199,18 @@ const AddAlbumForm = ({ onAlbumAdded }: AddAlbumFormProps) => {
     }
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      setAlbumImage(selectedFile);
+      toast({
+        title: "התמונה נקלטה בהצלחה",
+        description: `${selectedFile.name} נבחרה כתמונת האלבום.`,
+        duration: 3000,
+      });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -187,8 +228,9 @@ const AddAlbumForm = ({ onAlbumAdded }: AddAlbumFormProps) => {
         </DialogHeader>
         
         <Tabs defaultValue="basic">
-          <TabsList className="grid grid-cols-2 mb-4">
+          <TabsList className="grid grid-cols-3 mb-4">
             <TabsTrigger value="basic">מידע בסיסי</TabsTrigger>
+            <TabsTrigger value="image">תמונת אלבום</TabsTrigger>
             <TabsTrigger value="import">ייבוא מדבקות</TabsTrigger>
           </TabsList>
           
@@ -243,6 +285,34 @@ const AddAlbumForm = ({ onAlbumAdded }: AddAlbumFormProps) => {
                   className="col-span-3"
                   required
                 />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="image" className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="albumImage">תמונת אלבום</Label>
+                <div className="space-y-3">
+                  <Input 
+                    id="albumImage" 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleImageUpload} 
+                    ref={imageInputRef}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    בחר תמונה עבור האלבום. תמונה זו תשמש גם כתמונת ברירת מחדל למדבקות שאין להן תמונה.
+                  </p>
+                  
+                  {albumImagePreview && (
+                    <div className="mt-4 relative w-full max-w-[300px] mx-auto aspect-square rounded-lg overflow-hidden border">
+                      <img 
+                        src={albumImagePreview} 
+                        alt="Album preview" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </TabsContent>
             

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Sticker } from "@/lib/data";
+import { Sticker } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Image } from "lucide-react";
 import StickerCard from "./StickerCard";

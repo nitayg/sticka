@@ -2,6 +2,7 @@
 import { Sticker } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Check, X } from "lucide-react";
+import { getAlbumById } from "@/lib/album-operations";
 
 interface StickerCardProps {
   sticker: Sticker;
@@ -18,6 +19,10 @@ const StickerCard = ({
   onClick, 
   className 
 }: StickerCardProps) => {
+  // Get the album to use its image as a fallback
+  const album = getAlbumById(sticker.albumId);
+  const displayImage = sticker.imageUrl || album?.coverImage;
+  
   return (
     <div 
       onClick={onClick}
@@ -42,14 +47,21 @@ const StickerCard = ({
         "relative w-full overflow-hidden", 
         compact ? "aspect-[3/4]" : "aspect-square"
       )}>
-        <img 
-          src={sticker.imageUrl} 
-          alt={sticker.name} 
-          className={cn(
-            "w-full h-full object-cover transition-transform duration-500",
-            "group-hover:scale-105"
-          )} 
-        />
+        {displayImage ? (
+          <img 
+            src={displayImage} 
+            alt={sticker.name} 
+            className={cn(
+              "w-full h-full object-cover transition-transform duration-500",
+              "group-hover:scale-105",
+              !sticker.imageUrl && "opacity-70" // Make album fallback image slightly transparent
+            )} 
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-muted">
+            <span className="text-muted-foreground text-xs">No Image</span>
+          </div>
+        )}
         {!sticker.isOwned && (
           <div className="absolute inset-0 bg-background/40 backdrop-blur-[2px] flex items-center justify-center">
             <span className="text-xs font-medium bg-background/80 px-2 py-1 rounded-md">
