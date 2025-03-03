@@ -2,11 +2,10 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
 import { useToast } from "./ui/use-toast";
 import { Shield, Upload, Image, Link as LinkIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Input } from "./ui/input";
 
 interface TeamLogoInput {
   team: string;
