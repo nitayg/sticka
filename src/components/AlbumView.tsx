@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { getAllAlbums } from "@/lib/data";
 import { getStickersByAlbumId, stickerData } from "@/lib/sticker-operations";
@@ -7,7 +8,7 @@ import FilterControls from "./album/FilterControls";
 import TabsContainer from "./album/TabsContainer";
 
 const AlbumView = () => {
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "compact">("grid");
   const [showImages, setShowImages] = useState<boolean>(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("הכל");
   const [selectedAlbum, setSelectedAlbum] = useState<string>("");

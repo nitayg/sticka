@@ -12,10 +12,10 @@ import AddAlbumForm from "../AddAlbumForm";
 interface AlbumHeaderProps {
   albums: Album[];
   selectedAlbum: string;
-  viewMode: "grid" | "list";
-  setViewMode: (mode: "grid" | "list") => void;
-  showImages?: boolean;  // New prop
-  setShowImages?: (show: boolean) => void;  // New prop
+  viewMode: "grid" | "list" | "compact";
+  setViewMode: (mode: "grid" | "list" | "compact") => void;
+  showImages?: boolean;
+  setShowImages?: (show: boolean) => void;
   onRefresh: () => void;
   onImportComplete?: () => void;
 }

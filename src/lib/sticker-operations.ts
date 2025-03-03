@@ -90,3 +90,14 @@ export const getStats = (albumId?: string) => {
     duplicates: filteredStickers.filter(s => s.isDuplicate).length
   };
 };
+
+// Get stickers that are in a transaction (Mock implementation)
+// This would be replaced with actual transaction data in a real app
+export const getStickerTransactions = () => {
+  // This is just a mock - in a real app, this would fetch from your transaction store
+  return {
+    "sticker3": { person: "דני", color: "bg-purple-100 border-purple-300" },
+    "sticker7": { person: "יוסי", color: "bg-blue-100 border-blue-300" },
+    "sticker15": { person: "רותי", color: "bg-pink-100 border-pink-300" },
+  };
+};

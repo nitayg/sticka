@@ -1,6 +1,7 @@
 
 import { Image } from "lucide-react";
 import { Album } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface StickerImageProps {
   imageUrl?: string;
@@ -8,6 +9,11 @@ interface StickerImageProps {
   alt: string;
   stickerNumber?: number;
   showImage?: boolean;
+  isOwned?: boolean;
+  isDuplicate?: boolean;
+  inTransaction?: boolean;
+  transactionColor?: string;
+  compactView?: boolean;
 }
 
 const StickerImage = ({ 
@@ -15,8 +21,43 @@ const StickerImage = ({
   fallbackImage, 
   alt, 
   stickerNumber,
-  showImage = true 
+  showImage = true,
+  isOwned = false,
+  isDuplicate = false,
+  inTransaction = false,
+  transactionColor,
+  compactView = false
 }: StickerImageProps) => {
+  // Determine background color based on sticker status
+  const getBgColor = () => {
+    if (inTransaction && transactionColor) return transactionColor;
+    if (isOwned) return "bg-green-100 border-green-300";
+    return "bg-muted border-muted-foreground/20";
+  };
+
+  if (compactView) {
+    return (
+      <div className={cn(
+        "relative aspect-square rounded-lg overflow-hidden border flex items-center justify-center transition-all",
+        getBgColor(),
+        isDuplicate && isOwned && "ring-2 ring-interactive"
+      )}>
+        {stickerNumber && (
+          <div className={cn(
+            "text-lg font-bold",
+            isOwned ? "text-green-800" : "text-muted-foreground",
+            inTransaction && "text-foreground"
+          )}>
+            {stickerNumber}
+          </div>
+        )}
+        {isDuplicate && isOwned && (
+          <div className="absolute top-1 right-1 text-xs font-semibold text-interactive">2+</div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="relative aspect-square rounded-lg overflow-hidden border order-1 md:order-2">
       {showImage ? (

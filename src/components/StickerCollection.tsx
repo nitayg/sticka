@@ -8,11 +8,12 @@ import StickerListItem from "./StickerListItem";
 import EmptyState from "./EmptyState";
 import AddStickerForm from "./AddStickerForm";
 import StickerDetailsDialog from "./StickerDetailsDialog";
+import StickerImage from "./sticker-details/StickerImage";
 
 interface StickerCollectionProps {
   stickers: Sticker[];
-  viewMode: "grid" | "list";
-  showImages?: boolean; // New prop
+  viewMode: "grid" | "list" | "compact";
+  showImages?: boolean;
   selectedAlbum: string;
   onRefresh: () => void;
   activeFilter?: string | null;
@@ -22,7 +23,7 @@ interface StickerCollectionProps {
 const StickerCollection = ({ 
   stickers, 
   viewMode, 
-  showImages = true, // Default to showing images
+  showImages = true,
   selectedAlbum, 
   onRefresh,
   activeFilter,
@@ -31,8 +32,12 @@ const StickerCollection = ({
   const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
-  // Adjust card size based on active filter (zoom in/out effect)
+  // Adjust card size based on active filter and view mode
   const getGridColsClass = () => {
+    if (viewMode === "compact") {
+      return "grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-16";
+    }
+    
     // When filtered, show more cards by reducing their size
     if (activeFilter) {
       return "grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8";
@@ -67,16 +72,42 @@ const StickerCollection = ({
     );
   }
 
+  // Mock transaction data - in a real app, this would come from your transaction store
+  const transactionMap: Record<string, { person: string, color: string }> = {
+    // These are examples - you would populate this from your actual transaction data
+    "sticker3": { person: "דני", color: "bg-purple-100 border-purple-300" },
+    "sticker7": { person: "יוסי", color: "bg-blue-100 border-blue-300" },
+    "sticker15": { person: "רותי", color: "bg-pink-100 border-pink-300" },
+  };
+
   return (
     <>
       <div className={cn(
         "w-full animate-scale-in",
-        viewMode === "grid" 
-          ? `grid ${getGridColsClass()} gap-3 px-0.5` 
-          : "grid grid-cols-1 gap-3"
+        viewMode === "list" 
+          ? "grid grid-cols-1 gap-3" 
+          : `grid ${getGridColsClass()} gap-3 px-0.5`
       )}>
-        {stickers.map(sticker => 
-          viewMode === "grid" ? (
+        {stickers.map(sticker => {
+          const transaction = transactionMap[sticker.id];
+          
+          if (viewMode === "compact") {
+            return (
+              <div key={sticker.id} onClick={() => handleStickerClick(sticker)} className="cursor-pointer">
+                <StickerImage
+                  alt={sticker.name}
+                  stickerNumber={sticker.number}
+                  isOwned={sticker.isOwned}
+                  isDuplicate={sticker.isDuplicate}
+                  inTransaction={!!transaction}
+                  transactionColor={transaction?.color}
+                  compactView={true}
+                />
+              </div>
+            );
+          }
+          
+          return viewMode === "grid" ? (
             <StickerCard 
               key={sticker.id} 
               sticker={sticker} 
@@ -92,8 +123,8 @@ const StickerCollection = ({
               showImages={showImages}
               onClick={() => handleStickerClick(sticker)}
             />
-          )
-        )}
+          );
+        })}
       </div>
       
       <StickerDetailsDialog

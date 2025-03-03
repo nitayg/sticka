@@ -9,7 +9,7 @@ interface StickerCardProps {
   compact?: boolean;
   showActions?: boolean;
   showAlbumInfo?: boolean;
-  showImages?: boolean; // New prop to control image display
+  showImages?: boolean;
   onClick?: () => void;
   className?: string;
 }
@@ -19,7 +19,7 @@ const StickerCard = ({
   compact = false, 
   showActions = false,
   showAlbumInfo = false,
-  showImages = true, // Default to showing images
+  showImages = true,
   onClick, 
   className 
 }: StickerCardProps) => {

@@ -1,10 +1,10 @@
 
 import { cn } from "@/lib/utils";
-import { Eye, EyeOff, Grid, List } from "lucide-react"; 
+import { Eye, EyeOff, Grid, List, LayoutGrid } from "lucide-react"; 
 
 interface ViewModeToggleProps {
-  viewMode: "grid" | "list";
-  setViewMode: (mode: "grid" | "list") => void;
+  viewMode: "grid" | "list" | "compact";
+  setViewMode: (mode: "grid" | "list" | "compact") => void;
   showImages?: boolean;
   setShowImages?: (show: boolean) => void;
 }
@@ -25,6 +25,7 @@ const ViewModeToggle = ({
             ? "bg-secondary text-foreground" 
             : "text-muted-foreground hover:text-foreground"
         )}
+        title="תצוגת קלפים"
       >
         <Grid size={20} />
       </button>
@@ -36,11 +37,24 @@ const ViewModeToggle = ({
             ? "bg-secondary text-foreground" 
             : "text-muted-foreground hover:text-foreground"
         )}
+        title="תצוגת רשימה"
       >
         <List size={20} />
       </button>
+      <button 
+        onClick={() => setViewMode("compact")}
+        className={cn(
+          "p-2 rounded-md transition-colors",
+          viewMode === "compact" 
+            ? "bg-secondary text-foreground" 
+            : "text-muted-foreground hover:text-foreground"
+        )}
+        title="תצוגה קומפקטית"
+      >
+        <LayoutGrid size={20} />
+      </button>
       
-      {setShowImages && (
+      {setShowImages && viewMode !== "compact" && (
         <button 
           onClick={() => setShowImages(!showImages)}
           className={cn(
