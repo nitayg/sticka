@@ -1,7 +1,7 @@
 
 import { Sticker } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Check, X } from "lucide-react";
+import { Check, Shield, X } from "lucide-react";
 import { getAlbumById } from "@/lib/album-operations";
 
 interface StickerCardProps {
@@ -80,9 +80,14 @@ const StickerCard = ({
             <span className="text-xs font-medium text-muted-foreground">
               #{sticker.number}
             </span>
-            <span className="text-xs font-medium text-muted-foreground">
-              {sticker.team}
-            </span>
+            <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+              {sticker.teamLogo ? (
+                <img src={sticker.teamLogo} alt={sticker.team} className="w-4 h-4 object-contain" />
+              ) : (
+                <Shield className="w-3 h-3 opacity-50" />
+              )}
+              <span>{sticker.team}</span>
+            </div>
           </div>
           <h3 className={cn(
             "font-semibold text-foreground line-clamp-1",

@@ -14,18 +14,19 @@ const NumberRangeView = ({ ranges, selectedRange, onRangeSelect }: NumberRangeVi
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
         {ranges.map((range) => (
           <button
             key={range}
             onClick={() => onRangeSelect(selectedRange === range ? null : range)}
             className={cn(
-              "px-4 py-2 rounded-md text-sm font-medium transition-colors",
+              "px-4 py-2 rounded-md text-sm font-medium transition-colors text-right",
               "hover:bg-accent hover:text-accent-foreground",
               selectedRange === range
                 ? "bg-primary text-primary-foreground"
                 : "bg-card border border-border"
             )}
+            dir="rtl"
           >
             {range}
           </button>
@@ -35,7 +36,7 @@ const NumberRangeView = ({ ranges, selectedRange, onRangeSelect }: NumberRangeVi
       {selectedRange && (
         <button
           onClick={() => onRangeSelect(null)}
-          className="mt-4 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="mt-4 text-sm text-muted-foreground hover:text-foreground transition-colors text-right w-full"
         >
           הצג הכל
         </button>

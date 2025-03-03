@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { getAllAlbums } from "@/lib/data";
 import Header from "./Header";
@@ -27,32 +26,27 @@ const AlbumView = () => {
   const albums = getAllAlbums();
   const categories = ["הכל", "שחקנים", "קבוצות", "אצטדיונים", "סמלים"];
   
-  // Set default album if none selected
   useEffect(() => {
     if (albums.length > 0 && !selectedAlbum) {
       setSelectedAlbum(albums[0].id);
     }
   }, [albums]);
   
-  // Load stickers when album changes or refresh is triggered
   useEffect(() => {
     if (selectedAlbum) {
       const albumStickers = getStickersByAlbumId(selectedAlbum);
       setStickers(albumStickers);
       
-      // Dispatch custom event to notify Layout of album change
       const event = new CustomEvent('albumChanged', { detail: { albumId: selectedAlbum } });
       window.dispatchEvent(event);
     }
   }, [selectedAlbum, refreshKey]);
   
-  // Reset filters when album changes
   useEffect(() => {
     setSelectedRange(null);
     setSelectedTeam(null);
   }, [selectedAlbum]);
 
-  // Get all unique teams from stickers
   const teams = useMemo(() => {
     const teamSet = new Set<string>();
     stickers.forEach(sticker => {
@@ -63,7 +57,6 @@ const AlbumView = () => {
     return Array.from(teamSet).sort();
   }, [stickers]);
 
-  // Get number ranges (hundreds) from stickers
   const numberRanges = useMemo(() => {
     if (!stickers.length) return [];
     
@@ -81,14 +74,21 @@ const AlbumView = () => {
     });
   }, [stickers]);
   
-  // Apply both category and range/team filters
+  const teamLogos = useMemo(() => {
+    const logoMap: Record<string, string> = {};
+    stickers.forEach(sticker => {
+      if (sticker.team && sticker.teamLogo) {
+        logoMap[sticker.team] = sticker.teamLogo;
+      }
+    });
+    return logoMap;
+  }, [stickers]);
+  
   const getFilteredStickers = () => {
-    // First apply category filter
     let filtered = stickers.filter(sticker => 
       selectedCategory === "הכל" || sticker.category === selectedCategory
     );
     
-    // Then apply number range or team filter based on active tab
     if (activeTab === "number" && selectedRange) {
       const [rangeStart, rangeEnd] = selectedRange.split('-').map(Number);
       filtered = filtered.filter(sticker => 
@@ -190,6 +190,7 @@ const AlbumView = () => {
             teams={teams} 
             selectedTeam={selectedTeam}
             onTeamSelect={handleTeamSelect}
+            teamLogos={teamLogos}
           />
         </TabsContent>
       </Tabs>

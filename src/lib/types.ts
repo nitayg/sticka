@@ -1,9 +1,11 @@
+
 import { LucideIcon } from "lucide-react";
 
 export interface Sticker {
   id: string;
   name: string;
   team: string;
+  teamLogo?: string; // Add team logo URL field
   category: string;
   imageUrl?: string;
   number: number;
