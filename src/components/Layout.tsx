@@ -1,8 +1,10 @@
 
 import { cn } from "@/lib/utils";
 import { Album, Image, List, Search } from "lucide-react";
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { getStats } from "@/lib/sticker-operations";
+import { useParams } from "react-router-dom";
 
 interface LayoutProps {
   children: ReactNode;
@@ -11,6 +13,37 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [stats, setStats] = useState({ total: 0, owned: 0, needed: 0, duplicates: 0 });
+  const [currentAlbumId, setCurrentAlbumId] = useState<string | undefined>(undefined);
+
+  // Listen for album changes from children components
+  useEffect(() => {
+    // Create a custom event listener to receive the current album ID
+    const handleAlbumChange = (event: CustomEvent) => {
+      setCurrentAlbumId(event.detail.albumId);
+    };
+
+    // Add event listener
+    window.addEventListener('albumChanged' as any, handleAlbumChange);
+
+    // Initial stats
+    updateStats();
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('albumChanged' as any, handleAlbumChange);
+    };
+  }, []);
+
+  // Update stats when album changes
+  useEffect(() => {
+    updateStats();
+  }, [currentAlbumId]);
+
+  const updateStats = () => {
+    const newStats = getStats(currentAlbumId);
+    setStats(newStats);
+  };
 
   const navigation = [
     { name: "אלבום", href: "/", icon: Album },
@@ -112,19 +145,19 @@ const Layout = ({ children }: LayoutProps) => {
                 <div className="text-xs text-muted-foreground">
                   <div className="flex justify-between mb-1">
                     <span>סה"כ מדבקות</span>
-                    <span className="font-medium">250</span>
+                    <span className="font-medium">{stats.total}</span>
                   </div>
                   <div className="flex justify-between mb-1">
                     <span>נאספו</span>
-                    <span className="font-medium">182</span>
+                    <span className="font-medium">{stats.owned}</span>
                   </div>
                   <div className="flex justify-between mb-1">
                     <span>חסרות</span>
-                    <span className="font-medium">68</span>
+                    <span className="font-medium">{stats.needed}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>כפולות</span>
-                    <span className="font-medium">45</span>
+                    <span className="font-medium">{stats.duplicates}</span>
                   </div>
                 </div>
               </div>

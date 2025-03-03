@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { getAllAlbums, getStickersByAlbumId } from "@/lib/data";
+import { getAllAlbums } from "@/lib/data";
 import Header from "./Header";
 import AddStickerForm from "./AddStickerForm";
 import AddAlbumForm from "./AddAlbumForm";
@@ -9,6 +9,7 @@ import CategoryFilter from "./CategoryFilter";
 import StickerCollection from "./StickerCollection";
 import ImportExcelDialog from "./ImportExcelDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { getStickersByAlbumId } from "@/lib/sticker-operations";
 
 const AlbumView = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -32,6 +33,10 @@ const AlbumView = () => {
     if (selectedAlbum) {
       const albumStickers = getStickersByAlbumId(selectedAlbum);
       setStickers(albumStickers);
+      
+      // Dispatch custom event to notify Layout of album change
+      const event = new CustomEvent('albumChanged', { detail: { albumId: selectedAlbum } });
+      window.dispatchEvent(event);
     }
   }, [selectedAlbum, refreshKey]);
   
@@ -41,6 +46,10 @@ const AlbumView = () => {
   
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
+  };
+  
+  const handleAlbumChange = (albumId: string) => {
+    setSelectedAlbum(albumId);
   };
 
   return (
@@ -78,7 +87,7 @@ const AlbumView = () => {
           setSelectedCategory={setSelectedCategory}
         />
         
-        <Select value={selectedAlbum} onValueChange={setSelectedAlbum}>
+        <Select value={selectedAlbum} onValueChange={handleAlbumChange}>
           <SelectTrigger className="w-full sm:w-[200px]">
             <SelectValue placeholder="בחר אלבום" />
           </SelectTrigger>
