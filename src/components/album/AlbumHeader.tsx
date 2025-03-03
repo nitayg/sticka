@@ -14,6 +14,8 @@ interface AlbumHeaderProps {
   selectedAlbum: string;
   viewMode: "grid" | "list";
   setViewMode: (mode: "grid" | "list") => void;
+  showImages?: boolean;  // New prop
+  setShowImages?: (show: boolean) => void;  // New prop
   onRefresh: () => void;
   onImportComplete?: () => void;
 }
@@ -23,6 +25,8 @@ const AlbumHeader = ({
   selectedAlbum, 
   viewMode, 
   setViewMode, 
+  showImages = true,
+  setShowImages,
   onRefresh,
   onImportComplete
 }: AlbumHeaderProps) => {
@@ -56,6 +60,8 @@ const AlbumHeader = ({
           <ViewModeToggle 
             viewMode={viewMode} 
             setViewMode={setViewMode}
+            showImages={showImages}
+            setShowImages={setShowImages}
           />
         </div>
       </div>

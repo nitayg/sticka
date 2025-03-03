@@ -1,14 +1,15 @@
 
 import { Sticker } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Shield } from "lucide-react";
+import { Image, Shield } from "lucide-react";
 
 interface StickerListItemProps {
   sticker: Sticker;
+  showImages?: boolean;
   onClick?: () => void;
 }
 
-const StickerListItem = ({ sticker, onClick }: StickerListItemProps) => {
+const StickerListItem = ({ sticker, showImages = true, onClick }: StickerListItemProps) => {
   return (
     <div 
       onClick={onClick}
@@ -19,11 +20,18 @@ const StickerListItem = ({ sticker, onClick }: StickerListItemProps) => {
       )}
     >
       <div className="h-16 w-16 rounded-md overflow-hidden bg-secondary flex-shrink-0">
-        <img 
-          src={sticker.imageUrl} 
-          alt={sticker.name} 
-          className="w-full h-full object-cover" 
-        />
+        {showImages ? (
+          <img 
+            src={sticker.imageUrl} 
+            alt={sticker.name} 
+            className="w-full h-full object-cover" 
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center">
+            <Image className="h-4 w-4 text-muted-foreground mb-0.5 opacity-40" />
+            <div className="text-sm font-bold">{sticker.number}</div>
+          </div>
+        )}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1 text-sm font-medium text-muted-foreground">

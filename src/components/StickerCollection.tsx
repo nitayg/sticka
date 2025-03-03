@@ -12,15 +12,17 @@ import StickerDetailsDialog from "./StickerDetailsDialog";
 interface StickerCollectionProps {
   stickers: Sticker[];
   viewMode: "grid" | "list";
+  showImages?: boolean; // New prop
   selectedAlbum: string;
   onRefresh: () => void;
   activeFilter?: string | null;
-  showMultipleAlbums?: boolean; // New prop to indicate if showing stickers from multiple albums
+  showMultipleAlbums?: boolean;
 }
 
 const StickerCollection = ({ 
   stickers, 
   viewMode, 
+  showImages = true, // Default to showing images
   selectedAlbum, 
   onRefresh,
   activeFilter,
@@ -79,13 +81,15 @@ const StickerCollection = ({
               key={sticker.id} 
               sticker={sticker} 
               compact
+              showImages={showImages}
               showAlbumInfo={showMultipleAlbums}
               onClick={() => handleStickerClick(sticker)}
             />
           ) : (
             <StickerListItem 
               key={sticker.id} 
-              sticker={sticker} 
+              sticker={sticker}
+              showImages={showImages}
               onClick={() => handleStickerClick(sticker)}
             />
           )

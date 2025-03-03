@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { getAllAlbums } from "@/lib/data";
 import { getStickersByAlbumId, stickerData } from "@/lib/sticker-operations";
@@ -9,6 +8,7 @@ import TabsContainer from "./album/TabsContainer";
 
 const AlbumView = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [showImages, setShowImages] = useState<boolean>(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("הכל");
   const [selectedAlbum, setSelectedAlbum] = useState<string>("");
   const [stickers, setStickers] = useState<any[]>([]);
@@ -38,7 +38,6 @@ const AlbumView = () => {
   }, [selectedAlbum, refreshKey]);
   
   useEffect(() => {
-    // Reset filters when changing albums or tabs
     if (!showAllAlbumStickers) {
       setSelectedRange(null);
       setSelectedTeam(null);
@@ -47,7 +46,6 @@ const AlbumView = () => {
 
   const teams = useMemo(() => {
     const teamSet = new Set<string>();
-    // כשנמצאים בלשונית הניהול או בתצוגת כל האלבומים, אנחנו רוצים לראות את כל הקבוצות מכל האלבומים
     const stickersToCheck = activeTab === "manage" || showAllAlbumStickers ? stickerData : stickers;
     
     stickersToCheck.forEach(sticker => {
@@ -77,7 +75,6 @@ const AlbumView = () => {
   
   const teamLogos = useMemo(() => {
     const logoMap: Record<string, string> = {};
-    // כאן גם אנחנו רוצים לכלול את כל הלוגואים מכל האלבומים בלשונית הניהול או בתצוגת כל האלבומים
     const stickersToCheck = activeTab === "manage" || showAllAlbumStickers ? stickerData : stickers;
     
     stickersToCheck.forEach(sticker => {
@@ -89,7 +86,6 @@ const AlbumView = () => {
   }, [stickers, activeTab, stickerData, showAllAlbumStickers]);
   
   const getFilteredStickers = () => {
-    // אם נבחרה קבוצה בלשונית הניהול או בתצוגת כל האלבומים, אנחנו רוצים להציג מדבקות מכל האלבומים
     let allStickers = (activeTab === "manage" && selectedTeam) || (showAllAlbumStickers && selectedTeam) 
       ? stickerData 
       : stickers;
@@ -141,6 +137,8 @@ const AlbumView = () => {
         selectedAlbum={selectedAlbum}
         viewMode={viewMode}
         setViewMode={setViewMode}
+        showImages={showImages}
+        setShowImages={setShowImages}
         onRefresh={handleRefresh}
         onImportComplete={handleRefresh}
       />
@@ -172,6 +170,7 @@ const AlbumView = () => {
       <StickerCollection 
         stickers={filteredStickers}
         viewMode={viewMode}
+        showImages={showImages}
         selectedAlbum={selectedAlbum}
         onRefresh={handleRefresh}
         activeFilter={activeTab === "number" ? selectedRange : selectedTeam}

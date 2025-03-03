@@ -1,14 +1,15 @@
 
 import { Sticker } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Check, Shield, X, BookOpen } from "lucide-react";
+import { Check, Shield, X, BookOpen, Image } from "lucide-react";
 import { getAlbumById } from "@/lib/album-operations";
 
 interface StickerCardProps {
   sticker: Sticker;
   compact?: boolean;
   showActions?: boolean;
-  showAlbumInfo?: boolean; // New prop to show album info
+  showAlbumInfo?: boolean;
+  showImages?: boolean; // New prop to control image display
   onClick?: () => void;
   className?: string;
 }
@@ -18,6 +19,7 @@ const StickerCard = ({
   compact = false, 
   showActions = false,
   showAlbumInfo = false,
+  showImages = true, // Default to showing images
   onClick, 
   className 
 }: StickerCardProps) => {
@@ -58,21 +60,29 @@ const StickerCard = ({
         "relative w-full overflow-hidden", 
         compact ? "aspect-[3/4]" : "aspect-square"
       )}>
-        {displayImage ? (
-          <img 
-            src={displayImage} 
-            alt={sticker.name} 
-            className={cn(
-              "w-full h-full object-cover transition-transform duration-500",
-              "group-hover:scale-105",
-              !sticker.imageUrl && "opacity-70" // Make album fallback image slightly transparent
-            )} 
-          />
+        {showImages ? (
+          displayImage ? (
+            <img 
+              src={displayImage} 
+              alt={sticker.name} 
+              className={cn(
+                "w-full h-full object-cover transition-transform duration-500",
+                "group-hover:scale-105",
+                !sticker.imageUrl && "opacity-70" // Make album fallback image slightly transparent
+              )} 
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-muted">
+              <span className="text-muted-foreground text-xs">No Image</span>
+            </div>
+          )
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-muted">
-            <span className="text-muted-foreground text-xs">No Image</span>
+          <div className="w-full h-full flex flex-col items-center justify-center bg-muted">
+            <Image className="h-6 w-6 text-muted-foreground mb-1 opacity-40" />
+            <div className="text-2xl font-bold">{sticker.number}</div>
           </div>
         )}
+        
         {!sticker.isOwned && (
           <div className="absolute inset-0 bg-background/40 backdrop-blur-[2px] flex items-center justify-center">
             <span className="text-xs font-medium bg-background/80 px-2 py-1 rounded-md">
