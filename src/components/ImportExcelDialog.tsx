@@ -76,7 +76,24 @@ const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum }: ImportEx
       
       const lines = fileContent.split('\n').filter(line => line.trim());
       
-      const parsedData = lines.map(line => {
+      // Check if the first line looks like a header
+      const firstLine = lines[0];
+      const isHeader = firstLine && 
+        (firstLine.toLowerCase().includes('מספר') || 
+         firstLine.toLowerCase().includes('number') ||
+         firstLine.toLowerCase().includes('שם') ||
+         firstLine.toLowerCase().includes('name') ||
+         firstLine.toLowerCase().includes('קבוצה') ||
+         firstLine.toLowerCase().includes('team'));
+      
+      // Skip the header line if detected
+      const dataLines = isHeader ? lines.slice(1) : lines;
+      
+      if (dataLines.length === 0) {
+        throw new Error("הקובץ ריק או מכיל רק כותרות");
+      }
+      
+      const parsedData = dataLines.map(line => {
         const [numberStr, name, team] = line.split(',').map(item => item.trim());
         const number = parseInt(numberStr);
         
@@ -123,6 +140,7 @@ const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum }: ImportEx
           <DialogTitle>ייבוא מדבקות מקובץ CSV</DialogTitle>
           <DialogDescription>
             העלה קובץ CSV עם המדבקות. וודא כי העמודה הראשונה היא מספר הקלף, השנייה שם השחקן, והשלישית שם הקבוצה/הסדרה.
+            אם הקובץ מכיל שורת כותרת, המערכת תזהה אותה באופן אוטומטי ותדלג עליה.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
