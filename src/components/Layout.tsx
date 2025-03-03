@@ -13,18 +13,18 @@ const Layout = ({ children }: LayoutProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navigation = [
-    { name: "Album", href: "/", icon: Album },
-    { name: "Inventory", href: "/inventory", icon: List },
-    { name: "Exchange", href: "/exchange", icon: Search },
-    { name: "Scan", href: "/scan", icon: Image }
+    { name: "אלבום", href: "/", icon: Album },
+    { name: "מלאי", href: "/inventory", icon: List },
+    { name: "החלפות", href: "/exchange", icon: Search },
+    { name: "סריקה", href: "/scan", icon: Image }
   ];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col w-full">
+    <div className="min-h-screen bg-background flex flex-col w-full" dir="rtl">
       {/* Mobile Header */}
       <header className="lg:hidden sticky top-0 z-40 glass border-b border-border h-14 flex items-center justify-between px-4">
         <div className="flex items-center">
-          <span className="font-semibold text-lg">Sticker Swapper</span>
+          <span className="font-semibold text-lg">אוסף מדבקות</span>
         </div>
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -83,11 +83,11 @@ const Layout = ({ children }: LayoutProps) => {
 
       <div className="flex flex-1">
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:flex h-screen sticky top-0 z-30 w-64 shrink-0 border-r border-border">
+        <aside className="hidden lg:flex h-screen sticky top-0 z-30 w-64 shrink-0 border-l border-border">
           <div className="flex w-full flex-col gap-2 p-4">
             <div className="px-2 py-6">
-              <h2 className="text-xl font-semibold">Sticker Swapper</h2>
-              <p className="text-xs text-muted-foreground mt-1">Manage your collection</p>
+              <h2 className="text-xl font-semibold">אוסף מדבקות</h2>
+              <p className="text-xs text-muted-foreground mt-1">נהל את האוסף שלך</p>
             </div>
             <nav className="grid gap-1 px-2">
               {navigation.map((item) => (
@@ -108,22 +108,22 @@ const Layout = ({ children }: LayoutProps) => {
             </nav>
             <div className="mt-auto px-2 py-4">
               <div className="rounded-lg border border-border bg-card p-4">
-                <h3 className="text-sm font-medium mb-2">Collection Status</h3>
+                <h3 className="text-sm font-medium mb-2">סטטוס האוסף</h3>
                 <div className="text-xs text-muted-foreground">
                   <div className="flex justify-between mb-1">
-                    <span>Total</span>
+                    <span>סה"כ מדבקות</span>
                     <span className="font-medium">250</span>
                   </div>
                   <div className="flex justify-between mb-1">
-                    <span>Owned</span>
+                    <span>נאספו</span>
                     <span className="font-medium">182</span>
                   </div>
                   <div className="flex justify-between mb-1">
-                    <span>Needed</span>
+                    <span>חסרות</span>
                     <span className="font-medium">68</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Duplicates</span>
+                    <span>כפולות</span>
                     <span className="font-medium">45</span>
                   </div>
                 </div>
