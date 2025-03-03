@@ -1,17 +1,11 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { getAllAlbums } from "@/lib/data";
-import Header from "./Header";
-import AddStickerForm from "./AddStickerForm";
-import AddAlbumForm from "./AddAlbumForm";
-import ViewModeToggle from "./ViewModeToggle";
-import CategoryFilter from "./CategoryFilter";
-import StickerCollection from "./StickerCollection";
-import ImportExcelDialog from "./ImportExcelDialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { getStickersByAlbumId } from "@/lib/sticker-operations";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import NumberRangeView from "./NumberRangeView";
-import TeamView from "./TeamView";
+import StickerCollection from "./StickerCollection";
+import AlbumHeader from "./album/AlbumHeader";
+import FilterControls from "./album/FilterControls";
+import TabsContainer from "./album/TabsContainer";
 
 const AlbumView = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -121,79 +115,34 @@ const AlbumView = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <Header 
-        title="אלבום דיגיטלי" 
-        subtitle="צפייה וארגון אוסף המדבקות שלך"
-        action={
-          <div className="flex gap-2 flex-wrap justify-end">
-            <ImportExcelDialog 
-              albums={albums}
-              selectedAlbum={selectedAlbum}
-              setSelectedAlbum={setSelectedAlbum}
-            />
-            
-            <AddAlbumForm onAlbumAdded={handleRefresh} />
-            
-            <ViewModeToggle 
-              viewMode={viewMode} 
-              setViewMode={setViewMode} 
-            />
-            
-            <AddStickerForm 
-              onStickerAdded={handleRefresh} 
-              defaultAlbumId={selectedAlbum}
-            />
-          </div>
-        }
+      <AlbumHeader 
+        albums={albums}
+        selectedAlbum={selectedAlbum}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        onRefresh={handleRefresh}
       />
       
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <CategoryFilter 
-          categories={categories}
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-        />
-        
-        <Select value={selectedAlbum} onValueChange={handleAlbumChange}>
-          <SelectTrigger className="w-full sm:w-[200px]">
-            <SelectValue placeholder="בחר אלבום" />
-          </SelectTrigger>
-          <SelectContent>
-            {albums.map(album => (
-              <SelectItem key={album.id} value={album.id}>{album.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <FilterControls
+        categories={categories}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        albums={albums}
+        selectedAlbum={selectedAlbum}
+        handleAlbumChange={handleAlbumChange}
+      />
       
-      <Tabs
-        defaultValue="number"
-        value={activeTab}
-        onValueChange={(value) => setActiveTab(value as "number" | "team")}
-        className="w-full"
-      >
-        <TabsList className="grid w-full grid-cols-2 mb-4">
-          <TabsTrigger value="number">לפי מספר</TabsTrigger>
-          <TabsTrigger value="team">לפי קבוצה</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="number" className="mt-0">
-          <NumberRangeView 
-            ranges={numberRanges} 
-            selectedRange={selectedRange}
-            onRangeSelect={handleRangeSelect}
-          />
-        </TabsContent>
-        
-        <TabsContent value="team" className="mt-0">
-          <TeamView 
-            teams={teams} 
-            selectedTeam={selectedTeam}
-            onTeamSelect={handleTeamSelect}
-            teamLogos={teamLogos}
-          />
-        </TabsContent>
-      </Tabs>
+      <TabsContainer
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        numberRanges={numberRanges}
+        selectedRange={selectedRange}
+        handleRangeSelect={handleRangeSelect}
+        teams={teams}
+        selectedTeam={selectedTeam}
+        handleTeamSelect={handleTeamSelect}
+        teamLogos={teamLogos}
+      />
       
       <StickerCollection 
         stickers={filteredStickers}
