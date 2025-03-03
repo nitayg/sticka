@@ -33,6 +33,11 @@ const AlbumHeader = ({
           רענון
         </Button>
         
+        <Button variant="outline" size="sm" onClick={() => {}}>
+          <Plus className="h-4 w-4 mr-2" />
+          הוסף אלבום
+        </Button>
+        
         <ImportExcelDialog 
           albums={albums} 
           selectedAlbum={selectedAlbum} 
