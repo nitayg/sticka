@@ -4,7 +4,7 @@ import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Plus, FileInput, Upload } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { addAlbum } from "@/lib/data";
 import { useToast } from "./ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
@@ -219,7 +219,7 @@ const AddAlbumForm = ({ onAlbumAdded }: AddAlbumFormProps) => {
           הוסף אלבום
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px]" dir="rtl">
         <DialogHeader>
           <DialogTitle>הוספת אלבום חדש</DialogTitle>
           <DialogDescription>
