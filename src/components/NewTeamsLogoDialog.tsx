@@ -50,8 +50,18 @@ const NewTeamsLogoDialog = ({ open, onOpenChange, teams, onSave }: NewTeamsLogoD
     try {
       const teamLogos: Record<string, string> = {};
       
-      // In a real application, we would upload the files to a server
-      // For now, we'll convert the files to data URLs as a demonstration
+      // בדיקה אם יש סמלים להוסיף
+      const hasLogos = teamInputs.some(input => input.logoFile || input.logoUrl);
+      
+      if (!hasLogos) {
+        toast({
+          title: "לא נוספו סמלים",
+          description: "לא נבחרו סמלים לקבוצות החדשות. האם להמשיך?",
+        });
+      }
+      
+      // בפועל היינו מעלים את הקבצים לשרת
+      // כרגע נמיר את הקבצים ל-data URLs להדגמה
       for (const input of teamInputs) {
         if (input.logoFile) {
           const dataUrl = await readFileAsDataURL(input.logoFile);
@@ -66,7 +76,7 @@ const NewTeamsLogoDialog = ({ open, onOpenChange, teams, onSave }: NewTeamsLogoD
       
       toast({
         title: "סמלי קבוצות נשמרו",
-        description: `נשמרו סמלים ל-${Object.keys(teamLogos).length} קבוצות חדשות.`,
+        description: `נשמרו סמלים ל-${Object.keys(teamLogos).length} קבוצות.`,
       });
     } catch (error) {
       toast({
@@ -90,7 +100,7 @@ const NewTeamsLogoDialog = ({ open, onOpenChange, teams, onSave }: NewTeamsLogoD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]" dir="rtl">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col" dir="rtl">
         <DialogHeader>
           <DialogTitle>הוספת סמלים לקבוצות חדשות</DialogTitle>
           <DialogDescription>
@@ -98,41 +108,39 @@ const NewTeamsLogoDialog = ({ open, onOpenChange, teams, onSave }: NewTeamsLogoD
           </DialogDescription>
         </DialogHeader>
         
-        <div className="max-h-[400px] overflow-y-auto pr-1 space-y-6 py-4">
+        <div className="max-h-[60vh] overflow-y-auto pr-1 space-y-6 py-4 flex-grow">
           {teamInputs.map((input, index) => (
-            <div key={input.team} className="space-y-4 pb-4 border-b border-border">
-              <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-muted-foreground" />
+            <div key={input.team} className="border border-border rounded-lg p-4 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <Shield className="h-5 w-5 text-primary" />
                 <h3 className="text-lg font-medium">{input.team}</h3>
               </div>
               
               <Tabs defaultValue="url" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-2 mb-3">
                   <TabsTrigger value="url" className="flex items-center gap-1">
                     <LinkIcon className="h-4 w-4" />
-                    <span>קישור</span>
+                    <span>קישור לסמל</span>
                   </TabsTrigger>
                   <TabsTrigger value="upload" className="flex items-center gap-1">
                     <Upload className="h-4 w-4" />
-                    <span>העלאה</span>
+                    <span>העלאת קובץ</span>
                   </TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="url" className="space-y-2 mt-2">
-                  <div className="grid grid-cols-4 gap-4 items-center">
-                    <Label htmlFor={`logo-url-${index}`} className="text-right">קישור לסמל</Label>
-                    <Input
-                      id={`logo-url-${index}`}
-                      value={input.logoUrl}
-                      onChange={(e) => handleUrlChange(index, e.target.value)}
-                      placeholder="הכנס URL לתמונת הסמל"
-                      className="col-span-3"
-                    />
-                  </div>
-                  
-                  {input.logoUrl && (
-                    <div className="flex justify-center pt-2">
-                      <div className="relative w-16 h-16 border rounded-md overflow-hidden bg-gray-50">
+                <TabsContent value="url" className="mt-0">
+                  <div className="flex gap-3 items-center">
+                    <div className="flex-grow">
+                      <Input
+                        id={`logo-url-${index}`}
+                        value={input.logoUrl}
+                        onChange={(e) => handleUrlChange(index, e.target.value)}
+                        placeholder="הכנס URL לתמונת הסמל"
+                      />
+                    </div>
+                    
+                    {input.logoUrl && (
+                      <div className="w-16 h-16 border rounded-md overflow-hidden bg-gray-50 flex-shrink-0">
                         <img 
                           src={input.logoUrl} 
                           alt={`${input.team} logo`} 
@@ -140,40 +148,41 @@ const NewTeamsLogoDialog = ({ open, onOpenChange, teams, onSave }: NewTeamsLogoD
                           onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/64?text=Error")}
                         />
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </TabsContent>
                 
-                <TabsContent value="upload" className="space-y-2 mt-2">
-                  <div className="grid grid-cols-4 gap-4 items-center">
-                    <Label htmlFor={`logo-file-${index}`} className="text-right">העלאת סמל</Label>
-                    <Input
-                      id={`logo-file-${index}`}
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleFileChange(index, e.target.files?.[0] || null)}
-                      className="col-span-3"
-                    />
-                  </div>
-                  
-                  {input.logoFile && (
-                    <div className="flex justify-center pt-2">
-                      <div className="relative w-16 h-16 border rounded-md overflow-hidden bg-gray-50">
+                <TabsContent value="upload" className="mt-0">
+                  <div className="flex gap-3 items-center">
+                    <div className="flex-grow">
+                      <Input
+                        id={`logo-file-${index}`}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileChange(index, e.target.files?.[0] || null)}
+                      />
+                    </div>
+                    
+                    {input.logoFile && (
+                      <div className="w-16 h-16 border rounded-md overflow-hidden bg-gray-50 flex-shrink-0">
                         <img 
                           src={URL.createObjectURL(input.logoFile)} 
                           alt={`${input.team} logo`} 
                           className="w-full h-full object-contain"
                         />
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </TabsContent>
               </Tabs>
             </div>
           ))}
         </div>
         
-        <DialogFooter>
+        <DialogFooter className="pt-4 border-t mt-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="ml-2">
+            ביטול
+          </Button>
           <Button 
             onClick={handleSave}
             disabled={isSubmitting}
