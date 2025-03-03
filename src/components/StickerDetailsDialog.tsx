@@ -6,7 +6,7 @@ import { Sticker } from "@/lib/types";
 import { useToast } from "./ui/use-toast";
 import { toggleStickerOwned, toggleStickerDuplicate, updateSticker } from "@/lib/sticker-operations";
 import { getAlbumById } from "@/lib/album-operations";
-import EditStickerForm from "./EditStickerForm";
+import EditStickerForm from "./edit-sticker-form";
 import StickerInfo from "./sticker-details/StickerInfo";
 import ImageUploadUrl from "./sticker-details/ImageUploadUrl";
 import ImageUploadFile from "./sticker-details/ImageUploadFile";
