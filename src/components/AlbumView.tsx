@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { getAllAlbums } from "@/lib/data";
-import { getStickersByAlbumId } from "@/lib/sticker-operations";
+import { getStickersByAlbumId, stickerData } from "@/lib/sticker-operations";
 import StickerCollection from "./StickerCollection";
 import AlbumHeader from "./album/AlbumHeader";
 import FilterControls from "./album/FilterControls";
@@ -13,7 +13,7 @@ const AlbumView = () => {
   const [selectedAlbum, setSelectedAlbum] = useState<string>("");
   const [stickers, setStickers] = useState<any[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [activeTab, setActiveTab] = useState<"number" | "team">("number");
+  const [activeTab, setActiveTab] = useState<"number" | "team" | "manage">("number");
   const [selectedRange, setSelectedRange] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
   
@@ -43,13 +43,16 @@ const AlbumView = () => {
 
   const teams = useMemo(() => {
     const teamSet = new Set<string>();
-    stickers.forEach(sticker => {
+    // כשנמצאים בלשונית הניהול, אנחנו רוצים לראות את כל הקבוצות מכל האלבומים
+    const stickersToCheck = activeTab === "manage" ? stickerData : stickers;
+    
+    stickersToCheck.forEach(sticker => {
       if (sticker.team) {
         teamSet.add(sticker.team);
       }
     });
     return Array.from(teamSet).sort();
-  }, [stickers]);
+  }, [stickers, activeTab, stickerData]);
 
   const numberRanges = useMemo(() => {
     if (!stickers.length) return [];
@@ -70,16 +73,22 @@ const AlbumView = () => {
   
   const teamLogos = useMemo(() => {
     const logoMap: Record<string, string> = {};
-    stickers.forEach(sticker => {
+    // כאן גם אנחנו רוצים לכלול את כל הלוגואים מכל האלבומים בלשונית הניהול
+    const stickersToCheck = activeTab === "manage" ? stickerData : stickers;
+    
+    stickersToCheck.forEach(sticker => {
       if (sticker.team && sticker.teamLogo) {
         logoMap[sticker.team] = sticker.teamLogo;
       }
     });
     return logoMap;
-  }, [stickers]);
+  }, [stickers, activeTab, stickerData]);
   
   const getFilteredStickers = () => {
-    let filtered = stickers.filter(sticker => 
+    // אם נבחרה קבוצה בלשונית הניהול, אנחנו רוצים להציג מדבקות מכל האלבומים
+    let allStickers = activeTab === "manage" && selectedTeam ? stickerData : stickers;
+    
+    let filtered = allStickers.filter(sticker => 
       selectedCategory === "הכל" || sticker.category === selectedCategory
     );
     
@@ -88,7 +97,7 @@ const AlbumView = () => {
       filtered = filtered.filter(sticker => 
         sticker.number >= rangeStart && sticker.number <= rangeEnd
       );
-    } else if (activeTab === "team" && selectedTeam) {
+    } else if ((activeTab === "team" || activeTab === "manage") && selectedTeam) {
       filtered = filtered.filter(sticker => sticker.team === selectedTeam);
     }
     
@@ -143,6 +152,7 @@ const AlbumView = () => {
         selectedTeam={selectedTeam}
         handleTeamSelect={handleTeamSelect}
         teamLogos={teamLogos}
+        onTeamsUpdate={handleRefresh}
       />
       
       <StickerCollection 

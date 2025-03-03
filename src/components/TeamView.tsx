@@ -1,6 +1,7 @@
 
 import { cn } from "@/lib/utils";
 import { Shield } from "lucide-react";
+import { Button } from "./ui/button";
 
 interface TeamViewProps {
   teams: string[];
@@ -16,42 +17,43 @@ const TeamView = ({ teams, selectedTeam, onTeamSelect, teamLogos = {} }: TeamVie
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 w-full">
         {teams.map((team) => (
-          <button
+          <div
             key={team}
             onClick={() => onTeamSelect(selectedTeam === team ? null : team)}
             className={cn(
-              "px-4 py-2 rounded-md text-sm font-medium transition-colors w-full",
+              "px-4 py-3 rounded-md text-sm transition-colors w-full cursor-pointer",
               "hover:bg-accent hover:text-accent-foreground",
-              "flex items-center justify-end gap-2",
+              "border flex items-center justify-start gap-2",
               selectedTeam === team
-                ? "bg-primary text-primary-foreground"
-                : "bg-card border border-border"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card border-border"
             )}
             dir="rtl"
           >
-            <span>{team}</span>
             {teamLogos[team] ? (
               <img 
                 src={teamLogos[team]} 
                 alt={`${team} logo`} 
-                className="w-5 h-5 object-contain" 
+                className="w-6 h-6 object-contain" 
               />
             ) : (
-              <Shield className="w-4 h-4 opacity-50" />
+              <Shield className="w-5 h-5 opacity-50" />
             )}
-          </button>
+            <span className="font-medium">{team}</span>
+          </div>
         ))}
       </div>
 
       {selectedTeam && (
-        <button
+        <Button
+          variant="link"
+          className="mt-4 text-sm px-0"
           onClick={() => onTeamSelect(null)}
-          className="mt-4 text-sm text-muted-foreground hover:text-foreground transition-colors text-right w-full"
         >
           הצג הכל
-        </button>
+        </Button>
       )}
     </div>
   );
