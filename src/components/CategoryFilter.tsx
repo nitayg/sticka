@@ -5,7 +5,7 @@ interface CategoryFilterProps {
   categories: string[];
   selectedCategory: string;
   setSelectedCategory: (category: string) => void;
-  onTeamsManage?: () => void; // New prop for handling teams management
+  onTeamsManage?: () => void; // Prop for handling teams management
 }
 
 const CategoryFilter = ({ categories, selectedCategory, setSelectedCategory, onTeamsManage }: CategoryFilterProps) => {
