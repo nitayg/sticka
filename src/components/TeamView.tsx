@@ -16,7 +16,7 @@ const TeamView = ({ teams, selectedTeam, onTeamSelect, teamLogos = {} }: TeamVie
 
   return (
     <div className="w-full flex justify-end">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-w-[800px]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
         {teams.map((team) => (
           <button
             key={team}
