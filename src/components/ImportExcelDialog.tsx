@@ -2,20 +2,20 @@
 import { useState, useRef } from "react";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
 import { FileInput } from "lucide-react";
 import { useToast } from "./ui/use-toast";
 import { Album, importStickersFromCSV } from "@/lib/data";
 import { getStickersByAlbumId } from "@/lib/sticker-operations";
 import NewTeamsLogoDialog from "./NewTeamsLogoDialog";
+import FileUploadField from "./excel-import/FileUploadField";
+import AlbumSelectField from "./excel-import/AlbumSelectField";
+import { CSVData, parseCSVContent, readFileAsText } from "@/utils/csv-parser";
 
 interface ImportExcelDialogProps {
   albums: Album[];
   selectedAlbum: string;
   setSelectedAlbum: (albumId: string) => void;
-  onImportComplete?: () => void; // Add callback for refreshing the view
+  onImportComplete?: () => void;
 }
 
 const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum, onImportComplete }: ImportExcelDialogProps) => {
@@ -28,20 +28,8 @@ const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum, onImportCo
   // For new teams logo dialog
   const [newTeams, setNewTeams] = useState<string[]>([]);
   const [showNewTeamsDialog, setShowNewTeamsDialog] = useState(false);
-  const [parsedData, setParsedData] = useState<Array<[number, string, string]>>([]);
+  const [parsedData, setParsedData] = useState<CSVData>([]);
   
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      toast({
-        title: "הקובץ נקלט בהצלחה",
-        description: `${selectedFile.name} מוכן לייבוא.`,
-        duration: 3000,
-      });
-    }
-  };
-
   const resetForm = () => {
     setFile(null);
     if (fileInputRef.current) {
@@ -65,62 +53,19 @@ const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum, onImportCo
     setIsLoading(true);
 
     try {
-      // Use FileReader API with promise wrapper to handle file reading errors better
-      const fileContent = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            resolve(event.target.result as string);
-          } else {
-            reject(new Error("קריאת הקובץ נכשלה"));
-          }
-        };
-        
-        reader.onerror = () => {
-          reject(new Error("לא ניתן לקרוא את הקובץ, אנא ודא שהקובץ תקין ויש לך הרשאות לקרוא אותו"));
-        };
-        
-        reader.readAsText(file);
-      });
+      // Read file content
+      const fileContent = await readFileAsText(file);
       
-      const lines = fileContent.split('\n').filter(line => line.trim());
+      // Parse CSV data
+      const { parsedData: csvData } = parseCSVContent(fileContent);
       
-      // Check if the first line looks like a header
-      const firstLine = lines[0];
-      const isHeader = firstLine && 
-        (firstLine.toLowerCase().includes('מספר') || 
-         firstLine.toLowerCase().includes('number') ||
-         firstLine.toLowerCase().includes('שם') ||
-         firstLine.toLowerCase().includes('name') ||
-         firstLine.toLowerCase().includes('קבוצה') ||
-         firstLine.toLowerCase().includes('team'));
-      
-      // Skip the header line if detected
-      const dataLines = isHeader ? lines.slice(1) : lines;
-      
-      if (dataLines.length === 0) {
-        throw new Error("הקובץ ריק או מכיל רק כותרות");
-      }
-      
-      const parsedCsvData = dataLines.map(line => {
-        const [numberStr, name, team] = line.split(',').map(item => item.trim());
-        const number = parseInt(numberStr);
-        
-        if (isNaN(number) || !name || !team) {
-          throw new Error(`שורה לא תקינה: ${line}`);
-        }
-        
-        return [number, name, team] as [number, string, string];
-      });
-      
-      // Store parsed data for later use (after logo upload if needed)
-      setParsedData(parsedCsvData);
+      // Store parsed data for later use
+      setParsedData(csvData);
       
       // Find teams that don't exist yet
       const existingStickers = getStickersByAlbumId(selectedAlbum);
       const existingTeams = new Set(existingStickers.map(sticker => sticker.team));
-      const teamsInImport = new Set(parsedCsvData.map(([_, __, team]) => team));
+      const teamsInImport = new Set(csvData.map(([_, __, team]) => team));
       
       // Filter out teams that already exist
       const newTeamsFound = Array.from(teamsInImport).filter(team => !existingTeams.has(team));
@@ -131,7 +76,7 @@ const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum, onImportCo
         setShowNewTeamsDialog(true);
       } else {
         // If no new teams, proceed with import immediately
-        completeImport(parsedCsvData);
+        completeImport(csvData);
       }
     } catch (error) {
       console.error("Import error:", error);
@@ -145,7 +90,7 @@ const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum, onImportCo
     }
   };
 
-  const completeImport = (data: Array<[number, string, string]>) => {
+  const completeImport = (data: CSVData) => {
     try {
       const newStickers = importStickersFromCSV(selectedAlbum, data);
       
@@ -176,10 +121,7 @@ const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum, onImportCo
   };
 
   const handleTeamLogosSubmit = (teamLogos: Record<string, string>) => {
-    // In a real application, we would store these logos in a database
-    // For this demo, we'll assume the logos are stored and complete the import
-    
-    // Now complete the import with the parsed data
+    // Complete the import with the parsed data
     completeImport(parsedData);
   };
 
@@ -201,31 +143,15 @@ const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum, onImportCo
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="album" className="text-right">בחר אלבום</Label>
-              <Select value={selectedAlbum} onValueChange={setSelectedAlbum}>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="בחר אלבום" />
-                </SelectTrigger>
-                <SelectContent>
-                  {albums.map(album => (
-                    <SelectItem key={album.id} value={album.id}>{album.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="file" className="text-right">בחר קובץ</Label>
-              <div className="col-span-3">
-                <Input 
-                  id="file" 
-                  type="file" 
-                  accept=".csv,.txt" 
-                  onChange={handleFileUpload} 
-                  ref={fileInputRef}
-                />
-              </div>
-            </div>
+            <AlbumSelectField 
+              albums={albums} 
+              selectedAlbum={selectedAlbum} 
+              setSelectedAlbum={setSelectedAlbum} 
+            />
+            <FileUploadField 
+              onFileChange={setFile} 
+              fileInputRef={fileInputRef} 
+            />
           </div>
           <DialogFooter>
             <Button 
