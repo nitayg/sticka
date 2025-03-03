@@ -19,6 +19,7 @@ const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum }: ImportEx
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,9 +52,29 @@ const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum }: ImportEx
       return;
     }
 
+    setIsLoading(true);
+
     try {
-      const text = await file.text();
-      const lines = text.split('\n').filter(line => line.trim());
+      // Use FileReader API with promise wrapper to handle file reading errors better
+      const fileContent = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            resolve(event.target.result as string);
+          } else {
+            reject(new Error("קריאת הקובץ נכשלה"));
+          }
+        };
+        
+        reader.onerror = () => {
+          reject(new Error("לא ניתן לקרוא את הקובץ, אנא ודא שהקובץ תקין ויש לך הרשאות לקרוא אותו"));
+        };
+        
+        reader.readAsText(file);
+      });
+      
+      const lines = fileContent.split('\n').filter(line => line.trim());
       
       const parsedData = lines.map(line => {
         const [numberStr, name, team] = line.split(',').map(item => item.trim());
@@ -84,6 +105,8 @@ const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum }: ImportEx
         variant: "destructive",
         duration: 5000,
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -122,7 +145,7 @@ const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum }: ImportEx
               <Input 
                 id="file" 
                 type="file" 
-                accept=".csv" 
+                accept=".csv,.txt" 
                 onChange={handleFileUpload} 
                 ref={fileInputRef}
               />
@@ -130,8 +153,12 @@ const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum }: ImportEx
           </div>
         </div>
         <DialogFooter>
-          <Button type="button" onClick={handleImport} disabled={!file || !selectedAlbum}>
-            ייבא מדבקות
+          <Button 
+            type="button" 
+            onClick={handleImport} 
+            disabled={!file || !selectedAlbum || isLoading}
+          >
+            {isLoading ? "מייבא..." : "ייבא מדבקות"}
           </Button>
         </DialogFooter>
       </DialogContent>
