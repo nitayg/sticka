@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { getAllAlbums } from "@/lib/data";
 import { getStickersByAlbumId, stickerData } from "@/lib/sticker-operations";
@@ -5,6 +6,8 @@ import StickerCollection from "./StickerCollection";
 import AlbumHeader from "./album/AlbumHeader";
 import FilterControls from "./album/FilterControls";
 import TabsContainer from "./album/TabsContainer";
+import TeamManagementTab from "./TeamManagementTab";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 
 const AlbumView = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -16,6 +19,7 @@ const AlbumView = () => {
   const [selectedRange, setSelectedRange] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
   const [showAllAlbumStickers, setShowAllAlbumStickers] = useState(false);
+  const [isTeamManagementOpen, setIsTeamManagementOpen] = useState(false);
   
   const albums = getAllAlbums();
   const categories = ["הכל", "שחקנים", "קבוצות", "אצטדיונים", "סמלים"];
@@ -37,6 +41,7 @@ const AlbumView = () => {
   }, [selectedAlbum, refreshKey]);
   
   useEffect(() => {
+    // Reset filters when changing albums or tabs
     if (!showAllAlbumStickers) {
       setSelectedRange(null);
       setSelectedTeam(null);
@@ -45,6 +50,7 @@ const AlbumView = () => {
 
   const teams = useMemo(() => {
     const teamSet = new Set<string>();
+    // For team management or when viewing all albums, we want to see teams from all albums
     const stickersToCheck = activeTab === "manage" || showAllAlbumStickers ? stickerData : stickers;
     
     stickersToCheck.forEach(sticker => {
@@ -74,6 +80,7 @@ const AlbumView = () => {
   
   const teamLogos = useMemo(() => {
     const logoMap: Record<string, string> = {};
+    // For team management or when viewing all albums, we want to include logos from all albums
     const stickersToCheck = activeTab === "manage" || showAllAlbumStickers ? stickerData : stickers;
     
     stickersToCheck.forEach(sticker => {
@@ -85,6 +92,7 @@ const AlbumView = () => {
   }, [stickers, activeTab, stickerData, showAllAlbumStickers]);
   
   const getFilteredStickers = () => {
+    // When a team is selected in team mode or when viewing all albums, show stickers from all albums
     let allStickers = (activeTab === "team" && selectedTeam && showAllAlbumStickers) 
       ? stickerData 
       : stickers;
@@ -101,6 +109,7 @@ const AlbumView = () => {
     } else if (activeTab === "team" && selectedTeam) {
       filtered = filtered.filter(sticker => sticker.team === selectedTeam);
       
+      // If we're showing all albums, get stickers from all albums for this team
       if (showAllAlbumStickers) {
         filtered = stickerData.filter(sticker => sticker.team === selectedTeam);
       }
@@ -127,9 +136,19 @@ const AlbumView = () => {
   const handleTeamSelect = (team: string | null) => {
     setSelectedTeam(team);
     
+    // If a team is selected in team view, show stickers from all albums
     if (team && activeTab === "team") {
       setShowAllAlbumStickers(true);
     }
+  };
+  
+  const handleTeamsManagement = () => {
+    setIsTeamManagementOpen(true);
+  };
+
+  const handleTeamsUpdate = () => {
+    handleRefresh();
+    setIsTeamManagementOpen(false);
   };
 
   return (
@@ -150,6 +169,7 @@ const AlbumView = () => {
         albums={albums}
         selectedAlbum={selectedAlbum}
         handleAlbumChange={handleAlbumChange}
+        onTeamsManage={handleTeamsManagement}
       />
       
       <TabsContainer
@@ -174,6 +194,22 @@ const AlbumView = () => {
         activeFilter={activeTab === "number" ? selectedRange : selectedTeam}
         showMultipleAlbums={showAllAlbumStickers}
       />
+
+      {/* Team Management Dialog */}
+      <Dialog open={isTeamManagementOpen} onOpenChange={setIsTeamManagementOpen}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>ניהול קבוצות</DialogTitle>
+          </DialogHeader>
+          <TeamManagementTab
+            teams={teams}
+            teamLogos={teamLogos}
+            onTeamSelect={handleTeamSelect}
+            selectedTeam={selectedTeam}
+            onTeamsUpdate={handleTeamsUpdate}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

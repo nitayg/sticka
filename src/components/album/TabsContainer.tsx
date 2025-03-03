@@ -34,7 +34,7 @@ const TabsContainer = ({
     <Tabs
       defaultValue="number"
       value={activeTab}
-      onValueChange={(value) => setActiveTab(value as "number" | "team")}
+      onValueChange={(value) => setActiveTab(value as "number" | "team" | "manage")}
       className="w-full"
       dir="rtl"
     >
@@ -59,6 +59,11 @@ const TabsContainer = ({
           teamLogos={teamLogos}
           showAllAlbums={showAllAlbums}
         />
+      </TabsContent>
+      
+      {/* Hidden content for the manage tab that's not shown in the UI */}
+      <TabsContent value="manage" className="mt-0 hidden">
+        {/* TeamManagementTab component is still available for direct access via the "קבוצות" button */}
       </TabsContent>
     </Tabs>
   );
