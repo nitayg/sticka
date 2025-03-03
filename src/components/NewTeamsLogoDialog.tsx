@@ -3,9 +3,10 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
-import { Shield, Upload, Image, Link as LinkIcon } from "lucide-react";
+import { Shield, Upload, Image, Link as LinkIcon, UploadCloud } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Input } from "./ui/input";
+import { cn } from "@/lib/utils";
 
 interface TeamLogoInput {
   team: string;
@@ -26,6 +27,7 @@ const NewTeamsLogoDialog = ({ open, onOpenChange, teams, onSave }: NewTeamsLogoD
     teams.map(team => ({ team, logoUrl: "", logoFile: null }))
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState<"url" | "upload">("url");
 
   const handleUrlChange = (index: number, url: string) => {
     const newInputs = [...teamInputs];
@@ -99,7 +101,7 @@ const NewTeamsLogoDialog = ({ open, onOpenChange, teams, onSave }: NewTeamsLogoD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col" dir="rtl">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-hidden flex flex-col" dir="rtl">
         <DialogHeader>
           <DialogTitle>הוספת סמלים לקבוצות חדשות</DialogTitle>
           <DialogDescription>
@@ -107,25 +109,25 @@ const NewTeamsLogoDialog = ({ open, onOpenChange, teams, onSave }: NewTeamsLogoD
           </DialogDescription>
         </DialogHeader>
         
-        <div className="max-h-[60vh] overflow-y-auto pr-1 space-y-6 py-4 flex-grow">
-          {teamInputs.map((input, index) => (
-            <div key={input.team} className="border border-border rounded-lg p-4 shadow-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <Shield className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-medium">{input.team}</h3>
-              </div>
-              
-              <Tabs defaultValue="url" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-3">
-                  <TabsTrigger value="url" className="flex items-center gap-1">
-                    <LinkIcon className="h-4 w-4" />
-                    <span>קישור לסמל</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="upload" className="flex items-center gap-1">
-                    <Upload className="h-4 w-4" />
-                    <span>העלאת קובץ</span>
-                  </TabsTrigger>
-                </TabsList>
+        <Tabs defaultValue="url" className="w-full mt-4" value={activeTab} onValueChange={(value) => setActiveTab(value as "url" | "upload")}>
+          <TabsList className="grid w-full grid-cols-2 mb-3">
+            <TabsTrigger value="url" className="flex items-center gap-1">
+              <LinkIcon className="h-4 w-4" />
+              <span>קישור לסמל</span>
+            </TabsTrigger>
+            <TabsTrigger value="upload" className="flex items-center gap-1">
+              <Upload className="h-4 w-4" />
+              <span>העלאת קובץ</span>
+            </TabsTrigger>
+          </TabsList>
+          
+          <div className="max-h-[50vh] overflow-y-auto pr-1 space-y-4 py-2">
+            {teamInputs.map((input, index) => (
+              <div key={input.team} className="border border-border rounded-lg p-4 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <Shield className="h-5 w-5 text-primary" />
+                  <h3 className="text-lg font-medium">{input.team}</h3>
+                </div>
                 
                 <TabsContent value="url" className="mt-0">
                   <div className="flex gap-3 items-center">
@@ -173,12 +175,12 @@ const NewTeamsLogoDialog = ({ open, onOpenChange, teams, onSave }: NewTeamsLogoD
                     )}
                   </div>
                 </TabsContent>
-              </Tabs>
-            </div>
-          ))}
-        </div>
+              </div>
+            ))}
+          </div>
+        </Tabs>
         
-        <DialogFooter className="pt-4 border-t mt-2">
+        <DialogFooter className="pt-4 border-t mt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)} className="ml-2">
             ביטול
           </Button>
