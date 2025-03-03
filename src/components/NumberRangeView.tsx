@@ -13,8 +13,8 @@ const NumberRangeView = ({ ranges, selectedRange, onRangeSelect }: NumberRangeVi
   }
 
   return (
-    <div className="w-full flex justify-end">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+    <div className="w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 w-full">
         {ranges.map((range) => (
           <button
             key={range}

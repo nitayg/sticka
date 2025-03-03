@@ -32,6 +32,7 @@ const TabsContainer = ({
       value={activeTab}
       onValueChange={(value) => setActiveTab(value as "number" | "team")}
       className="w-full"
+      dir="rtl"
     >
       <TabsList className="grid w-full grid-cols-2 mb-4">
         <TabsTrigger value="number">לפי מספר</TabsTrigger>
