@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getAllAlbums } from "@/lib/data";
 import Header from "./Header";
 import AddStickerForm from "./AddStickerForm";
@@ -10,6 +10,9 @@ import StickerCollection from "./StickerCollection";
 import ImportExcelDialog from "./ImportExcelDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { getStickersByAlbumId } from "@/lib/sticker-operations";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import NumberRangeView from "./NumberRangeView";
+import TeamView from "./TeamView";
 
 const AlbumView = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -17,6 +20,9 @@ const AlbumView = () => {
   const [selectedAlbum, setSelectedAlbum] = useState<string>("");
   const [stickers, setStickers] = useState<any[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [activeTab, setActiveTab] = useState<"number" | "team">("number");
+  const [selectedRange, setSelectedRange] = useState<string | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
   
   const albums = getAllAlbums();
   const categories = ["הכל", "שחקנים", "קבוצות", "אצטדיונים", "סמלים"];
@@ -40,9 +46,62 @@ const AlbumView = () => {
     }
   }, [selectedAlbum, refreshKey]);
   
-  const filteredStickers = stickers.filter(sticker => 
-    selectedCategory === "הכל" || sticker.category === selectedCategory
-  );
+  // Reset filters when album changes
+  useEffect(() => {
+    setSelectedRange(null);
+    setSelectedTeam(null);
+  }, [selectedAlbum]);
+
+  // Get all unique teams from stickers
+  const teams = useMemo(() => {
+    const teamSet = new Set<string>();
+    stickers.forEach(sticker => {
+      if (sticker.team) {
+        teamSet.add(sticker.team);
+      }
+    });
+    return Array.from(teamSet).sort();
+  }, [stickers]);
+
+  // Get number ranges (hundreds) from stickers
+  const numberRanges = useMemo(() => {
+    if (!stickers.length) return [];
+    
+    const ranges = new Set<string>();
+    stickers.forEach(sticker => {
+      const hundred = Math.floor(sticker.number / 100) * 100;
+      const rangeEnd = hundred + 99;
+      ranges.add(`${hundred}-${rangeEnd}`);
+    });
+    
+    return Array.from(ranges).sort((a, b) => {
+      const aStart = parseInt(a.split('-')[0]);
+      const bStart = parseInt(b.split('-')[0]);
+      return aStart - bStart;
+    });
+  }, [stickers]);
+  
+  // Apply both category and range/team filters
+  const getFilteredStickers = () => {
+    // First apply category filter
+    let filtered = stickers.filter(sticker => 
+      selectedCategory === "הכל" || sticker.category === selectedCategory
+    );
+    
+    // Then apply number range or team filter based on active tab
+    if (activeTab === "number" && selectedRange) {
+      const [rangeStart, rangeEnd] = selectedRange.split('-').map(Number);
+      filtered = filtered.filter(sticker => 
+        sticker.number >= rangeStart && sticker.number <= rangeEnd
+      );
+    } else if (activeTab === "team" && selectedTeam) {
+      filtered = filtered.filter(sticker => sticker.team === selectedTeam);
+    }
+    
+    return filtered;
+  };
+  
+  const filteredStickers = getFilteredStickers();
   
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
@@ -50,6 +109,14 @@ const AlbumView = () => {
   
   const handleAlbumChange = (albumId: string) => {
     setSelectedAlbum(albumId);
+  };
+
+  const handleRangeSelect = (range: string | null) => {
+    setSelectedRange(range);
+  };
+
+  const handleTeamSelect = (team: string | null) => {
+    setSelectedTeam(team);
   };
 
   return (
@@ -99,11 +166,40 @@ const AlbumView = () => {
         </Select>
       </div>
       
+      <Tabs
+        defaultValue="number"
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as "number" | "team")}
+        className="w-full"
+      >
+        <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger value="number">לפי מספר</TabsTrigger>
+          <TabsTrigger value="team">לפי קבוצה</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="number" className="mt-0">
+          <NumberRangeView 
+            ranges={numberRanges} 
+            selectedRange={selectedRange}
+            onRangeSelect={handleRangeSelect}
+          />
+        </TabsContent>
+        
+        <TabsContent value="team" className="mt-0">
+          <TeamView 
+            teams={teams} 
+            selectedTeam={selectedTeam}
+            onTeamSelect={handleTeamSelect}
+          />
+        </TabsContent>
+      </Tabs>
+      
       <StickerCollection 
         stickers={filteredStickers}
         viewMode={viewMode}
         selectedAlbum={selectedAlbum}
         onRefresh={handleRefresh}
+        activeFilter={activeTab === "number" ? selectedRange : selectedTeam}
       />
     </div>
   );

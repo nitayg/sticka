@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sticker } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Image } from "lucide-react";
@@ -14,11 +14,28 @@ interface StickerCollectionProps {
   viewMode: "grid" | "list";
   selectedAlbum: string;
   onRefresh: () => void;
+  activeFilter?: string | null;
 }
 
-const StickerCollection = ({ stickers, viewMode, selectedAlbum, onRefresh }: StickerCollectionProps) => {
+const StickerCollection = ({ 
+  stickers, 
+  viewMode, 
+  selectedAlbum, 
+  onRefresh,
+  activeFilter 
+}: StickerCollectionProps) => {
   const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // Adjust card size based on active filter (zoom in/out effect)
+  const getGridColsClass = () => {
+    // When filtered, show more cards by reducing their size
+    if (activeFilter) {
+      return "grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8";
+    }
+    // Default size
+    return "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5";
+  };
   
   const handleStickerClick = (sticker: Sticker) => {
     setSelectedSticker(sticker);
@@ -51,7 +68,7 @@ const StickerCollection = ({ stickers, viewMode, selectedAlbum, onRefresh }: Sti
       <div className={cn(
         "w-full animate-scale-in",
         viewMode === "grid" 
-          ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 px-0.5" 
+          ? `grid ${getGridColsClass()} gap-3 px-0.5` 
           : "grid grid-cols-1 gap-3"
       )}>
         {stickers.map(sticker => 
