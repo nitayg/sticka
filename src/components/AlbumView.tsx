@@ -6,8 +6,6 @@ import StickerCollection from "./StickerCollection";
 import AlbumHeader from "./album/AlbumHeader";
 import FilterControls from "./album/FilterControls";
 import TabsContainer from "./album/TabsContainer";
-import TeamManagementTab from "./TeamManagementTab";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 
 const AlbumView = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -19,7 +17,6 @@ const AlbumView = () => {
   const [selectedRange, setSelectedRange] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
   const [showAllAlbumStickers, setShowAllAlbumStickers] = useState(false);
-  const [isTeamManagementOpen, setIsTeamManagementOpen] = useState(false);
   
   const albums = getAllAlbums();
   const categories = ["הכל", "שחקנים", "קבוצות", "אצטדיונים", "סמלים"];
@@ -50,7 +47,7 @@ const AlbumView = () => {
 
   const teams = useMemo(() => {
     const teamSet = new Set<string>();
-    // For team management or when viewing all albums, we want to see teams from all albums
+    // כשנמצאים בלשונית הניהול או בתצוגת כל האלבומים, אנחנו רוצים לראות את כל הקבוצות מכל האלבומים
     const stickersToCheck = activeTab === "manage" || showAllAlbumStickers ? stickerData : stickers;
     
     stickersToCheck.forEach(sticker => {
@@ -80,7 +77,7 @@ const AlbumView = () => {
   
   const teamLogos = useMemo(() => {
     const logoMap: Record<string, string> = {};
-    // For team management or when viewing all albums, we want to include logos from all albums
+    // כאן גם אנחנו רוצים לכלול את כל הלוגואים מכל האלבומים בלשונית הניהול או בתצוגת כל האלבומים
     const stickersToCheck = activeTab === "manage" || showAllAlbumStickers ? stickerData : stickers;
     
     stickersToCheck.forEach(sticker => {
@@ -92,8 +89,8 @@ const AlbumView = () => {
   }, [stickers, activeTab, stickerData, showAllAlbumStickers]);
   
   const getFilteredStickers = () => {
-    // When a team is selected in team mode or when viewing all albums, show stickers from all albums
-    let allStickers = (activeTab === "team" && selectedTeam && showAllAlbumStickers) 
+    // אם נבחרה קבוצה בלשונית הניהול או בתצוגת כל האלבומים, אנחנו רוצים להציג מדבקות מכל האלבומים
+    let allStickers = (activeTab === "manage" && selectedTeam) || (showAllAlbumStickers && selectedTeam) 
       ? stickerData 
       : stickers;
     
@@ -106,13 +103,8 @@ const AlbumView = () => {
       filtered = filtered.filter(sticker => 
         sticker.number >= rangeStart && sticker.number <= rangeEnd
       );
-    } else if (activeTab === "team" && selectedTeam) {
+    } else if (((activeTab === "team" || activeTab === "manage") && selectedTeam) || (showAllAlbumStickers && selectedTeam)) {
       filtered = filtered.filter(sticker => sticker.team === selectedTeam);
-      
-      // If we're showing all albums, get stickers from all albums for this team
-      if (showAllAlbumStickers) {
-        filtered = stickerData.filter(sticker => sticker.team === selectedTeam);
-      }
     }
     
     return filtered;
@@ -135,20 +127,11 @@ const AlbumView = () => {
 
   const handleTeamSelect = (team: string | null) => {
     setSelectedTeam(team);
-    
-    // If a team is selected in team view, show stickers from all albums
-    if (team && activeTab === "team") {
-      setShowAllAlbumStickers(true);
-    }
   };
   
   const handleTeamsManagement = () => {
-    setIsTeamManagementOpen(true);
-  };
-
-  const handleTeamsUpdate = () => {
-    handleRefresh();
-    setIsTeamManagementOpen(false);
+    setActiveTab("manage");
+    setShowAllAlbumStickers(true);
   };
 
   return (
@@ -192,24 +175,8 @@ const AlbumView = () => {
         selectedAlbum={selectedAlbum}
         onRefresh={handleRefresh}
         activeFilter={activeTab === "number" ? selectedRange : selectedTeam}
-        showMultipleAlbums={showAllAlbumStickers}
+        showMultipleAlbums={showAllAlbumStickers || (activeTab === "manage" && selectedTeam !== null)}
       />
-
-      {/* Team Management Dialog */}
-      <Dialog open={isTeamManagementOpen} onOpenChange={setIsTeamManagementOpen}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>ניהול קבוצות</DialogTitle>
-          </DialogHeader>
-          <TeamManagementTab
-            teams={teams}
-            teamLogos={teamLogos}
-            onTeamSelect={handleTeamSelect}
-            selectedTeam={selectedTeam}
-            onTeamsUpdate={handleTeamsUpdate}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

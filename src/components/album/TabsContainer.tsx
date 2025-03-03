@@ -2,6 +2,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import NumberRangeView from "../NumberRangeView";
 import TeamView from "../TeamView";
+import TeamManagementTab from "../TeamManagementTab";
 
 interface TabsContainerProps {
   activeTab: "number" | "team" | "manage";
@@ -14,7 +15,7 @@ interface TabsContainerProps {
   handleTeamSelect: (team: string | null) => void;
   teamLogos: Record<string, string>;
   onTeamsUpdate: () => void;
-  showAllAlbums?: boolean;
+  showAllAlbums?: boolean; // New prop
 }
 
 const TabsContainer = ({
@@ -38,9 +39,10 @@ const TabsContainer = ({
       className="w-full"
       dir="rtl"
     >
-      <TabsList className="grid w-full grid-cols-2 mb-4">
+      <TabsList className="grid w-full grid-cols-3 mb-4">
         <TabsTrigger value="number">לפי מספר</TabsTrigger>
         <TabsTrigger value="team">לפי קבוצה</TabsTrigger>
+        <TabsTrigger value="manage">ניהול קבוצות</TabsTrigger>
       </TabsList>
       
       <TabsContent value="number" className="mt-0">
@@ -61,9 +63,14 @@ const TabsContainer = ({
         />
       </TabsContent>
       
-      {/* Hidden content for the manage tab that's not shown in the UI */}
-      <TabsContent value="manage" className="mt-0 hidden">
-        {/* TeamManagementTab component is still available for direct access via the "קבוצות" button */}
+      <TabsContent value="manage" className="mt-0">
+        <TeamManagementTab
+          teams={teams}
+          teamLogos={teamLogos}
+          onTeamSelect={handleTeamSelect}
+          selectedTeam={selectedTeam}
+          onTeamsUpdate={onTeamsUpdate}
+        />
       </TabsContent>
     </Tabs>
   );
