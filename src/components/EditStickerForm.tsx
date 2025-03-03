@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -28,7 +27,6 @@ const EditStickerForm = ({ sticker, isOpen, onClose, onUpdate }: EditStickerForm
   const [teamLogo, setTeamLogo] = useState("");
   const [category, setCategory] = useState("");
   const [albumId, setAlbumId] = useState("");
-  const [updateAllTeamNames, setUpdateAllTeamNames] = useState(false);
   const albums = getAllAlbums();
   const categories = ["שחקנים", "קבוצות", "אצטדיונים", "סמלים", "אחר"];
   
@@ -45,7 +43,6 @@ const EditStickerForm = ({ sticker, isOpen, onClose, onUpdate }: EditStickerForm
       setTeamLogo(sticker.teamLogo || "");
       setCategory(sticker.category);
       setAlbumId(sticker.albumId);
-      setUpdateAllTeamNames(false);
       setLogoFile(null);
       setLogoSource("url");
     }
@@ -79,7 +76,7 @@ const EditStickerForm = ({ sticker, isOpen, onClose, onUpdate }: EditStickerForm
         finalLogoUrl = await readFileAsDataURL(logoFile);
       }
       
-      // Update this sticker
+      // Update this sticker (the updateSticker function now handles team name propagation)
       updateSticker(sticker.id, {
         name,
         number: parseInt(number),
@@ -89,22 +86,8 @@ const EditStickerForm = ({ sticker, isOpen, onClose, onUpdate }: EditStickerForm
         albumId,
       });
       
-      // If team name changed and updateAllTeamNames is checked, update all stickers with that team
-      if (updateAllTeamNames && team !== originalTeam) {
-        // Update all other stickers with the same team name
-        const updatedStickers = stickerData.map(s => {
-          if (s.id !== sticker.id && s.team === originalTeam) {
-            return {
-              ...s,
-              team,
-              teamLogo: finalLogoUrl || s.teamLogo,
-            };
-          }
-          return s;
-        });
-        
-        setStickerData(updatedStickers);
-        
+      // If team name changed and the update was successful
+      if (team !== originalTeam) {
         toast({
           title: "שם קבוצה עודכן",
           description: `שם הקבוצה עודכן מ-${originalTeam} ל-${team} עבור כל המדבקות הרלוונטיות`,
@@ -194,17 +177,10 @@ const EditStickerForm = ({ sticker, isOpen, onClose, onUpdate }: EditStickerForm
           {team !== originalTeam && (
             <div className="grid grid-cols-4 items-center gap-4">
               <div></div>
-              <div className="col-span-3 flex items-center space-x-2 space-x-reverse">
-                <input
-                  type="checkbox"
-                  id="updateAllTeams"
-                  checked={updateAllTeamNames}
-                  onChange={(e) => setUpdateAllTeamNames(e.target.checked)}
-                  className="form-checkbox h-4 w-4"
-                />
-                <Label htmlFor="updateAllTeams" className="cursor-pointer">
-                  עדכן את שם הקבוצה בכל המדבקות של קבוצה זו
-                </Label>
+              <div className="col-span-3">
+                <div className="text-sm text-muted-foreground">
+                  שים לב: שינוי שם הקבוצה יעדכן את כל המדבקות של קבוצה זו באלבום
+                </div>
               </div>
             </div>
           )}

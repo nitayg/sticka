@@ -23,9 +23,25 @@ export const addSticker = (sticker: Omit<Sticker, "id">) => {
 };
 
 export const updateSticker = (id: string, data: Partial<Sticker>) => {
+  // Check if team name is being updated
+  const originalSticker = stickerData.find(sticker => sticker.id === id);
+  const isTeamNameChanging = originalSticker && data.team && originalSticker.team !== data.team;
+  
+  // If team name is changing, update all stickers from the same team
+  if (isTeamNameChanging && originalSticker) {
+    const oldTeamName = originalSticker.team;
+    const newTeamName = data.team as string;
+    const newTeamLogo = data.teamLogo;
+    
+    // Update all stickers from this team
+    updateTeamNameAcrossStickers(oldTeamName, newTeamName, newTeamLogo);
+  }
+  
+  // Regular update for the current sticker
   setStickerData(stickerData.map(sticker => 
     sticker.id === id ? { ...sticker, ...data } : sticker
   ));
+  
   return stickerData.find(sticker => sticker.id === id);
 };
 
