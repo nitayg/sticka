@@ -1,8 +1,7 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import NumberRangeView from "../NumberRangeView";
 import TeamView from "../TeamView";
-import TeamManagementTab from "../TeamManagementTab";
+import TeamManagementTab from "../team-management";
 
 interface TabsContainerProps {
   activeTab: "number" | "team" | "manage";
