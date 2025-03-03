@@ -1,13 +1,14 @@
 
 import { Sticker } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Check, Shield, X } from "lucide-react";
+import { Check, Shield, X, BookOpen } from "lucide-react";
 import { getAlbumById } from "@/lib/album-operations";
 
 interface StickerCardProps {
   sticker: Sticker;
   compact?: boolean;
   showActions?: boolean;
+  showAlbumInfo?: boolean; // New prop to show album info
   onClick?: () => void;
   className?: string;
 }
@@ -15,7 +16,8 @@ interface StickerCardProps {
 const StickerCard = ({ 
   sticker, 
   compact = false, 
-  showActions = false, 
+  showActions = false,
+  showAlbumInfo = false,
   onClick, 
   className 
 }: StickerCardProps) => {
@@ -39,6 +41,15 @@ const StickerCard = ({
         <div className="absolute top-2 right-2 z-10">
           <div className="flex items-center justify-center w-6 h-6 bg-interactive text-interactive-foreground rounded-full text-xs font-semibold">
             2+
+          </div>
+        </div>
+      )}
+      
+      {showAlbumInfo && album && (
+        <div className="absolute top-2 left-2 z-10">
+          <div className="flex items-center justify-center px-2 py-0.5 bg-black/50 text-white rounded-full text-xs">
+            <BookOpen className="w-3 h-3 mr-1" />
+            {album.name}
           </div>
         </div>
       )}

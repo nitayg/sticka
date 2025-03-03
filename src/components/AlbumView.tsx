@@ -16,6 +16,7 @@ const AlbumView = () => {
   const [activeTab, setActiveTab] = useState<"number" | "team" | "manage">("number");
   const [selectedRange, setSelectedRange] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
+  const [showAllAlbumStickers, setShowAllAlbumStickers] = useState(false);
   
   const albums = getAllAlbums();
   const categories = ["הכל", "שחקנים", "קבוצות", "אצטדיונים", "סמלים"];
@@ -37,14 +38,17 @@ const AlbumView = () => {
   }, [selectedAlbum, refreshKey]);
   
   useEffect(() => {
-    setSelectedRange(null);
-    setSelectedTeam(null);
-  }, [selectedAlbum]);
+    // Reset filters when changing albums or tabs
+    if (!showAllAlbumStickers) {
+      setSelectedRange(null);
+      setSelectedTeam(null);
+    }
+  }, [selectedAlbum, showAllAlbumStickers]);
 
   const teams = useMemo(() => {
     const teamSet = new Set<string>();
-    // כשנמצאים בלשונית הניהול, אנחנו רוצים לראות את כל הקבוצות מכל האלבומים
-    const stickersToCheck = activeTab === "manage" ? stickerData : stickers;
+    // כשנמצאים בלשונית הניהול או בתצוגת כל האלבומים, אנחנו רוצים לראות את כל הקבוצות מכל האלבומים
+    const stickersToCheck = activeTab === "manage" || showAllAlbumStickers ? stickerData : stickers;
     
     stickersToCheck.forEach(sticker => {
       if (sticker.team) {
@@ -52,7 +56,7 @@ const AlbumView = () => {
       }
     });
     return Array.from(teamSet).sort();
-  }, [stickers, activeTab, stickerData]);
+  }, [stickers, activeTab, stickerData, showAllAlbumStickers]);
 
   const numberRanges = useMemo(() => {
     if (!stickers.length) return [];
@@ -73,8 +77,8 @@ const AlbumView = () => {
   
   const teamLogos = useMemo(() => {
     const logoMap: Record<string, string> = {};
-    // כאן גם אנחנו רוצים לכלול את כל הלוגואים מכל האלבומים בלשונית הניהול
-    const stickersToCheck = activeTab === "manage" ? stickerData : stickers;
+    // כאן גם אנחנו רוצים לכלול את כל הלוגואים מכל האלבומים בלשונית הניהול או בתצוגת כל האלבומים
+    const stickersToCheck = activeTab === "manage" || showAllAlbumStickers ? stickerData : stickers;
     
     stickersToCheck.forEach(sticker => {
       if (sticker.team && sticker.teamLogo) {
@@ -82,11 +86,13 @@ const AlbumView = () => {
       }
     });
     return logoMap;
-  }, [stickers, activeTab, stickerData]);
+  }, [stickers, activeTab, stickerData, showAllAlbumStickers]);
   
   const getFilteredStickers = () => {
-    // אם נבחרה קבוצה בלשונית הניהול, אנחנו רוצים להציג מדבקות מכל האלבומים
-    let allStickers = activeTab === "manage" && selectedTeam ? stickerData : stickers;
+    // אם נבחרה קבוצה בלשונית הניהול או בתצוגת כל האלבומים, אנחנו רוצים להציג מדבקות מכל האלבומים
+    let allStickers = (activeTab === "manage" && selectedTeam) || (showAllAlbumStickers && selectedTeam) 
+      ? stickerData 
+      : stickers;
     
     let filtered = allStickers.filter(sticker => 
       selectedCategory === "הכל" || sticker.category === selectedCategory
@@ -97,7 +103,7 @@ const AlbumView = () => {
       filtered = filtered.filter(sticker => 
         sticker.number >= rangeStart && sticker.number <= rangeEnd
       );
-    } else if ((activeTab === "team" || activeTab === "manage") && selectedTeam) {
+    } else if (((activeTab === "team" || activeTab === "manage") && selectedTeam) || (showAllAlbumStickers && selectedTeam)) {
       filtered = filtered.filter(sticker => sticker.team === selectedTeam);
     }
     
@@ -112,6 +118,7 @@ const AlbumView = () => {
   
   const handleAlbumChange = (albumId: string) => {
     setSelectedAlbum(albumId);
+    setShowAllAlbumStickers(false);
   };
 
   const handleRangeSelect = (range: string | null) => {
@@ -120,6 +127,11 @@ const AlbumView = () => {
 
   const handleTeamSelect = (team: string | null) => {
     setSelectedTeam(team);
+  };
+  
+  const handleTeamsManagement = () => {
+    setActiveTab("manage");
+    setShowAllAlbumStickers(true);
   };
 
   return (
@@ -140,6 +152,7 @@ const AlbumView = () => {
         albums={albums}
         selectedAlbum={selectedAlbum}
         handleAlbumChange={handleAlbumChange}
+        onTeamsManage={handleTeamsManagement}
       />
       
       <TabsContainer
@@ -153,6 +166,7 @@ const AlbumView = () => {
         handleTeamSelect={handleTeamSelect}
         teamLogos={teamLogos}
         onTeamsUpdate={handleRefresh}
+        showAllAlbums={showAllAlbumStickers}
       />
       
       <StickerCollection 
@@ -161,6 +175,7 @@ const AlbumView = () => {
         selectedAlbum={selectedAlbum}
         onRefresh={handleRefresh}
         activeFilter={activeTab === "number" ? selectedRange : selectedTeam}
+        showMultipleAlbums={showAllAlbumStickers || (activeTab === "manage" && selectedTeam !== null)}
       />
     </div>
   );

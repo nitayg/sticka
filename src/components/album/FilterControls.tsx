@@ -10,6 +10,7 @@ interface FilterControlsProps {
   albums: Album[];
   selectedAlbum: string;
   handleAlbumChange: (albumId: string) => void;
+  onTeamsManage?: () => void; // New prop
 }
 
 const FilterControls = ({
@@ -19,6 +20,7 @@ const FilterControls = ({
   albums,
   selectedAlbum,
   handleAlbumChange,
+  onTeamsManage,
 }: FilterControlsProps) => {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -26,6 +28,7 @@ const FilterControls = ({
         categories={categories}
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
+        onTeamsManage={onTeamsManage}
       />
       
       <Select value={selectedAlbum} onValueChange={handleAlbumChange}>

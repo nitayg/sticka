@@ -7,10 +7,17 @@ interface TeamViewProps {
   teams: string[];
   selectedTeam: string | null;
   onTeamSelect: (team: string | null) => void;
-  teamLogos?: Record<string, string>; // New prop for team logos mapping
+  teamLogos?: Record<string, string>; // Team logos mapping
+  showAllAlbums?: boolean; // New prop to indicate if showing teams from all albums
 }
 
-const TeamView = ({ teams, selectedTeam, onTeamSelect, teamLogos = {} }: TeamViewProps) => {
+const TeamView = ({ 
+  teams, 
+  selectedTeam, 
+  onTeamSelect, 
+  teamLogos = {},
+  showAllAlbums = false
+}: TeamViewProps) => {
   if (teams.length === 0) {
     return <div className="text-center text-muted-foreground p-4">אין מדבקות באלבום</div>;
   }
@@ -54,6 +61,12 @@ const TeamView = ({ teams, selectedTeam, onTeamSelect, teamLogos = {} }: TeamVie
         >
           הצג הכל
         </Button>
+      )}
+      
+      {showAllAlbums && selectedTeam && (
+        <div className="mt-2 text-sm text-muted-foreground">
+          מציג מדבקות מכל האלבומים עבור קבוצת {selectedTeam}
+        </div>
       )}
     </div>
   );

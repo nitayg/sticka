@@ -15,6 +15,7 @@ interface TabsContainerProps {
   handleTeamSelect: (team: string | null) => void;
   teamLogos: Record<string, string>;
   onTeamsUpdate: () => void;
+  showAllAlbums?: boolean; // New prop
 }
 
 const TabsContainer = ({
@@ -27,7 +28,8 @@ const TabsContainer = ({
   selectedTeam,
   handleTeamSelect,
   teamLogos,
-  onTeamsUpdate
+  onTeamsUpdate,
+  showAllAlbums = false
 }: TabsContainerProps) => {
   return (
     <Tabs
@@ -57,6 +59,7 @@ const TabsContainer = ({
           selectedTeam={selectedTeam}
           onTeamSelect={handleTeamSelect}
           teamLogos={teamLogos}
+          showAllAlbums={showAllAlbums}
         />
       </TabsContent>
       

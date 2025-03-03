@@ -15,6 +15,7 @@ interface StickerCollectionProps {
   selectedAlbum: string;
   onRefresh: () => void;
   activeFilter?: string | null;
+  showMultipleAlbums?: boolean; // New prop to indicate if showing stickers from multiple albums
 }
 
 const StickerCollection = ({ 
@@ -22,7 +23,8 @@ const StickerCollection = ({
   viewMode, 
   selectedAlbum, 
   onRefresh,
-  activeFilter 
+  activeFilter,
+  showMultipleAlbums = false
 }: StickerCollectionProps) => {
   const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -77,6 +79,7 @@ const StickerCollection = ({
               key={sticker.id} 
               sticker={sticker} 
               compact
+              showAlbumInfo={showMultipleAlbums}
               onClick={() => handleStickerClick(sticker)}
             />
           ) : (
