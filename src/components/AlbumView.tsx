@@ -44,7 +44,7 @@ const AlbumView = () => {
         title="אלבום דיגיטלי" 
         subtitle="צפייה וארגון אוסף המדבקות שלך"
         action={
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap justify-end">
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -116,40 +116,42 @@ const AlbumView = () => {
               </DialogContent>
             </Dialog>
             
-            <button 
-              onClick={() => setViewMode("grid")}
-              className={cn(
-                "p-2 rounded-md transition-colors",
-                viewMode === "grid" 
-                  ? "bg-secondary text-foreground" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="7" height="7" x="3" y="3" rx="1" />
-                <rect width="7" height="7" x="14" y="3" rx="1" />
-                <rect width="7" height="7" x="14" y="14" rx="1" />
-                <rect width="7" height="7" x="3" y="14" rx="1" />
-              </svg>
-            </button>
-            <button 
-              onClick={() => setViewMode("list")}
-              className={cn(
-                "p-2 rounded-md transition-colors",
-                viewMode === "list" 
-                  ? "bg-secondary text-foreground" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="8" x2="21" y1="6" y2="6" />
-                <line x1="8" x2="21" y1="12" y2="12" />
-                <line x1="8" x2="21" y1="18" y2="18" />
-                <line x1="3" x2="3.01" y1="6" y2="6" />
-                <line x1="3" x2="3.01" y1="12" y2="12" />
-                <line x1="3" x2="3.01" y1="18" y2="18" />
-              </svg>
-            </button>
+            <div className="flex">
+              <button 
+                onClick={() => setViewMode("grid")}
+                className={cn(
+                  "p-2 rounded-md transition-colors",
+                  viewMode === "grid" 
+                    ? "bg-secondary text-foreground" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="7" height="7" x="3" y="3" rx="1" />
+                  <rect width="7" height="7" x="14" y="3" rx="1" />
+                  <rect width="7" height="7" x="14" y="14" rx="1" />
+                  <rect width="7" height="7" x="3" y="14" rx="1" />
+                </svg>
+              </button>
+              <button 
+                onClick={() => setViewMode("list")}
+                className={cn(
+                  "p-2 rounded-md transition-colors",
+                  viewMode === "list" 
+                    ? "bg-secondary text-foreground" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="8" x2="21" y1="6" y2="6" />
+                  <line x1="8" x2="21" y1="12" y2="12" />
+                  <line x1="8" x2="21" y1="18" y2="18" />
+                  <line x1="3" x2="3.01" y1="6" y2="6" />
+                  <line x1="3" x2="3.01" y1="12" y2="12" />
+                  <line x1="3" x2="3.01" y1="18" y2="18" />
+                </svg>
+              </button>
+            </div>
             <Button>
               <Plus className="h-4 w-4 ml-1" />
               הוסף
@@ -158,8 +160,8 @@ const AlbumView = () => {
         }
       />
       
-      <div className="flex justify-between items-center">
-        <div className="overflow-x-auto pb-2 -mx-1 px-1">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div className="overflow-x-auto w-full sm:w-auto pb-2 -mx-1 px-1">
           <div className="flex gap-2">
             {categories.map(category => (
               <button
@@ -179,7 +181,7 @@ const AlbumView = () => {
         </div>
         
         <Select value={selectedAlbum} onValueChange={setSelectedAlbum}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-full sm:w-[200px]">
             <SelectValue placeholder="בחר אלבום" />
           </SelectTrigger>
           <SelectContent>
@@ -194,7 +196,7 @@ const AlbumView = () => {
         <div className={cn(
           "w-full animate-scale-in",
           viewMode === "grid" 
-            ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" 
+            ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 px-0.5" 
             : "grid grid-cols-1 gap-3"
         )}>
           {filteredStickers.map(sticker => 
