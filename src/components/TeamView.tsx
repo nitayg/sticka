@@ -16,15 +16,15 @@ const TeamView = ({ teams, selectedTeam, onTeamSelect, teamLogos = {} }: TeamVie
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 justify-items-end">
         {teams.map((team) => (
           <button
             key={team}
             onClick={() => onTeamSelect(selectedTeam === team ? null : team)}
             className={cn(
-              "px-4 py-2 rounded-md text-sm font-medium transition-colors text-right",
+              "px-4 py-2 rounded-md text-sm font-medium transition-colors",
               "hover:bg-accent hover:text-accent-foreground",
-              "flex items-center justify-end gap-2",
+              "flex items-center justify-end gap-2 w-full",
               selectedTeam === team
                 ? "bg-primary text-primary-foreground"
                 : "bg-card border border-border"

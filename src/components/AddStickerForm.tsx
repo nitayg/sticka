@@ -20,6 +20,7 @@ const AddStickerForm = ({ onStickerAdded, defaultAlbumId }: AddStickerFormProps)
   const [name, setName] = useState("");
   const [number, setNumber] = useState("");
   const [team, setTeam] = useState("");
+  const [teamLogo, setTeamLogo] = useState(""); // New state for team logo
   const [category, setCategory] = useState("שחקנים");
   const [albumId, setAlbumId] = useState(defaultAlbumId || "");
   const [isOwned, setIsOwned] = useState(true);
@@ -54,6 +55,7 @@ const AddStickerForm = ({ onStickerAdded, defaultAlbumId }: AddStickerFormProps)
       name,
       number: parseInt(number),
       team,
+      teamLogo: teamLogo || undefined, // Add team logo to the sticker
       category,
       albumId,
       isOwned,
@@ -70,6 +72,7 @@ const AddStickerForm = ({ onStickerAdded, defaultAlbumId }: AddStickerFormProps)
     setName("");
     setNumber("");
     setTeam("");
+    setTeamLogo("");
     setCategory("שחקנים");
     setIsOwned(true);
     setIsDuplicate(false);
@@ -158,6 +161,20 @@ const AddStickerForm = ({ onStickerAdded, defaultAlbumId }: AddStickerFormProps)
               onChange={(e) => setTeam(e.target.value)}
               className="col-span-3"
               required
+            />
+          </div>
+
+          {/* New field for team logo */}
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="teamLogo" className="text-right">
+              סמל קבוצה
+            </Label>
+            <Input
+              id="teamLogo"
+              value={teamLogo}
+              onChange={(e) => setTeamLogo(e.target.value)}
+              className="col-span-3"
+              placeholder="URL של סמל הקבוצה"
             />
           </div>
           

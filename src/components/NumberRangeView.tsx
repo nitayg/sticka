@@ -14,13 +14,13 @@ const NumberRangeView = ({ ranges, selectedRange, onRangeSelect }: NumberRangeVi
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 justify-items-end">
         {ranges.map((range) => (
           <button
             key={range}
             onClick={() => onRangeSelect(selectedRange === range ? null : range)}
             className={cn(
-              "px-4 py-2 rounded-md text-sm font-medium transition-colors text-right",
+              "px-4 py-2 rounded-md text-sm font-medium transition-colors text-right w-full",
               "hover:bg-accent hover:text-accent-foreground",
               selectedRange === range
                 ? "bg-primary text-primary-foreground"
