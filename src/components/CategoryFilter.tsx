@@ -1,18 +1,21 @@
 
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface CategoryFilterProps {
   categories: string[];
   selectedCategory: string;
   setSelectedCategory: (category: string) => void;
-  onTeamsManage?: () => void; // Prop for handling teams management
+  onTeamsManage?: () => void; // We'll keep this for backward compatibility
 }
 
 const CategoryFilter = ({ categories, selectedCategory, setSelectedCategory, onTeamsManage }: CategoryFilterProps) => {
+  const navigate = useNavigate();
+  
   const handleCategoryClick = (category: string) => {
-    // If it's the "קבוצות" category and we have a teams management handler, call it
-    if (category === "קבוצות" && onTeamsManage) {
-      onTeamsManage();
+    // If it's the "קבוצות" category, navigate to the teams management page
+    if (category === "קבוצות") {
+      navigate("/teams");
     } else {
       setSelectedCategory(category);
     }
