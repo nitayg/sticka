@@ -24,7 +24,7 @@ const StickerFormDialog = ({
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]" dir="rtl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
