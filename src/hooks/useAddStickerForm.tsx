@@ -1,6 +1,7 @@
 
 import { useState } from "react";
-import { addSticker, getAlbumById } from "@/lib/data";
+import { addSticker } from "@/lib/sticker-operations";
+import { getAlbumById } from "@/lib/data";
 import { useToast } from "@/components/ui/use-toast";
 
 interface UseAddStickerFormProps {
