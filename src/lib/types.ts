@@ -1,3 +1,4 @@
+import { LucideIcon } from "lucide-react";
 
 export interface Sticker {
   id: string;
@@ -42,4 +43,10 @@ export interface ExchangeOffer {
   wantedStickerId: string;
   wantedStickerName: string;
   status: "pending" | "accepted" | "declined";
+}
+
+export interface NavigationItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
 }
