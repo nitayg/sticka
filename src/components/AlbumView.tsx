@@ -1,10 +1,9 @@
-
-import { useState } from "react";
-import { Sticker, stickers } from "@/lib/data";
+import { useState, useEffect } from "react";
+import { getAllAlbums, getStickersByAlbumId } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import Header from "./Header";
 import StickerCard from "./StickerCard";
-import { FileInput, Image, Plus } from "lucide-react";
+import { FileInput, Image } from "lucide-react";
 import EmptyState from "./EmptyState";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
@@ -12,19 +11,42 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useToast } from "./ui/use-toast";
+import AddStickerForm from "./AddStickerForm";
+import AddAlbumForm from "./AddAlbumForm";
 
 const AlbumView = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedCategory, setSelectedCategory] = useState<string>("הכל");
-  const [selectedAlbum, setSelectedAlbum] = useState<string>("כדורגל 2024");
+  const [selectedAlbum, setSelectedAlbum] = useState<string>("");
+  const [stickers, setStickers] = useState<any[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
   const { toast } = useToast();
   
+  const albums = getAllAlbums();
   const categories = ["הכל", "שחקנים", "קבוצות", "אצטדיונים", "סמלים"];
-  const albums = ["כדורגל 2024", "כדורגל 2023", "מונדיאל 2022"];
+  
+  // Set default album if none selected
+  useEffect(() => {
+    if (albums.length > 0 && !selectedAlbum) {
+      setSelectedAlbum(albums[0].id);
+    }
+  }, [albums]);
+  
+  // Load stickers when album changes or refresh is triggered
+  useEffect(() => {
+    if (selectedAlbum) {
+      const albumStickers = getStickersByAlbumId(selectedAlbum);
+      setStickers(albumStickers);
+    }
+  }, [selectedAlbum, refreshKey]);
   
   const filteredStickers = stickers.filter(sticker => 
     selectedCategory === "הכל" || sticker.category === selectedCategory
   );
+  
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -68,7 +90,7 @@ const AlbumView = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {albums.map(album => (
-                          <SelectItem key={album} value={album}>{album}</SelectItem>
+                          <SelectItem key={album.id} value={album.id}>{album.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -86,35 +108,7 @@ const AlbumView = () => {
               </DialogContent>
             </Dialog>
             
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  הוסף אלבום
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>הוספת אלבום חדש</DialogTitle>
-                  <DialogDescription>
-                    הוסף אלבום חדש לאוסף שלך.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="name" className="text-right">שם האלבום</Label>
-                    <Input id="name" className="col-span-3" />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="total" className="text-right">כמות מדבקות</Label>
-                    <Input id="total" type="number" className="col-span-3" />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit">הוסף אלבום</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <AddAlbumForm onAlbumAdded={handleRefresh} />
             
             <div className="flex">
               <button 
@@ -152,10 +146,10 @@ const AlbumView = () => {
                 </svg>
               </button>
             </div>
-            <Button>
-              <Plus className="h-4 w-4 ml-1" />
-              הוסף
-            </Button>
+            <AddStickerForm 
+              onStickerAdded={handleRefresh} 
+              defaultAlbumId={selectedAlbum}
+            />
           </div>
         }
       />
@@ -186,7 +180,7 @@ const AlbumView = () => {
           </SelectTrigger>
           <SelectContent>
             {albums.map(album => (
-              <SelectItem key={album} value={album}>{album}</SelectItem>
+              <SelectItem key={album.id} value={album.id}>{album.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -218,10 +212,10 @@ const AlbumView = () => {
           title="לא נמצאו מדבקות"
           description="הוסף מדבקות לאוסף שלך או שנה את קריטריוני הסינון."
           action={
-            <Button>
-              <Plus className="h-4 w-4 ml-1" />
-              הוסף מדבקה
-            </Button>
+            <AddStickerForm 
+              onStickerAdded={handleRefresh} 
+              defaultAlbumId={selectedAlbum}
+            />
           }
         />
       )}
@@ -229,7 +223,7 @@ const AlbumView = () => {
   );
 };
 
-const ListItem = ({ sticker }: { sticker: Sticker }) => {
+const ListItem = ({ sticker }: { sticker: any }) => {
   return (
     <div className={cn(
       "flex items-center space-x-4 p-3 rounded-xl bg-white border border-border",
