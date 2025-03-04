@@ -34,6 +34,8 @@ export interface User {
     needed: number;
     duplicates: number;
   };
+  location?: string;
+  phone?: string;
 }
 
 export interface ExchangeOffer {
@@ -41,11 +43,16 @@ export interface ExchangeOffer {
   userId: string;
   userName: string;
   userAvatar?: string;
-  offeredStickerId: string;
+  offeredStickerId: string[];
   offeredStickerName: string;
-  wantedStickerId: string;
+  wantedStickerId: string[];
   wantedStickerName: string;
   status: "pending" | "accepted" | "declined";
+  exchangeMethod?: "pickup" | "mail" | "other";
+  location?: string;
+  phone?: string;
+  color?: string;
+  albumId: string;
 }
 
 export interface NavigationItem {
