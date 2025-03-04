@@ -16,7 +16,10 @@ const CompactStickerItem = ({
   onClick 
 }: CompactStickerItemProps) => {
   return (
-    <div onClick={onClick} className="cursor-pointer">
+    <div 
+      onClick={onClick} 
+      className="cursor-pointer rounded-lg overflow-hidden sticker-shadow transition-all duration-200 hover:translate-y-[-2px]"
+    >
       <StickerImage
         alt={sticker.name}
         stickerNumber={sticker.number}

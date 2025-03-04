@@ -40,7 +40,7 @@ const StickerCard = ({
     <div 
       onClick={onClick}
       className={cn(
-        "relative overflow-hidden rounded-xl bg-white border border-border",
+        "relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 border border-border",
         "transition-all duration-300 ease-out",
         "card-hover sticker-shadow",
         onClick && "cursor-pointer",
@@ -91,15 +91,15 @@ const StickerCard = ({
       </div>
       
       <div className={cn(
-        "p-3",
-        compact ? "space-y-0.5" : "space-y-2"
+        compact ? "px-2 py-1.5 space-y-0.5" : "px-2 py-2 space-y-1",
+        "dark:text-gray-200"
       )}>
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">
+            <span className="text-xs font-medium text-muted-foreground dark:text-gray-300">
               #{sticker.number}
             </span>
-            <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+            <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground dark:text-gray-300">
               {sticker.teamLogo ? (
                 <img src={sticker.teamLogo} alt={sticker.team} className="w-4 h-4 object-contain" />
               ) : (
@@ -109,7 +109,7 @@ const StickerCard = ({
             </div>
           </div>
           <h3 className={cn(
-            "font-semibold text-foreground line-clamp-1",
+            "font-semibold text-foreground dark:text-white line-clamp-1",
             compact ? "text-sm" : "text-base"
           )}>
             {sticker.name}
@@ -117,7 +117,7 @@ const StickerCard = ({
         </div>
         
         {showActions && (
-          <div className="flex items-center justify-between pt-2">
+          <div className="flex items-center justify-between pt-1">
             <button className="w-[calc(50%-0.25rem)] py-1.5 bg-interactive hover:bg-interactive-hover text-white text-xs font-medium rounded-md transition-colors duration-200">
               <Check className="h-4 w-4 mx-auto" />
             </button>
@@ -129,7 +129,7 @@ const StickerCard = ({
         
         {transaction && (
           <div className="pt-1">
-            <div className="text-xs font-medium text-foreground bg-background/80 rounded-sm px-2 py-0.5 text-center truncate">
+            <div className="text-xs font-medium text-foreground dark:text-white bg-background/80 dark:bg-gray-700/80 rounded-sm px-2 py-0.5 text-center truncate">
               {getFirstName(transaction.person)}
             </div>
           </div>
