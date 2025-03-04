@@ -1,3 +1,4 @@
+
 import { Album } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Plus, RefreshCw, Upload } from "lucide-react";
@@ -6,7 +7,7 @@ import ViewModeToggle from "../ViewModeToggle";
 import ImportExcelDialog from "../ImportExcelDialog";
 import { useState } from "react";
 import { useToast } from "../ui/use-toast";
-import AddAlbumForm from "../AddAlbumForm";
+import AddAlbumForm from "../add-album-form";
 import CollectionStats from "@/components/stats/CollectionStats";
 import TeamStatsChart from "@/components/stats/TeamStatsChart";
 

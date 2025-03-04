@@ -102,12 +102,17 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
   },
   
   handleStickerIntake: async (albumId, stickerNumbers) => {
-    const results = addStickersToInventory(albumId, stickerNumbers);
+    const result = addStickersToInventory(albumId, stickerNumbers);
     get().handleRefresh();
     
     // Notify other components about the change
     window.dispatchEvent(new CustomEvent('albumDataChanged'));
     
-    return results;
+    // Return the result in the proper format with arrays
+    return {
+      newlyOwned: result.newlyOwned > 0 ? stickerNumbers.slice(0, result.newlyOwned) : [],
+      duplicatesUpdated: result.duplicatesUpdated > 0 ? stickerNumbers.slice(0, result.duplicatesUpdated) : [],
+      notFound: result.notFound > 0 ? stickerNumbers.slice(0, result.notFound) : []
+    };
   }
 }));

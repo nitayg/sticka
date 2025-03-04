@@ -1,14 +1,15 @@
 
-import React, { useState, useRef, useEffect } from "react";
-import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Plus, Upload } from "lucide-react";
-import { addAlbum } from "@/lib/data";
-import { useToast } from "./ui/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import React, { useState } from "react";
+import { Button } from "../ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Plus } from "lucide-react";
+import { addAlbum } from "@/lib/album-operations";
+import { useToast } from "../ui/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { importStickersFromCSV } from "@/lib/sticker-operations";
+import AlbumBasicInfo from "./AlbumBasicInfo";
+import AlbumImageUploader from "./AlbumImageUploader";
+import CsvImportField from "./CsvImportField";
 
 interface AddAlbumFormProps {
   onAlbumAdded?: () => void;
@@ -25,20 +26,16 @@ const AddAlbumForm = ({ onAlbumAdded }: AddAlbumFormProps) => {
   const [albumImage, setAlbumImage] = useState<File | null>(null);
   const [albumImagePreview, setAlbumImagePreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
   
-  useEffect(() => {
-    if (albumImage) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setAlbumImagePreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(albumImage);
-    } else {
-      setAlbumImagePreview(null);
-    }
-  }, [albumImage]);
+  const resetForm = () => {
+    setName("");
+    setDescription("");
+    setYear("");
+    setTotalStickers("");
+    setFile(null);
+    setAlbumImage(null);
+    setAlbumImagePreview(null);
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,20 +152,7 @@ const AddAlbumForm = ({ onAlbumAdded }: AddAlbumFormProps) => {
       }
       
       // Reset form
-      setName("");
-      setDescription("");
-      setYear("");
-      setTotalStickers("");
-      setFile(null);
-      setAlbumImage(null);
-      setAlbumImagePreview(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-      if (imageInputRef.current) {
-        imageInputRef.current.value = "";
-      }
-      
+      resetForm();
       setOpen(false);
       
       // Call the callback if provided
@@ -184,30 +168,6 @@ const AddAlbumForm = ({ onAlbumAdded }: AddAlbumFormProps) => {
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-  
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      toast({
-        title: "הקובץ נקלט בהצלחה",
-        description: `${selectedFile.name} מוכן לייבוא.`,
-        duration: 3000,
-      });
-    }
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setAlbumImage(selectedFile);
-      toast({
-        title: "התמונה נקלטה בהצלחה",
-        description: `${selectedFile.name} נבחרה כתמונת האלבום.`,
-        duration: 3000,
-      });
     }
   };
 
@@ -236,103 +196,32 @@ const AddAlbumForm = ({ onAlbumAdded }: AddAlbumFormProps) => {
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <TabsContent value="basic" className="space-y-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  שם האלבום *
-                </Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="col-span-3"
-                  required
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="description" className="text-right">
-                  תיאור
-                </Label>
-                <Input
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="col-span-3"
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="year" className="text-right">
-                  שנה
-                </Label>
-                <Input
-                  id="year"
-                  value={year}
-                  onChange={(e) => setYear(e.target.value)}
-                  className="col-span-3"
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="totalStickers" className="text-right">
-                  כמות מדבקות *
-                </Label>
-                <Input
-                  id="totalStickers"
-                  type="number"
-                  value={totalStickers}
-                  onChange={(e) => setTotalStickers(e.target.value)}
-                  className="col-span-3"
-                  required
-                />
-              </div>
+              <AlbumBasicInfo 
+                name={name}
+                setName={setName}
+                description={description}
+                setDescription={setDescription}
+                year={year}
+                setYear={setYear}
+                totalStickers={totalStickers}
+                setTotalStickers={setTotalStickers}
+              />
             </TabsContent>
             
             <TabsContent value="image" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="albumImage">תמונת אלבום</Label>
-                <div className="space-y-3">
-                  <Input 
-                    id="albumImage" 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleImageUpload} 
-                    ref={imageInputRef}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    בחר תמונה עבור האלבום. תמונה זו תשמש גם כתמונת ברירת מחדל למדבקות שאין להן תמונה.
-                  </p>
-                  
-                  {albumImagePreview && (
-                    <div className="mt-4 relative w-full max-w-[300px] mx-auto aspect-square rounded-lg overflow-hidden border">
-                      <img 
-                        src={albumImagePreview} 
-                        alt="Album preview" 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
+              <AlbumImageUploader 
+                albumImage={albumImage}
+                setAlbumImage={setAlbumImage}
+                albumImagePreview={albumImagePreview}
+                setAlbumImagePreview={setAlbumImagePreview}
+              />
             </TabsContent>
             
             <TabsContent value="import" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="file">העלאת קובץ CSV</Label>
-                <div className="space-y-1">
-                  <Input 
-                    id="file" 
-                    type="file" 
-                    accept=".csv,.txt" 
-                    onChange={handleFileUpload} 
-                    ref={fileInputRef}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    פורמט הקובץ: מספר, שם, קבוצה/סדרה בכל שורה. 
-                    המערכת תזהה באופן אוטומטי שורת כותרת אם קיימת.
-                  </p>
-                </div>
-              </div>
+              <CsvImportField 
+                file={file}
+                setFile={setFile}
+              />
             </TabsContent>
             
             <DialogFooter>
