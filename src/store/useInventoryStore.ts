@@ -30,14 +30,18 @@ interface InventoryState {
   
   handleRefresh: () => void;
   handleAlbumChange: (albumId: string) => void;
-  handleStickerIntake: (albumId: string, stickerNumbers: number[]) => void;
+  handleStickerIntake: (albumId: string, stickerNumbers: number[]) => Promise<{
+    newlyOwned: number[];
+    duplicatesUpdated: number[];
+    notFound: number[];
+  }>;
   updateTransactionMap: (albumId: string) => void;
 }
 
 export const useInventoryStore = create<InventoryState>((set, get) => ({
   // UI state
-  activeTab: "all",
-  viewMode: "compact",
+  activeTab: "all" as InventoryTab,
+  viewMode: "compact" as ViewMode,
   showImages: true,
   isIntakeFormOpen: false,
   
@@ -47,7 +51,7 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
   transactionMap: {},
   
   // Actions
-  setActiveTab: (tab) => set({ activeTab }),
+  setActiveTab: (activeTab) => set({ activeTab }),
   setViewMode: (viewMode) => set({ viewMode }),
   setShowImages: (showImages) => set({ showImages }),
   setIsIntakeFormOpen: (isIntakeFormOpen) => set({ isIntakeFormOpen }),
@@ -97,7 +101,7 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
     set({ transactionMap: newTransactionMap });
   },
   
-  handleStickerIntake: (albumId, stickerNumbers) => {
+  handleStickerIntake: async (albumId, stickerNumbers) => {
     const results = addStickersToInventory(albumId, stickerNumbers);
     get().handleRefresh();
     

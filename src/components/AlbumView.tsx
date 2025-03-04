@@ -1,7 +1,7 @@
 
 import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getAllAlbums } from "@/lib/data";
+import { fetchAllAlbums } from "@/lib/queries";
 import { getStickersByAlbumId, stickerData } from "@/lib/sticker-operations";
 import StickerCollection from "./StickerCollection";
 import AlbumHeader from "./album/AlbumHeader";
@@ -29,10 +29,10 @@ const AlbumView = () => {
     handleTeamsManagement
   } = useAlbumStore();
   
-  // Get all albums
+  // Get all albums using React Query
   const { data: albums = [] } = useQuery({
-    queryKey: ['albums'],
-    queryFn: getAllAlbums
+    queryKey: ['albums', refreshKey],
+    queryFn: fetchAllAlbums
   });
   
   // Get stickers for selected album

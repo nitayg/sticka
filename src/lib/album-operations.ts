@@ -25,6 +25,10 @@ export const addAlbum = (album: Omit<Album, "id">) => {
     id: `album${albumData.length + 1}`
   };
   setAlbumData([...albumData, newAlbum]);
+  
+  // Trigger a custom event to notify components that album data has changed
+  window.dispatchEvent(new CustomEvent('albumDataChanged'));
+  
   return newAlbum;
 };
 
@@ -32,6 +36,10 @@ export const updateAlbum = (id: string, data: Partial<Album>) => {
   setAlbumData(albumData.map(album => 
     album.id === id ? { ...album, ...data } : album
   ));
+  
+  // Trigger a custom event to notify components that album data has changed
+  window.dispatchEvent(new CustomEvent('albumDataChanged'));
+  
   return albumData.find(album => album.id === id);
 };
 
@@ -39,4 +47,7 @@ export const deleteAlbum = (id: string) => {
   setAlbumData(albumData.filter(album => album.id !== id));
   // מחיקת כל המדבקות השייכות לאלבום זה
   setStickerData(stickerData.filter(sticker => sticker.albumId !== id));
+  
+  // Trigger a custom event to notify components that album data has changed
+  window.dispatchEvent(new CustomEvent('albumDataChanged'));
 };
