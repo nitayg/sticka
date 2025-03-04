@@ -1,8 +1,9 @@
 
 import { Sticker } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Check, Shield, X, BookOpen, Image } from "lucide-react";
+import { Check, Shield, X, BookOpen } from "lucide-react";
 import { getAlbumById } from "@/lib/album-operations";
+import StickerImage from "./sticker-details/StickerImage";
 
 interface StickerCardProps {
   sticker: Sticker;
@@ -29,7 +30,6 @@ const StickerCard = ({
 }: StickerCardProps) => {
   // Get the album to use its image as a fallback
   const album = getAlbumById(sticker.albumId);
-  const displayImage = sticker.imageUrl || album?.coverImage;
   
   return (
     <div 
@@ -69,63 +69,19 @@ const StickerCard = ({
         "relative w-full overflow-hidden", 
         compact ? "aspect-[3/4]" : "aspect-square"
       )}>
-        {showImages ? (
-          displayImage ? (
-            <>
-              <img 
-                src={displayImage} 
-                alt={sticker.name} 
-                className={cn(
-                  "w-full h-full object-cover transition-transform duration-500",
-                  "group-hover:scale-105",
-                  !sticker.imageUrl && "opacity-70" // Make album fallback image slightly transparent
-                )} 
-              />
-              {transaction && (
-                <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-center py-0.5 text-xs">
-                  מ{transaction.person}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className={cn(
-              "w-full h-full flex items-center justify-center",
-              transaction ? transaction.color : "bg-muted"
-            )}>
-              <span className="text-muted-foreground text-xs">No Image</span>
-            </div>
-          )
-        ) : (
-          <div className={cn(
-            "w-full h-full flex flex-col items-center justify-center",
-            transaction ? transaction.color : "bg-muted"
-          )}>
-            <Image className="h-6 w-6 text-muted-foreground mb-1 opacity-40" />
-            <div className="text-2xl font-bold">{sticker.number}</div>
-            
-            {transaction && (
-              <div className="mt-1 text-xs font-medium bg-background/80 px-2 py-0.5 rounded-sm">
-                מ{transaction.person}
-              </div>
-            )}
-          </div>
-        )}
-        
-        {!sticker.isOwned && !transaction && (
-          <div className="absolute inset-0 bg-background/40 backdrop-blur-[2px] flex items-center justify-center">
-            <span className="text-xs font-medium bg-background/80 px-2 py-1 rounded-md">
-              Need
-            </span>
-          </div>
-        )}
-        
-        {transaction && !sticker.isOwned && (
-          <div className="absolute inset-0 bg-background/20 backdrop-blur-[1px] flex items-center justify-center">
-            <span className="text-xs font-medium bg-background/80 px-2 py-1 rounded-md flex items-center gap-1">
-              בדרך מ{transaction.person}
-            </span>
-          </div>
-        )}
+        <StickerImage
+          imageUrl={sticker.imageUrl}
+          fallbackImage={album?.coverImage}
+          alt={sticker.name}
+          stickerNumber={sticker.number}
+          showImage={showImages}
+          isOwned={sticker.isOwned}
+          isDuplicate={sticker.isDuplicate}
+          duplicateCount={sticker.duplicateCount}
+          inTransaction={!!transaction}
+          transactionColor={transaction?.color}
+          transactionPerson={transaction?.person}
+        />
       </div>
       
       <div className={cn(
