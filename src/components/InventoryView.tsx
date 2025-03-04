@@ -29,16 +29,16 @@ const InventoryView = () => {
   } = useInventory();
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-3 animate-fade-in">
       <Header 
         title="מלאי" 
         subtitle="ניהול אוסף המדבקות שלך"
         action={
           <Button 
             onClick={() => setIsIntakeFormOpen(true)}
-            className="px-3 py-2 rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
+            className="px-2 py-1.5 h-8 text-xs rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground font-medium transition-colors flex items-center gap-1"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3.5 w-3.5" />
             הוספה
           </Button>
         }
@@ -73,15 +73,15 @@ const InventoryView = () => {
         />
       ) : (
         <EmptyState
-          icon={<List className="h-12 w-12" />}
+          icon={<List className="h-10 w-10" />}
           title="לא נמצאו מדבקות"
           description={`אין מדבקות בקטגוריה "${activeTab}".`}
           action={
             <Button 
               onClick={() => setIsIntakeFormOpen(true)}
-              className="px-4 py-2 rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground text-xs font-medium transition-colors flex items-center gap-1"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3.5 w-3.5" />
               הוספת מדבקה
             </Button>
           }

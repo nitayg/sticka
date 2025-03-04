@@ -24,13 +24,13 @@ const InventoryFilters = ({
   const albums = getAllAlbums();
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 pb-2">
-      <div className="w-64">
+    <div className="flex flex-wrap items-center justify-between gap-2 py-1">
+      <div className="w-48">
         <Select
           value={selectedAlbumId}
           onValueChange={onAlbumChange}
         >
-          <SelectTrigger>
+          <SelectTrigger className="h-8 text-sm">
             <SelectValue placeholder="בחר אלבום" />
           </SelectTrigger>
           <SelectContent>
