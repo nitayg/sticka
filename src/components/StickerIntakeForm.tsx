@@ -1,22 +1,16 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Textarea } from "./ui/textarea";
 import { useToast } from "./ui/use-toast";
 import AlbumSelector from "./sticker-form/AlbumSelector";
+import StickerNumbersInput from "./sticker-intake/StickerNumbersInput";
+import SourceSelector from "./sticker-intake/SourceSelector";
+import ExchangePartnerSelector from "./sticker-intake/ExchangePartnerSelector";
+import OtherDetailsInput from "./sticker-intake/OtherDetailsInput";
+import ValidationError from "./sticker-intake/ValidationError";
 import { getStickersByAlbumId } from "@/lib/sticker-operations";
 import { getAllAlbums } from "@/lib/data";
-
-// Mock exchange partners data - in a real app, this would come from your data store
-const exchangePartners = [
-  { id: "user1", name: "דני" },
-  { id: "user2", name: "יוסי" },
-  { id: "user3", name: "רותי" },
-  { id: "user4", name: "משה" },
-];
 
 interface StickerIntakeFormProps {
   isOpen: boolean;
@@ -114,87 +108,29 @@ const StickerIntakeForm = ({ isOpen, onClose, onIntake }: StickerIntakeFormProps
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4">
             <AlbumSelector albumId={albumId} setAlbumId={setAlbumId} />
+            
+            <StickerNumbersInput 
+              stickerNumbers={stickerNumbers} 
+              setStickerNumbers={setStickerNumbers} 
+            />
 
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="stickerNumbers" className="text-right">
-                מספרי מדבקות *
-              </Label>
-              <div className="col-span-3">
-                <Input
-                  id="stickerNumbers"
-                  placeholder="1, 2, 3, 4"
-                  value={stickerNumbers}
-                  onChange={(e) => setStickerNumbers(e.target.value)}
-                  className="text-right"
-                />
-                <p className="text-xs text-muted-foreground mt-1 text-right">
-                  יש להפריד מספרים עם פסיק (,)
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="source" className="text-right">
-                מקור *
-              </Label>
-              <Select 
-                value={source} 
-                onValueChange={(value) => setSource(value as "exchange" | "pack" | "other")}
-              >
-                <SelectTrigger id="source" className="col-span-3">
-                  <SelectValue placeholder="בחר מקור" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pack">מעטפה</SelectItem>
-                  <SelectItem value="exchange">החלפה</SelectItem>
-                  <SelectItem value="other">אחר</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <SourceSelector source={source} setSource={setSource} />
 
             {source === "exchange" && (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="exchangePartner" className="text-right">
-                  שם המחליף *
-                </Label>
-                <Select 
-                  value={exchangePartner} 
-                  onValueChange={setExchangePartner}
-                >
-                  <SelectTrigger id="exchangePartner" className="col-span-3">
-                    <SelectValue placeholder="בחר מחליף" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {exchangePartners.map(partner => (
-                      <SelectItem key={partner.id} value={partner.name}>
-                        {partner.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <ExchangePartnerSelector 
+                exchangePartner={exchangePartner} 
+                setExchangePartner={setExchangePartner} 
+              />
             )}
 
             {source === "other" && (
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="otherDetails" className="text-right pt-2">
-                  פירוט *
-                </Label>
-                <Textarea
-                  id="otherDetails"
-                  value={otherDetails}
-                  onChange={(e) => setOtherDetails(e.target.value)}
-                  className="col-span-3 text-right"
-                  rows={3}
-                />
-              </div>
+              <OtherDetailsInput 
+                otherDetails={otherDetails} 
+                setOtherDetails={setOtherDetails} 
+              />
             )}
 
-            {validationError && (
-              <div className="bg-red-50 text-red-800 p-3 rounded-md text-right border border-red-200">
-                {validationError}
-              </div>
-            )}
+            <ValidationError error={validationError} />
           </div>
           <DialogFooter className="sm:justify-start">
             <Button type="submit">הוסף מדבקות</Button>
