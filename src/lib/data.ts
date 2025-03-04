@@ -28,5 +28,6 @@ export {
   toggleStickerOwned,
   toggleStickerDuplicate,
   importStickersFromCSV,
-  getStats
+  getStats,
+  addStickersToInventory
 } from './sticker-operations';

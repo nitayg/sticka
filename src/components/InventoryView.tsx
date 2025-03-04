@@ -1,20 +1,20 @@
+
 import { useState, useEffect } from "react";
-import { stickers } from "@/lib/data";
-import { cn } from "@/lib/utils";
-import Header from "./Header";
 import { List, Plus } from "lucide-react";
+import Header from "./Header";
 import EmptyState from "./EmptyState";
-import ViewModeToggle from "./ViewModeToggle";
 import StickerCollection from "./StickerCollection";
 import StickerIntakeForm from "./StickerIntakeForm";
 import { Button } from "./ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { 
   getAllAlbums, 
-  getStickersByAlbumId, 
-  addStickersToInventory 
+  getStickersByAlbumId,
 } from "@/lib/data";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { addStickersToInventory } from "@/lib/sticker-operations";
+import InventoryFilters from "./inventory/InventoryFilters";
+import InventoryStats from "./inventory/InventoryStats";
+import InventoryTitle from "./inventory/InventoryTitle";
 
 const InventoryView = () => {
   const [activeTab, setActiveTab] = useState<"all" | "owned" | "needed" | "duplicates">("all");
@@ -108,67 +108,22 @@ const InventoryView = () => {
         }
       />
       
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-2">
-        <div className="w-64">
-          <Select
-            value={selectedAlbumId}
-            onValueChange={handleAlbumChange}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="בחר אלבום" />
-            </SelectTrigger>
-            <SelectContent>
-              {albums.map(album => (
-                <SelectItem key={album.id} value={album.id}>
-                  {album.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <ViewModeToggle 
-          viewMode={viewMode} 
-          setViewMode={setViewMode}
-          showImages={showImages}
-          setShowImages={setShowImages}
-        />
-      </div>
+      <InventoryFilters
+        selectedAlbumId={selectedAlbumId}
+        onAlbumChange={handleAlbumChange}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        showImages={showImages}
+        setShowImages={setShowImages}
+      />
       
-      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 animate-fade-up">
-        <InventoryCard 
-          title="סך הכל" 
-          value={tabStats.all} 
-          active={activeTab === "all"}
-          onClick={() => setActiveTab("all")}
-        />
-        <InventoryCard 
-          title="ברשותי" 
-          value={tabStats.owned} 
-          active={activeTab === "owned"}
-          onClick={() => setActiveTab("owned")}
-        />
-        <InventoryCard 
-          title="חסרים" 
-          value={tabStats.needed} 
-          active={activeTab === "needed"}
-          onClick={() => setActiveTab("needed")}
-        />
-        <InventoryCard 
-          title="כפולים" 
-          value={tabStats.duplicates} 
-          active={activeTab === "duplicates"}
-          onClick={() => setActiveTab("duplicates")}
-        />
-      </div>
+      <InventoryStats 
+        stats={tabStats} 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+      />
       
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-foreground">
-          {activeTab === "all" && "כל המדבקות"}
-          {activeTab === "owned" && "מדבקות ברשותי"}
-          {activeTab === "needed" && "מדבקות חסרות"}
-          {activeTab === "duplicates" && "מדבקות כפולות"}
-        </h2>
-      </div>
+      <InventoryTitle activeTab={activeTab} />
       
       {filteredStickers.length > 0 ? (
         <StickerCollection 
@@ -206,36 +161,6 @@ const InventoryView = () => {
         }}
       />
     </div>
-  );
-};
-
-interface InventoryCardProps {
-  title: string;
-  value: number;
-  active: boolean;
-  onClick: () => void;
-}
-
-const InventoryCard = ({ title, value, active, onClick }: InventoryCardProps) => {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex-1 rounded-xl p-4 text-right transition-all duration-300",
-        "border",
-        active 
-          ? "border-interactive bg-interactive/5 shadow-sm" 
-          : "border-border bg-card hover:bg-secondary"
-      )}
-    >
-      <div className="text-sm font-medium text-muted-foreground">{title}</div>
-      <div className={cn(
-        "text-2xl font-bold mt-1",
-        active ? "text-interactive" : "text-foreground"
-      )}>
-        {value}
-      </div>
-    </button>
   );
 };
 
