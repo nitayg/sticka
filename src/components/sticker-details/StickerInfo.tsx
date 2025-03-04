@@ -33,7 +33,13 @@ const StickerInfo = ({ sticker }: StickerInfoProps) => {
         </div>
         <div className="flex justify-between">
           <span className="text-sm text-muted-foreground">כפולה:</span>
-          <span className="font-medium">{sticker.isDuplicate ? "כן" : "לא"}</span>
+          <span className="font-medium">
+            {sticker.isDuplicate ? 
+              (sticker.duplicateCount && sticker.duplicateCount > 0 ? 
+                `כן (${sticker.duplicateCount + 1})` : 
+                'כן') : 
+              'לא'}
+          </span>
         </div>
       </div>
     </div>

@@ -50,7 +50,7 @@ const StickerListItem = ({ sticker, showImages = true, onClick }: StickerListIte
       <div className="flex-shrink-0 flex space-x-2">
         {sticker.isDuplicate && sticker.isOwned && (
           <div className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium">
-            כפול
+            כפול {sticker.duplicateCount && sticker.duplicateCount > 0 ? `(${sticker.duplicateCount + 1})` : ''}
           </div>
         )}
         {!sticker.isOwned && (

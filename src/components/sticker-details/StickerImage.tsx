@@ -11,6 +11,7 @@ interface StickerImageProps {
   showImage?: boolean;
   isOwned?: boolean;
   isDuplicate?: boolean;
+  duplicateCount?: number;
   inTransaction?: boolean;
   transactionColor?: string;
   compactView?: boolean;
@@ -24,6 +25,7 @@ const StickerImage = ({
   showImage = true,
   isOwned = false,
   isDuplicate = false,
+  duplicateCount = 0,
   inTransaction = false,
   transactionColor,
   compactView = false
@@ -52,7 +54,9 @@ const StickerImage = ({
           </div>
         )}
         {isDuplicate && isOwned && (
-          <div className="absolute top-1 right-1 text-xs font-semibold text-interactive">2+</div>
+          <div className="absolute top-1 right-1 text-xs font-semibold text-interactive">
+            {duplicateCount > 0 ? duplicateCount + 1 : '2+'}
+          </div>
         )}
       </div>
     );

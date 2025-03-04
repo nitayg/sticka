@@ -9,7 +9,11 @@ import StickerCollection from "./StickerCollection";
 import StickerIntakeForm from "./StickerIntakeForm";
 import { Button } from "./ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { getAllAlbums, getStickersByAlbumId } from "@/lib/data";
+import { 
+  getAllAlbums, 
+  getStickersByAlbumId, 
+  addStickersToInventory 
+} from "@/lib/data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 const InventoryView = () => {
@@ -35,7 +39,6 @@ const InventoryView = () => {
     }
   }, [selectedAlbumId]);
   
-  // Filter stickers based on active tab
   const filteredStickers = albumStickers.filter(sticker => {
     if (activeTab === "all") return true;
     if (activeTab === "owned") return sticker.isOwned;
@@ -52,7 +55,6 @@ const InventoryView = () => {
   };
 
   const handleRefresh = () => {
-    // This would refresh the stickers data
     if (selectedAlbumId) {
       setAlbumStickers(getStickersByAlbumId(selectedAlbumId));
     }
@@ -64,6 +66,30 @@ const InventoryView = () => {
 
   const handleAlbumChange = (albumId: string) => {
     setSelectedAlbumId(albumId);
+  };
+
+  const handleStickerIntake = (albumId: string, stickerNumbers: number[]) => {
+    const results = addStickersToInventory(albumId, stickerNumbers);
+    
+    const totalUpdated = results.newlyOwned + results.duplicatesUpdated;
+    
+    let message = `נוספו ${totalUpdated} מדבקות למלאי.`;
+    if (results.newlyOwned > 0) {
+      message += ` ${results.newlyOwned} מדבקות חדשות.`;
+    }
+    if (results.duplicatesUpdated > 0) {
+      message += ` ${results.duplicatesUpdated} מדבקות כפולות עודכנו.`;
+    }
+    if (results.notFound > 0) {
+      message += ` ${results.notFound} מדבקות לא נמצאו.`;
+    }
+    
+    toast({
+      title: "מדבקות נוספו למלאי",
+      description: message,
+    });
+    
+    handleRefresh();
   };
 
   return (
@@ -174,7 +200,10 @@ const InventoryView = () => {
       <StickerIntakeForm 
         isOpen={isIntakeFormOpen}
         onClose={() => setIsIntakeFormOpen(false)}
-        onIntake={handleRefresh}
+        onIntake={(albumId, stickerNumbers) => {
+          handleStickerIntake(albumId, stickerNumbers);
+          setIsIntakeFormOpen(false);
+        }}
       />
     </div>
   );

@@ -11,6 +11,7 @@ export interface Sticker {
   number: number;
   isOwned: boolean;
   isDuplicate: boolean;
+  duplicateCount?: number; // Add duplicate count field
   albumId: string;
 }
 

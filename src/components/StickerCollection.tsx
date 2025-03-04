@@ -99,6 +99,7 @@ const StickerCollection = ({
                   stickerNumber={sticker.number}
                   isOwned={sticker.isOwned}
                   isDuplicate={sticker.isDuplicate}
+                  duplicateCount={sticker.duplicateCount}
                   inTransaction={!!transaction}
                   transactionColor={transaction?.color}
                   compactView={true}

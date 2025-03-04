@@ -42,7 +42,7 @@ const StickerCard = ({
       {(sticker.isDuplicate && sticker.isOwned) && (
         <div className="absolute top-2 right-2 z-10">
           <div className="flex items-center justify-center w-6 h-6 bg-interactive text-interactive-foreground rounded-full text-xs font-semibold">
-            2+
+            {sticker.duplicateCount && sticker.duplicateCount > 0 ? (sticker.duplicateCount + 1) : '2+'}
           </div>
         </div>
       )}

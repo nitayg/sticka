@@ -87,11 +87,48 @@ export const importStickersFromCSV = (albumId: string, csvData: Array<[number, s
     category: "שחקנים", // ברירת מחדל
     isOwned: false,
     isDuplicate: false,
+    duplicateCount: 0,
     albumId
   }));
   
   setStickerData([...stickerData, ...newStickers]);
   return newStickers;
+};
+
+// New function to handle adding stickers to inventory
+export const addStickersToInventory = (albumId: string, stickerNumbers: number[]) => {
+  const results = {
+    newlyOwned: 0,
+    alreadyOwned: 0,
+    notFound: 0,
+    duplicatesUpdated: 0
+  };
+  
+  stickerNumbers.forEach(number => {
+    // Find sticker in the selected album
+    const sticker = stickerData.find(s => s.albumId === albumId && s.number === number);
+    
+    if (!sticker) {
+      results.notFound++;
+      return;
+    }
+    
+    if (sticker.isOwned) {
+      // Sticker already owned - increment duplicate count
+      updateSticker(sticker.id, { 
+        isDuplicate: true, 
+        duplicateCount: (sticker.duplicateCount || 0) + 1 
+      });
+      results.duplicatesUpdated++;
+      results.alreadyOwned++;
+    } else {
+      // New sticker - mark as owned
+      updateSticker(sticker.id, { isOwned: true });
+      results.newlyOwned++;
+    }
+  });
+  
+  return results;
 };
 
 export const getStats = (albumId?: string) => {
@@ -116,4 +153,10 @@ export const getStickerTransactions = () => {
     "sticker7": { person: "יוסי", color: "bg-blue-100 border-blue-300" },
     "sticker15": { person: "רותי", color: "bg-pink-100 border-pink-300" },
   };
+};
+
+// New function to get duplicate count for a sticker
+export const getStickerDuplicateCount = (stickerId: string) => {
+  const sticker = stickerData.find(s => s.id === stickerId);
+  return sticker?.duplicateCount || 0;
 };
