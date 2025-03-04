@@ -39,14 +39,14 @@ const StickerCollection = ({
       // Dynamic grid sizing based on sticker count
       const count = stickers.length;
       
-      if (count > 200) {
-        setGridColsClass("grid-cols-8 sm:grid-cols-12 md:grid-cols-16 lg:grid-cols-20 xl:grid-cols-24");
+      if (count > 400) {
+        setGridColsClass("grid-cols-12 xxs:grid-cols-15 xs:grid-cols-18 sm:grid-cols-20 md:grid-cols-24 lg:grid-cols-30 xl:grid-cols-36");
+      } else if (count > 200) {
+        setGridColsClass("grid-cols-10 xxs:grid-cols-12 xs:grid-cols-15 sm:grid-cols-18 md:grid-cols-22 lg:grid-cols-26 xl:grid-cols-30");
       } else if (count > 100) {
-        setGridColsClass("grid-cols-6 sm:grid-cols-10 md:grid-cols-14 lg:grid-cols-18 xl:grid-cols-20");
-      } else if (count > 50) {
-        setGridColsClass("grid-cols-5 sm:grid-cols-8 md:grid-cols-12 lg:grid-cols-16 xl:grid-cols-18");
+        setGridColsClass("grid-cols-8 xxs:grid-cols-10 xs:grid-cols-12 sm:grid-cols-15 md:grid-cols-18 lg:grid-cols-22 xl:grid-cols-26");
       } else {
-        setGridColsClass("grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-16");
+        setGridColsClass("grid-cols-6 xxs:grid-cols-8 xs:grid-cols-10 sm:grid-cols-12 md:grid-cols-15 lg:grid-cols-18 xl:grid-cols-20");
       }
     } else if (activeFilter) {
       // When filtered, show more cards by reducing their size
@@ -98,7 +98,7 @@ const StickerCollection = ({
         viewMode === "list" 
           ? "grid grid-cols-1 gap-2" 
           : viewMode === "compact"
-            ? `grid ${gridColsClass} gap-1.5`
+            ? `grid ${gridColsClass} gap-0.5 xxs:gap-1 px-0`
             : `grid ${gridColsClass} gap-3 px-0.5`
       )}>
         {stickers.map(sticker => {
@@ -106,7 +106,11 @@ const StickerCollection = ({
           
           if (viewMode === "compact") {
             return (
-              <div key={sticker.id} onClick={() => handleStickerClick(sticker)} className="cursor-pointer">
+              <div 
+                key={sticker.id} 
+                onClick={() => handleStickerClick(sticker)} 
+                className="cursor-pointer flex items-center justify-center p-0.5"
+              >
                 <StickerImage
                   alt={sticker.name}
                   stickerNumber={sticker.number}

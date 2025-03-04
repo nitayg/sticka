@@ -40,7 +40,7 @@ const StickerImage = ({
   if (compactView) {
     return (
       <div className={cn(
-        "relative aspect-square rounded-lg overflow-hidden border flex items-center justify-center transition-all",
+        "relative h-7 w-7 xxs:h-8 xxs:w-8 xs:h-9 xs:w-9 sm:h-8 sm:w-8 md:h-7 md:w-7 lg:h-7 lg:w-7 xl:h-8 xl:w-8 rounded-md overflow-hidden border flex items-center justify-center transition-all",
         getBgColor(),
         isDuplicate && isOwned && "ring-1 ring-interactive"
       )}>
@@ -50,15 +50,15 @@ const StickerImage = ({
             isOwned ? "text-green-800" : "text-muted-foreground",
             inTransaction && "text-foreground",
             // Adjust text size based on number length
-            stickerNumber > 999 ? "text-[10px]" : 
-            stickerNumber > 99 ? "text-xs" : 
-            "text-sm"
+            stickerNumber > 999 ? "text-[7px] xxs:text-[8px] xs:text-[9px]" : 
+            stickerNumber > 99 ? "text-[8px] xxs:text-[9px] xs:text-[10px]" : 
+            "text-[9px] xxs:text-[10px] xs:text-xs"
           )}>
             {stickerNumber}
           </div>
         )}
         {isDuplicate && isOwned && duplicateCount > 0 && (
-          <div className="absolute bottom-0.5 right-0.5 text-[10px] font-semibold text-interactive">
+          <div className="absolute bottom-0 right-0 text-[6px] font-semibold text-interactive">
             {duplicateCount + 1}
           </div>
         )}

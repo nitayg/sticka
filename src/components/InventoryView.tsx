@@ -29,7 +29,7 @@ const InventoryView = () => {
   } = useInventory();
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-2 animate-fade-in">
       <Header 
         title="מלאי" 
         subtitle="ניהול אוסף המדבקות שלך"
@@ -44,7 +44,7 @@ const InventoryView = () => {
         }
       />
       
-      <div className="space-y-3">
+      <div className="space-y-2">
         <InventoryFilters
           selectedAlbumId={selectedAlbumId}
           onAlbumChange={handleAlbumChange}
