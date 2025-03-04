@@ -1,43 +1,58 @@
-import { useState, useEffect, useMemo } from "react";
+
+import { useEffect, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getAllAlbums } from "@/lib/data";
 import { getStickersByAlbumId, stickerData } from "@/lib/sticker-operations";
 import StickerCollection from "./StickerCollection";
 import AlbumHeader from "./album/AlbumHeader";
 import FilterControls from "./album/FilterControls";
 import TabsContainer from "./album/TabsContainer";
+import { useAlbumStore } from "@/store/useAlbumStore";
 
 const AlbumView = () => {
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "compact">("compact");
-  const [showImages, setShowImages] = useState<boolean>(true);
-  const [selectedAlbum, setSelectedAlbum] = useState<string>("");
-  const [stickers, setStickers] = useState<any[]>([]);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [activeTab, setActiveTab] = useState<"number" | "team" | "manage">("number");
-  const [selectedRange, setSelectedRange] = useState<string | null>(null);
-  const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
-  const [showAllAlbumStickers, setShowAllAlbumStickers] = useState(false);
+  const {
+    viewMode,
+    setViewMode,
+    showImages,
+    setShowImages,
+    activeTab,
+    setActiveTab,
+    selectedAlbumId,
+    selectedRange,
+    selectedTeam,
+    showAllAlbumStickers,
+    refreshKey,
+    handleRefresh,
+    handleAlbumChange,
+    handleRangeSelect,
+    handleTeamSelect,
+    handleTeamsManagement
+  } = useAlbumStore();
   
-  const albums = getAllAlbums();
+  // Get all albums
+  const { data: albums = [] } = useQuery({
+    queryKey: ['albums'],
+    queryFn: getAllAlbums
+  });
   
+  // Get stickers for selected album
+  const { data: stickers = [] } = useQuery({
+    queryKey: ['stickers', selectedAlbumId, refreshKey],
+    queryFn: () => selectedAlbumId ? getStickersByAlbumId(selectedAlbumId) : [],
+    enabled: !!selectedAlbumId
+  });
+  
+  // Set default album if none selected
   useEffect(() => {
-    if (albums.length > 0 && !selectedAlbum) {
-      setSelectedAlbum(albums[0].id);
+    if (albums.length > 0 && !selectedAlbumId) {
+      handleAlbumChange(albums[0].id);
     }
-  }, [albums]);
+  }, [albums, selectedAlbumId, handleAlbumChange]);
   
-  useEffect(() => {
-    if (selectedAlbum) {
-      const albumStickers = getStickersByAlbumId(selectedAlbum);
-      setStickers(albumStickers);
-      
-      const event = new CustomEvent('albumChanged', { detail: { albumId: selectedAlbum } });
-      window.dispatchEvent(event);
-    }
-  }, [selectedAlbum, refreshKey]);
-  
+  // Listen for album data changes
   useEffect(() => {
     const handleAlbumDataChanged = () => {
-      setRefreshKey(prev => prev + 1);
+      handleRefresh();
     };
     
     window.addEventListener('albumDataChanged', handleAlbumDataChanged);
@@ -45,15 +60,9 @@ const AlbumView = () => {
     return () => {
       window.removeEventListener('albumDataChanged', handleAlbumDataChanged);
     };
-  }, []);
+  }, [handleRefresh]);
   
-  useEffect(() => {
-    if (!showAllAlbumStickers) {
-      setSelectedRange(null);
-      setSelectedTeam(null);
-    }
-  }, [selectedAlbum, showAllAlbumStickers]);
-
+  // Calculate unique teams
   const teams = useMemo(() => {
     const teamSet = new Set<string>();
     const stickersToCheck = activeTab === "manage" || showAllAlbumStickers ? stickerData : stickers;
@@ -66,6 +75,7 @@ const AlbumView = () => {
     return Array.from(teamSet).sort();
   }, [stickers, activeTab, stickerData, showAllAlbumStickers]);
 
+  // Calculate number ranges
   const numberRanges = useMemo(() => {
     if (!stickers.length) return [];
     
@@ -83,6 +93,7 @@ const AlbumView = () => {
     });
   }, [stickers]);
   
+  // Team logos map
   const teamLogos = useMemo(() => {
     const logoMap: Record<string, string> = {};
     const stickersToCheck = activeTab === "manage" || showAllAlbumStickers ? stickerData : stickers;
@@ -95,6 +106,7 @@ const AlbumView = () => {
     return logoMap;
   }, [stickers, activeTab, stickerData, showAllAlbumStickers]);
   
+  // Get filtered stickers based on current selections
   const getFilteredStickers = () => {
     let allStickers = (activeTab === "manage" && selectedTeam) || (showAllAlbumStickers && selectedTeam) 
       ? stickerData 
@@ -115,34 +127,12 @@ const AlbumView = () => {
   };
   
   const filteredStickers = getFilteredStickers();
-  
-  const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1);
-  };
-  
-  const handleAlbumChange = (albumId: string) => {
-    setSelectedAlbum(albumId);
-    setShowAllAlbumStickers(false);
-  };
-
-  const handleRangeSelect = (range: string | null) => {
-    setSelectedRange(range);
-  };
-
-  const handleTeamSelect = (team: string | null) => {
-    setSelectedTeam(team);
-  };
-  
-  const handleTeamsManagement = () => {
-    setActiveTab("manage");
-    setShowAllAlbumStickers(true);
-  };
 
   return (
     <div className="space-y-4 animate-fade-in">
       <AlbumHeader 
         albums={albums}
-        selectedAlbum={selectedAlbum}
+        selectedAlbum={selectedAlbumId}
         viewMode={viewMode}
         setViewMode={setViewMode}
         showImages={showImages}
@@ -153,7 +143,7 @@ const AlbumView = () => {
       
       <FilterControls
         albums={albums}
-        selectedAlbum={selectedAlbum}
+        selectedAlbum={selectedAlbumId}
         handleAlbumChange={handleAlbumChange}
         onTeamsManage={handleTeamsManagement}
       />
@@ -176,7 +166,7 @@ const AlbumView = () => {
         stickers={filteredStickers}
         viewMode={viewMode}
         showImages={showImages}
-        selectedAlbum={selectedAlbum}
+        selectedAlbum={selectedAlbumId}
         onRefresh={handleRefresh}
         activeFilter={activeTab === "number" ? selectedRange : selectedTeam}
         showMultipleAlbums={showAllAlbumStickers || (activeTab === "manage" && selectedTeam !== null)}

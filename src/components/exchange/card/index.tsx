@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { ExchangeOffer } from "@/lib/types";
 import { toggleStickerOwned } from "@/lib/sticker-operations";
 import { useToast } from "@/components/ui/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import StickerDetailsDialog from "@/components/StickerDetailsDialog";
 import { getStickersByAlbumId } from "@/lib/sticker-operations";
 
@@ -22,6 +23,7 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
   const [selectedSticker, setSelectedSticker] = useState<any | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const albumStickers = getStickersByAlbumId(exchange.albumId);
   
@@ -35,6 +37,12 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
     const actualSticker = getActualStickerByNumber(number);
     if (actualSticker) {
       toggleStickerOwned(actualSticker.id);
+      
+      // Update cache with new sticker data
+      queryClient.invalidateQueries({ 
+        queryKey: ['stickers', exchange.albumId] 
+      });
+      
       toast({
         title: actualSticker.isOwned ? "מדבקה הוסרה מהמלאי" : "מדבקה נוספה למלאי",
         description: `מדבקה #${number} ${actualSticker.isOwned ? "הוסרה מ" : "נוספה ל"}מלאי שלך.`,
@@ -115,6 +123,10 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
           isOpen={isDialogOpen}
           onClose={handleCloseDialog}
           onUpdate={() => {
+            queryClient.invalidateQueries({ 
+              queryKey: ['stickers', exchange.albumId] 
+            });
+            
             if (onRefresh) onRefresh();
             window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
             window.dispatchEvent(new CustomEvent('albumDataChanged'));
