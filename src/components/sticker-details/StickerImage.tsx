@@ -1,4 +1,3 @@
-
 import { Image } from "lucide-react";
 import { Album } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -40,25 +39,25 @@ const StickerImage = ({
   if (compactView) {
     return (
       <div className={cn(
-        "relative h-7 w-7 xxs:h-8 xxs:w-8 xs:h-9 xs:w-9 sm:h-8 sm:w-8 md:h-7 md:w-7 lg:h-7 lg:w-7 xl:h-8 xl:w-8 rounded-md overflow-hidden border flex items-center justify-center transition-all",
+        "relative h-5 w-5 xxs:h-6 xxs:w-6 xs:h-7 xs:w-7 sm:h-6 sm:w-6 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-5 xl:w-5 rounded border flex items-center justify-center transition-all",
         getBgColor(),
-        isDuplicate && isOwned && "ring-1 ring-interactive"
+        isDuplicate && isOwned && "ring-[0.5px] ring-interactive"
       )}>
         {stickerNumber && (
           <div className={cn(
-            "font-bold",
+            "font-medium",
             isOwned ? "text-green-800" : "text-muted-foreground",
             inTransaction && "text-foreground",
             // Adjust text size based on number length
-            stickerNumber > 999 ? "text-[7px] xxs:text-[8px] xs:text-[9px]" : 
-            stickerNumber > 99 ? "text-[8px] xxs:text-[9px] xs:text-[10px]" : 
-            "text-[9px] xxs:text-[10px] xs:text-xs"
+            stickerNumber > 999 ? "text-[5px] xxs:text-[6px] xs:text-[7px]" : 
+            stickerNumber > 99 ? "text-[6px] xxs:text-[7px] xs:text-[8px]" : 
+            "text-[7px] xxs:text-[8px] xs:text-[9px]"
           )}>
             {stickerNumber}
           </div>
         )}
         {isDuplicate && isOwned && duplicateCount > 0 && (
-          <div className="absolute bottom-0 right-0 text-[6px] font-semibold text-interactive">
+          <div className="absolute bottom-0 right-0 text-[4px] font-semibold text-interactive">
             {duplicateCount + 1}
           </div>
         )}

@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -33,6 +32,15 @@ export default {
 				'26': 'repeat(26, minmax(0, 1fr))',
 				'30': 'repeat(30, minmax(0, 1fr))',
 				'36': 'repeat(36, minmax(0, 1fr))',
+				'40': 'repeat(40, minmax(0, 1fr))',
+				'42': 'repeat(42, minmax(0, 1fr))',
+				'46': 'repeat(46, minmax(0, 1fr))',
+				'48': 'repeat(48, minmax(0, 1fr))',
+				'50': 'repeat(50, minmax(0, 1fr))',
+				'60': 'repeat(60, minmax(0, 1fr))',
+				'70': 'repeat(70, minmax(0, 1fr))',
+				'80': 'repeat(80, minmax(0, 1fr))',
+				'90': 'repeat(90, minmax(0, 1fr))',
 			},
 			colors: {
 				border: 'hsl(var(--border))',

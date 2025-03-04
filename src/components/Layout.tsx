@@ -55,7 +55,7 @@ const Layout = ({ children }: LayoutProps) => {
         <DesktopSidebar navigation={navigation} albumId={currentAlbumId} />
 
         {/* Main Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:py-8 lg:px-10 overflow-x-hidden">
+        <main className="flex-1 p-2 sm:p-3 lg:py-4 lg:px-6 overflow-x-hidden">
           <div className="max-w-6xl mx-auto">
             {children}
           </div>
