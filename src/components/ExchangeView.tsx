@@ -7,7 +7,7 @@ import AlbumCarousel from "./inventory/AlbumCarousel";
 import { getAllAlbums } from "@/lib/data";
 import { 
   Plus, 
-  ArrowRightLeft
+  ArrowLeftRight
 } from "lucide-react";
 import { Button } from "./ui/button";
 import EmptyState from "./EmptyState";
@@ -106,7 +106,7 @@ const ExchangeView = () => {
             </div>
           ) : (
             <EmptyState
-              icon={<ArrowRightLeft className="h-12 w-12" />}
+              icon={<ArrowLeftRight className="h-12 w-12" />}
               title="אין עסקאות פעילות"
               description={`אין לך עסקאות החלפה פעילות לאלבום זה כרגע.`}
               action={

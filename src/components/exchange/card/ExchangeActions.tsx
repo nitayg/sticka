@@ -2,12 +2,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { ArrowRightLeft } from "lucide-react";
+import { ArrowLeftRight, RefreshCw, CheckCircle, Trash } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import StickerIntakeForm from "@/components/StickerIntakeForm";
 import { exchangeOffers } from "@/lib/data";
 import { useInventoryStore } from "@/store/useInventoryStore";
 import UpdateExchangeDialog from "../UpdateExchangeDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ExchangeActionsProps {
   exchange: {
@@ -79,30 +80,58 @@ const ExchangeActions = ({ exchange, onRefresh }: ExchangeActionsProps) => {
 
   return (
     <div className="mt-4 flex space-x-2">
-      <Button 
-        variant="outline"
-        onClick={handleUpdate}
-        className="flex-1 py-2 text-sm font-medium"
-      >
-        <ArrowRightLeft className="mr-2 h-4 w-4" />
-        עדכן עסקה
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="outline"
+              onClick={handleUpdate}
+              size="icon"
+              className="flex-1"
+            >
+              <RefreshCw className="h-5 w-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>עדכן עסקה</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       
-      <Button 
-        onClick={handleComplete}
-        className="flex-1 py-2 text-sm font-medium"
-      >
-        <ArrowRightLeft className="mr-2 h-4 w-4 rotate-90" />
-        השלם עסקה
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              onClick={handleComplete}
+              size="icon"
+              className="flex-1 bg-green-600 hover:bg-green-700"
+            >
+              <CheckCircle className="h-5 w-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>השלם עסקה</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       
-      <Button 
-        variant="destructive"
-        onClick={handleCancel}
-        className="flex-1 py-2 text-sm font-medium"
-      >
-        ביטול עסקה
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="destructive"
+              onClick={handleCancel}
+              size="icon"
+              className="flex-1"
+            >
+              <Trash className="h-5 w-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>ביטול עסקה</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       {/* Dialog for cancellation confirmation */}
       <Dialog open={isCancelDialogOpen} onOpenChange={setCancelDialogOpen}>

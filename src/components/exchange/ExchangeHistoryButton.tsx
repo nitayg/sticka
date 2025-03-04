@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { History } from "lucide-react";
+import { ArrowLeftRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ExchangeHistoryLog from "./ExchangeHistoryLog";
 
@@ -14,7 +14,7 @@ const ExchangeHistoryButton = () => {
       <Tooltip>
         <TooltipTrigger asChild>
           <Button variant="outline" onClick={() => setIsOpen(true)}>
-            <History className="h-4 w-4 mr-2" />
+            <ArrowLeftRight className="h-4 w-4 mr-2" />
             היסטוריית החלפות
           </Button>
         </TooltipTrigger>

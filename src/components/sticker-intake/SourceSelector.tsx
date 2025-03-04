@@ -2,6 +2,7 @@
 import React from "react";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { ArrowLeftRight, Package, CirclePlus } from "lucide-react";
 
 type SourceType = "exchange" | "pack" | "other";
 
@@ -24,9 +25,24 @@ const SourceSelector = ({ source, setSource }: SourceSelectorProps) => {
           <SelectValue placeholder="בחר מקור" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="pack">מעטפה</SelectItem>
-          <SelectItem value="exchange">החלפה</SelectItem>
-          <SelectItem value="other">אחר</SelectItem>
+          <SelectItem value="pack" className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <Package className="h-4 w-4" />
+              <span>מעטפה</span>
+            </div>
+          </SelectItem>
+          <SelectItem value="exchange" className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <ArrowLeftRight className="h-4 w-4" />
+              <span>החלפה</span>
+            </div>
+          </SelectItem>
+          <SelectItem value="other" className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <CirclePlus className="h-4 w-4" />
+              <span>אחר</span>
+            </div>
+          </SelectItem>
         </SelectContent>
       </Select>
     </div>
