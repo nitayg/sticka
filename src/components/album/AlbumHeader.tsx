@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Plus, History, RefreshCcw, FileMinus, Copy, ClipboardCopy } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -16,8 +17,8 @@ import {
 interface AlbumHeaderProps {
   albums: Album[];
   selectedAlbum: string;
-  viewMode: string;
-  setViewMode: (mode: string) => void;
+  viewMode: "grid" | "list" | "compact";
+  setViewMode: (mode: "grid" | "list" | "compact") => void;
   showImages: boolean;
   setShowImages: (show: boolean) => void;
   onRefresh: () => void;
