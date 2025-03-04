@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Sticker } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -20,8 +21,10 @@ interface StickerCollectionProps {
   transactionMap?: Record<string, { person: string, color: string }>;
 }
 
+// Utility function to check if a sticker was recently added (within the last 5 minutes)
 const isRecentlyAdded = (sticker: Sticker): boolean => {
-  const recentStickerIds = ["sticker1", "sticker5", "sticker12"];
+  // Mock implementation - in a real app, you would compare with the actual creation timestamp
+  const recentStickerIds = ["sticker1", "sticker5", "sticker12"]; // Example for demo
   return recentStickerIds.includes(sticker.id);
 };
 
@@ -38,14 +41,17 @@ const StickerCollection = ({
   const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
+  // Adjust card size based on active filter and view mode
   const getGridColsClass = () => {
     if (viewMode === "compact") {
       return "grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-16";
     }
     
+    // When filtered, show more cards by reducing their size
     if (activeFilter) {
       return "grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8";
     }
+    // Default size
     return "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5";
   };
   
