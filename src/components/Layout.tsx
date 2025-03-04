@@ -1,6 +1,6 @@
 
 import { ReactNode, useState, useEffect } from "react";
-import { Album, Image, List, Search, Moon, Sun, X } from "lucide-react";
+import { Album, Image, List, ArrowLeftRight, Moon, Sun, X } from "lucide-react";
 import DesktopSidebar from "./DesktopSidebar";
 import MobileHeader from "./MobileHeader";
 import MobileMenu from "./MobileMenu";
@@ -38,7 +38,7 @@ const Layout = ({ children }: LayoutProps) => {
   const navigation: NavigationItem[] = [
     { name: "אלבום", href: "/", icon: Album },
     { name: "מלאי", href: "/inventory", icon: List },
-    { name: "החלפות", href: "/exchange", icon: Search },
+    { name: "החלפות", href: "/exchange", icon: ArrowLeftRight },
     { name: "סריקה", href: "/scan", icon: Image }
   ];
 
