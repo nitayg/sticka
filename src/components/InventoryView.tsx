@@ -1,6 +1,5 @@
-
-import { useEffect } from "react";
-import { Plus, List, History, ArrowLeftRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Plus, List, History, ArrowLeftRight, FileMinus, FileCopy, ClipboardCopy, Copy } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import Header from "./Header";
@@ -16,6 +15,12 @@ import { getAllAlbums } from "@/lib/data";
 import { fetchStickersByAlbumId } from "@/lib/queries";
 import { useToast } from "@/components/ui/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const InventoryView = () => {
   const {
@@ -35,6 +40,7 @@ const InventoryView = () => {
   } = useInventoryStore();
   
   const { toast } = useToast();
+  const [reportFormat, setReportFormat] = useState<'numbers' | 'names'>('numbers');
   
   const { data: albums = [] } = useQuery({
     queryKey: ['albums'],
@@ -101,6 +107,57 @@ const InventoryView = () => {
     }
   };
 
+  const copyMissingStickers = () => {
+    const missingStickers = albumStickers.filter(s => !s.isOwned);
+    
+    let clipboardText = '';
+    if (reportFormat === 'numbers') {
+      clipboardText = missingStickers.map(s => s.number).join(', ');
+    } else {
+      clipboardText = missingStickers.map(s => `${s.number} - ${s.name || 'ללא שם'}`).join('\n');
+    }
+    
+    if (clipboardText) {
+      navigator.clipboard.writeText(clipboardText);
+      toast({
+        title: "דו״ח חוסרים הועתק",
+        description: `${missingStickers.length} מדבקות חסרות הועתקו ללוח`,
+      });
+    } else {
+      toast({
+        title: "אין מדבקות חסרות",
+        description: "לא נמצאו מדבקות חסרות להעתקה",
+      });
+    }
+  };
+  
+  const copyDuplicateStickers = () => {
+    const duplicateStickers = albumStickers.filter(s => s.isDuplicate && s.isOwned);
+    
+    let clipboardText = '';
+    if (reportFormat === 'numbers') {
+      clipboardText = duplicateStickers.map(s => s.number).join(', ');
+    } else {
+      clipboardText = duplicateStickers.map(s => {
+        const count = s.duplicateCount || 1;
+        return `${s.number} - ${s.name || 'ללא שם'} (${count} כפולים)`;
+      }).join('\n');
+    }
+    
+    if (clipboardText) {
+      navigator.clipboard.writeText(clipboardText);
+      toast({
+        title: "דו״ח כפולים הועתק",
+        description: `${duplicateStickers.length} מדבקות כפולות הועתקו ללוח`,
+      });
+    } else {
+      toast({
+        title: "אין מדבקות כפולות",
+        description: "לא נמצאו מדבקות כפולות להעתקה",
+      });
+    }
+  };
+
   return (
     <div className="space-y-3 animate-fade-in">
       <Header 
@@ -124,6 +181,66 @@ const InventoryView = () => {
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>היסטוריית קליטת מדבקות</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="flex gap-1.5"
+                      >
+                        <FileMinus className="h-3.5 w-3.5" />
+                        <span className="sr-only md:not-sr-only md:inline-block">דו״ח חוסרים</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => { setReportFormat('numbers'); copyMissingStickers(); }}>
+                        <ClipboardCopy className="h-4 w-4 ml-2" />
+                        העתק מספרים (1, 2, 3)
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => { setReportFormat('names'); copyMissingStickers(); }}>
+                        <Copy className="h-4 w-4 ml-2" />
+                        העתק מספרים ושמות
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>הפקת דו״ח חוסרים</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="flex gap-1.5"
+                      >
+                        <FileCopy className="h-3.5 w-3.5" />
+                        <span className="sr-only md:not-sr-only md:inline-block">דו״ח כפולים</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => { setReportFormat('numbers'); copyDuplicateStickers(); }}>
+                        <ClipboardCopy className="h-4 w-4 ml-2" />
+                        העתק מספרים (1, 2, 3)
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => { setReportFormat('names'); copyDuplicateStickers(); }}>
+                        <Copy className="h-4 w-4 ml-2" />
+                        העתק מספרים ושמות
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>הפקת דו״ח כפולים</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
