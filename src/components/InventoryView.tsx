@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Plus, List } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -34,27 +33,23 @@ const InventoryView = () => {
   
   const { toast } = useToast();
   
-  // Get albums (won't change often)
   const { data: albums = [] } = useQuery({
     queryKey: ['albums'],
     queryFn: getAllAlbums
   });
   
-  // Get stickers for selected album
   const { data: albumStickers = [] } = useQuery({
     queryKey: ['stickers', selectedAlbumId],
     queryFn: () => fetchStickersByAlbumId(selectedAlbumId),
     enabled: !!selectedAlbumId,
   });
   
-  // Set default album if none selected
   useEffect(() => {
     if (albums.length > 0 && !selectedAlbumId) {
       handleAlbumChange(albums[0].id);
     }
   }, [albums, selectedAlbumId, handleAlbumChange]);
   
-  // Filter stickers based on active tab
   const filteredStickers = albumStickers.filter(sticker => {
     if (activeTab === "all") return true;
     if (activeTab === "owned") return sticker.isOwned;
@@ -63,7 +58,6 @@ const InventoryView = () => {
     return true;
   });
   
-  // Calculate tab stats
   const tabStats = {
     all: albumStickers.length,
     owned: albumStickers.filter(s => s.isOwned).length,
@@ -72,29 +66,36 @@ const InventoryView = () => {
   };
   
   const handleStickerIntakeSubmit = async (albumId: string, stickerNumbers: number[]) => {
-    // Await the Promise returned by handleStickerIntake
-    const results = await handleStickerIntake(albumId, stickerNumbers);
-    
-    // Now the properties are available since we've resolved the Promise
-    const totalUpdated = results.newlyOwned.length + results.duplicatesUpdated.length;
-    
-    let message = `נוספו ${totalUpdated} מדבקות למלאי.`;
-    if (results.newlyOwned.length > 0) {
-      message += ` ${results.newlyOwned.length} מדבקות חדשות.`;
+    try {
+      const results = await handleStickerIntake(albumId, stickerNumbers);
+      
+      const totalUpdated = results.newlyOwned.length + results.duplicatesUpdated.length;
+      
+      let message = `נוספו ${totalUpdated} מדבקות למלאי.`;
+      if (results.newlyOwned.length > 0) {
+        message += ` ${results.newlyOwned.length} מדבקות חדשות.`;
+      }
+      if (results.duplicatesUpdated.length > 0) {
+        message += ` ${results.duplicatesUpdated.length} מדבקות כפולות עודכנו.`;
+      }
+      if (results.notFound.length > 0) {
+        message += ` ${results.notFound.length} מדבקות לא נמצאו.`;
+      }
+      
+      toast({
+        title: "מדבקות נוספו למלאי",
+        description: message,
+      });
+      
+      handleRefresh();
+    } catch (error) {
+      console.error("Error adding stickers to inventory:", error);
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בעת הוספת המדבקות למלאי",
+        variant: "destructive"
+      });
     }
-    if (results.duplicatesUpdated.length > 0) {
-      message += ` ${results.duplicatesUpdated.length} מדבקות כפולות עודכנו.`;
-    }
-    if (results.notFound.length > 0) {
-      message += ` ${results.notFound.length} מדבקות לא נמצאו.`;
-    }
-    
-    toast({
-      title: "מדבקות נוספו למלאי",
-      description: message,
-    });
-    
-    handleRefresh();
   };
 
   return (
