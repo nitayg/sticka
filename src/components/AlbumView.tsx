@@ -19,7 +19,7 @@ const AlbumView = () => {
   const [showAllAlbumStickers, setShowAllAlbumStickers] = useState(false);
   
   const albums = getAllAlbums();
-  const categories = ["הכל", "שחקנים", "קבוצות", "אצטדיונים", "סמלים"];
+  const categories = ["הכל"];
   
   useEffect(() => {
     if (albums.length > 0 && !selectedAlbum) {

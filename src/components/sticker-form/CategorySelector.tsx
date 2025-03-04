@@ -9,7 +9,7 @@ interface CategorySelectorProps {
 }
 
 const CategorySelector = ({ category, setCategory }: CategorySelectorProps) => {
-  const categories = ["שחקנים", "קבוצות", "אצטדיונים", "סמלים", "אחר"];
+  const categories = ["הכל"]; // Simplified to only include "All"
   
   return (
     <div className="grid grid-cols-4 items-center gap-4">
