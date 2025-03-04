@@ -110,6 +110,14 @@ const StickerCard = ({
           </h3>
         </div>
         
+        {transaction && (
+          <div className="mt-1">
+            <div className="text-xs px-2 py-0.5 bg-secondary rounded-sm inline-block">
+              מ{transaction.person}
+            </div>
+          </div>
+        )}
+        
         {showActions && (
           <div className="flex items-center justify-between pt-2">
             <button className="w-[calc(50%-0.25rem)] py-1.5 bg-interactive hover:bg-interactive-hover text-white text-xs font-medium rounded-md transition-colors duration-200">
