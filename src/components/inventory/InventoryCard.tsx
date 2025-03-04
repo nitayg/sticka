@@ -13,16 +13,16 @@ const InventoryCard = ({ title, value, active, onClick }: InventoryCardProps) =>
     <button
       onClick={onClick}
       className={cn(
-        "flex-1 rounded-xl p-4 text-right transition-all duration-300",
+        "flex-1 rounded-lg p-2 text-right transition-all duration-300",
         "border",
         active 
           ? "border-interactive bg-interactive/5 shadow-sm" 
           : "border-border bg-card hover:bg-secondary"
       )}
     >
-      <div className="text-sm font-medium text-muted-foreground">{title}</div>
+      <div className="text-xs font-medium text-muted-foreground">{title}</div>
       <div className={cn(
-        "text-2xl font-bold mt-1",
+        "text-xl font-bold",
         active ? "text-interactive" : "text-foreground"
       )}>
         {value}

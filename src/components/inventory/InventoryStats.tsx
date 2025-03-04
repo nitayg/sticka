@@ -14,7 +14,7 @@ interface InventoryStatsProps {
 
 const InventoryStats = ({ stats, activeTab, setActiveTab }: InventoryStatsProps) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 animate-fade-up">
+    <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 animate-fade-up">
       <InventoryCard 
         title="סך הכל" 
         value={stats.all} 
