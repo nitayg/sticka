@@ -12,13 +12,23 @@ import {
 import { cn } from "@/lib/utils";
 import { ExchangeOffer } from "@/lib/types";
 import StickerImage from "../sticker-details/StickerImage";
+import { toggleStickerOwned } from "@/lib/sticker-operations";
+import { useToast } from "@/components/ui/use-toast";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import StickerDetailsDialog from "@/components/StickerDetailsDialog";
+import { getStickersByAlbumId } from "@/lib/sticker-operations";
 
 interface ExchangeCardProps {
   exchange: ExchangeOffer;
+  onRefresh?: () => void;
 }
 
-const ExchangeCard = ({ exchange }: ExchangeCardProps) => {
+const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedStickerId, setSelectedStickerId] = useState<string | null>(null);
+  const { toast } = useToast();
+  
+  const albumStickers = getStickersByAlbumId(exchange.albumId);
   
   const getExchangeMethodIcon = () => {
     switch (exchange.exchangeMethod) {
@@ -45,6 +55,35 @@ const ExchangeCard = ({ exchange }: ExchangeCardProps) => {
   // Parse sticker numbers from arrays
   const stickersToReceive = exchange.wantedStickerId.map(id => parseInt(id));
   const stickersToGive = exchange.offeredStickerId.map(id => parseInt(id));
+  
+  // Find actual sticker objects by number
+  const getActualStickerByNumber = (number: number) => {
+    return albumStickers.find(sticker => sticker.number === number);
+  };
+  
+  // Handle sticker click (toggle owned status)
+  const handleStickerClick = (number: number) => {
+    const actualSticker = getActualStickerByNumber(number);
+    if (actualSticker) {
+      toggleStickerOwned(actualSticker.id);
+      toast({
+        title: actualSticker.isOwned ? "מדבקה הוסרה מהמלאי" : "מדבקה נוספה למלאי",
+        description: `מדבקה #${number} ${actualSticker.isOwned ? "הוסרה מ" : "נוספה ל"}מלאי שלך.`,
+      });
+      
+      if (onRefresh) {
+        onRefresh();
+      }
+    }
+  };
+  
+  // Open sticker details dialog
+  const handleStickerDetails = (number: number) => {
+    const actualSticker = getActualStickerByNumber(number);
+    if (actualSticker) {
+      setSelectedStickerId(actualSticker.id);
+    }
+  };
 
   return (
     <div 
@@ -110,34 +149,82 @@ const ExchangeCard = ({ exchange }: ExchangeCardProps) => {
           <div>
             <h4 className="text-sm font-medium mb-2">מקבל</h4>
             <div className="grid grid-cols-8 gap-2">
-              {stickersToReceive.map(stickerId => (
-                <StickerImage
-                  key={`receive-${stickerId}`}
-                  alt={`מדבקה ${stickerId}`}
-                  stickerNumber={stickerId}
-                  compactView={true}
-                  inTransaction={true}
-                  transactionColor={exchange.color}
-                  transactionPerson={exchange.userName}
-                />
-              ))}
+              {stickersToReceive.map(stickerId => {
+                const actualSticker = getActualStickerByNumber(stickerId);
+                return (
+                  <Dialog key={`receive-${stickerId}`}>
+                    <DialogTrigger asChild>
+                      <div 
+                        onClick={() => handleStickerDetails(stickerId)}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          handleStickerClick(stickerId);
+                        }}
+                        className="cursor-pointer"
+                      >
+                        <StickerImage
+                          alt={`מדבקה ${stickerId}`}
+                          stickerNumber={stickerId}
+                          compactView={true}
+                          inTransaction={true}
+                          transactionColor={exchange.color}
+                          isOwned={actualSticker?.isOwned}
+                          isDuplicate={actualSticker?.isDuplicate}
+                          duplicateCount={actualSticker?.duplicateCount}
+                        />
+                      </div>
+                    </DialogTrigger>
+                    {actualSticker && selectedStickerId === actualSticker.id && (
+                      <StickerDetailsDialog 
+                        stickerId={actualSticker.id}
+                        onClose={() => setSelectedStickerId(null)}
+                        onRefresh={onRefresh}
+                      />
+                    )}
+                  </Dialog>
+                );
+              })}
             </div>
           </div>
           
           <div>
             <h4 className="text-sm font-medium mb-2">נותן</h4>
             <div className="grid grid-cols-8 gap-2">
-              {stickersToGive.map(stickerId => (
-                <StickerImage
-                  key={`give-${stickerId}`}
-                  alt={`מדבקה ${stickerId}`}
-                  stickerNumber={stickerId}
-                  compactView={true}
-                  inTransaction={true}
-                  transactionColor={exchange.color}
-                  transactionPerson={exchange.userName}
-                />
-              ))}
+              {stickersToGive.map(stickerId => {
+                const actualSticker = getActualStickerByNumber(stickerId);
+                return (
+                  <Dialog key={`give-${stickerId}`}>
+                    <DialogTrigger asChild>
+                      <div 
+                        onClick={() => handleStickerDetails(stickerId)}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          handleStickerClick(stickerId);
+                        }}
+                        className="cursor-pointer"
+                      >
+                        <StickerImage
+                          alt={`מדבקה ${stickerId}`}
+                          stickerNumber={stickerId}
+                          compactView={true}
+                          inTransaction={true}
+                          transactionColor={exchange.color}
+                          isOwned={actualSticker?.isOwned}
+                          isDuplicate={actualSticker?.isDuplicate}
+                          duplicateCount={actualSticker?.duplicateCount}
+                        />
+                      </div>
+                    </DialogTrigger>
+                    {actualSticker && selectedStickerId === actualSticker.id && (
+                      <StickerDetailsDialog 
+                        stickerId={actualSticker.id}
+                        onClose={() => setSelectedStickerId(null)}
+                        onRefresh={onRefresh}
+                      />
+                    )}
+                  </Dialog>
+                );
+              })}
             </div>
           </div>
         </div>

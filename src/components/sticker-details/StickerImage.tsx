@@ -63,11 +63,6 @@ const StickerImage = ({
             {duplicateCount > 0 ? duplicateCount + 1 : '2+'}
           </div>
         )}
-        {inTransaction && transactionPerson && (
-          <div className="absolute bottom-1 right-1 text-[9px] font-medium max-w-[80%] truncate bg-background/80 px-1 rounded-sm">
-            {transactionPerson}
-          </div>
-        )}
         {isRecentlyAdded && (
           <div className="absolute top-0 left-0 w-0 h-0 border-solid border-t-[12px] border-t-yellow-400 border-r-[12px] border-r-transparent"></div>
         )}

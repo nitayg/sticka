@@ -14,6 +14,7 @@ export default function useInventory() {
   const [isIntakeFormOpen, setIsIntakeFormOpen] = useState(false);
   const [selectedAlbumId, setSelectedAlbumId] = useState<string>("");
   const [albumStickers, setAlbumStickers] = useState<any[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
   const { toast } = useToast();
   
   const albums = getAllAlbums();
@@ -28,7 +29,20 @@ export default function useInventory() {
     if (selectedAlbumId) {
       setAlbumStickers(getStickersByAlbumId(selectedAlbumId));
     }
-  }, [selectedAlbumId]);
+  }, [selectedAlbumId, refreshKey]);
+  
+  // Add listener for inventory data changes from exchange system
+  useEffect(() => {
+    const handleInventoryDataChanged = () => {
+      setRefreshKey(prev => prev + 1);
+    };
+    
+    window.addEventListener('inventoryDataChanged', handleInventoryDataChanged);
+    
+    return () => {
+      window.removeEventListener('inventoryDataChanged', handleInventoryDataChanged);
+    };
+  }, []);
   
   const filteredStickers = albumStickers.filter(sticker => {
     if (activeTab === "all") return true;

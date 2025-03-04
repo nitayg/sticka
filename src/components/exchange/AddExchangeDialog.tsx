@@ -4,7 +4,8 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogFooter 
+  DialogFooter,
+  DialogDescription 
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
@@ -14,7 +15,7 @@ import {
   Mail, 
   User 
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "../ui/use-toast";
 import { ExchangeOffer } from "@/lib/types";
 import { exchangeOffers } from "@/lib/data";
 
@@ -26,17 +27,17 @@ interface AddExchangeDialogProps {
 
 type ExchangeMethod = "pickup" | "mail" | "other";
 
-// Colors for different exchanges
+// Updated colors for different exchanges - more vibrant
 const exchangeColors = [
-  "bg-purple-100 border-purple-300",
-  "bg-blue-100 border-blue-300",
-  "bg-pink-100 border-pink-300",
-  "bg-green-100 border-green-300",
-  "bg-orange-100 border-orange-300",
-  "bg-yellow-100 border-yellow-300",
-  "bg-indigo-100 border-indigo-300",
-  "bg-red-100 border-red-300",
-  "bg-teal-100 border-teal-300"
+  "bg-purple-200 border-purple-500",
+  "bg-blue-200 border-blue-500",
+  "bg-pink-200 border-pink-500",
+  "bg-green-200 border-green-500",
+  "bg-orange-200 border-orange-500",
+  "bg-yellow-200 border-yellow-500",
+  "bg-indigo-200 border-indigo-500",
+  "bg-red-200 border-red-500",
+  "bg-teal-200 border-teal-500"
 ];
 
 const AddExchangeDialog = ({ onClose, selectedAlbumId, onExchangeAdded }: AddExchangeDialogProps) => {
@@ -70,7 +71,7 @@ const AddExchangeDialog = ({ onClose, selectedAlbumId, onExchangeAdded }: AddExc
     
     // Create new exchange offer
     const newExchange: ExchangeOffer = {
-      id: `e${exchangeOffers.length + 1}`,
+      id: `e${Date.now()}`, // Use timestamp to ensure unique ID
       userId: "u1", // Current user ID (in a real app, this would be dynamic)
       userName: personName,
       offeredStickerId: stickersToGiveArray,
@@ -105,6 +106,7 @@ const AddExchangeDialog = ({ onClose, selectedAlbumId, onExchangeAdded }: AddExc
     <DialogContent className="max-w-md">
       <DialogHeader>
         <DialogTitle>עסקת החלפה חדשה</DialogTitle>
+        <DialogDescription>צור עסקת החלפה חדשה עבור אלבום זה</DialogDescription>
       </DialogHeader>
       
       <form onSubmit={handleSubmit} className="space-y-4">

@@ -36,6 +36,18 @@ const AlbumView = () => {
   }, [selectedAlbum, refreshKey]);
   
   useEffect(() => {
+    const handleAlbumDataChanged = () => {
+      setRefreshKey(prev => prev + 1);
+    };
+    
+    window.addEventListener('albumDataChanged', handleAlbumDataChanged);
+    
+    return () => {
+      window.removeEventListener('albumDataChanged', handleAlbumDataChanged);
+    };
+  }, []);
+  
+  useEffect(() => {
     if (!showAllAlbumStickers) {
       setSelectedRange(null);
       setSelectedTeam(null);

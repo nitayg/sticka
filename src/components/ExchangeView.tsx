@@ -46,6 +46,10 @@ const ExchangeView = () => {
   const handleExchangeAdded = () => {
     // Refresh the view when a new exchange is added
     setRefreshKey(prev => prev + 1);
+    
+    // Force update album view and inventory view by dispatching custom events
+    window.dispatchEvent(new CustomEvent('albumDataChanged'));
+    window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
   };
 
   return (
@@ -86,6 +90,7 @@ const ExchangeView = () => {
                 <ExchangeCard 
                   key={exchange.id}
                   exchange={exchange}
+                  onRefresh={() => setRefreshKey(prev => prev + 1)}
                 />
               ))}
             </div>
