@@ -1,7 +1,7 @@
 
 import CategoryFilter from "../CategoryFilter";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Album } from "@/lib/types";
+import AlbumCarousel from "../inventory/AlbumCarousel";
 
 interface FilterControlsProps {
   categories: string[];
@@ -10,7 +10,7 @@ interface FilterControlsProps {
   albums: Album[];
   selectedAlbum: string;
   handleAlbumChange: (albumId: string) => void;
-  onTeamsManage?: () => void; // New prop
+  onTeamsManage?: () => void;
 }
 
 const FilterControls = ({
@@ -23,24 +23,19 @@ const FilterControls = ({
   onTeamsManage,
 }: FilterControlsProps) => {
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+    <div className="flex flex-col gap-3">
+      <AlbumCarousel 
+        albums={albums}
+        selectedAlbumId={selectedAlbum}
+        onAlbumChange={handleAlbumChange}
+      />
+      
       <CategoryFilter 
         categories={categories}
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
         onTeamsManage={onTeamsManage}
       />
-      
-      <Select value={selectedAlbum} onValueChange={handleAlbumChange}>
-        <SelectTrigger className="w-full sm:w-[200px]">
-          <SelectValue placeholder="בחר אלבום" />
-        </SelectTrigger>
-        <SelectContent>
-          {albums.map(album => (
-            <SelectItem key={album.id} value={album.id}>{album.name}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
     </div>
   );
 };
