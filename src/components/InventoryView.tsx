@@ -71,20 +71,22 @@ const InventoryView = () => {
     duplicates: albumStickers.filter(s => s.isDuplicate && s.isOwned).length
   };
   
-  const handleStickerIntakeSubmit = (albumId: string, stickerNumbers: number[]) => {
-    const results = handleStickerIntake(albumId, stickerNumbers);
+  const handleStickerIntakeSubmit = async (albumId: string, stickerNumbers: number[]) => {
+    // Await the Promise returned by handleStickerIntake
+    const results = await handleStickerIntake(albumId, stickerNumbers);
     
-    const totalUpdated = results.newlyOwned + results.duplicatesUpdated;
+    // Now the properties are available since we've resolved the Promise
+    const totalUpdated = results.newlyOwned.length + results.duplicatesUpdated.length;
     
     let message = `נוספו ${totalUpdated} מדבקות למלאי.`;
-    if (results.newlyOwned > 0) {
-      message += ` ${results.newlyOwned} מדבקות חדשות.`;
+    if (results.newlyOwned.length > 0) {
+      message += ` ${results.newlyOwned.length} מדבקות חדשות.`;
     }
-    if (results.duplicatesUpdated > 0) {
-      message += ` ${results.duplicatesUpdated} מדבקות כפולות עודכנו.`;
+    if (results.duplicatesUpdated.length > 0) {
+      message += ` ${results.duplicatesUpdated.length} מדבקות כפולות עודכנו.`;
     }
-    if (results.notFound > 0) {
-      message += ` ${results.notFound} מדבקות לא נמצאו.`;
+    if (results.notFound.length > 0) {
+      message += ` ${results.notFound.length} מדבקות לא נמצאו.`;
     }
     
     toast({

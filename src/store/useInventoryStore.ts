@@ -108,11 +108,12 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
     // Notify other components about the change
     window.dispatchEvent(new CustomEvent('albumDataChanged'));
     
-    // Return the result in the proper format with arrays
-    return {
+    // Convert the result to match the expected return type with arrays
+    // Now handling as a resolved Promise, not a direct return
+    return Promise.resolve({
       newlyOwned: result.newlyOwned > 0 ? stickerNumbers.slice(0, result.newlyOwned) : [],
-      duplicatesUpdated: result.duplicatesUpdated > 0 ? stickerNumbers.slice(0, result.duplicatesUpdated) : [],
-      notFound: result.notFound > 0 ? stickerNumbers.slice(0, result.notFound) : []
-    };
+      duplicatesUpdated: result.duplicatesUpdated > 0 ? stickerNumbers.slice(result.newlyOwned, result.newlyOwned + result.duplicatesUpdated) : [],
+      notFound: result.notFound > 0 ? stickerNumbers.slice(result.newlyOwned + result.duplicatesUpdated, result.newlyOwned + result.duplicatesUpdated + result.notFound) : []
+    });
   }
 }));
