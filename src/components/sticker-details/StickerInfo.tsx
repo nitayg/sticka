@@ -1,6 +1,7 @@
 
 import { Sticker } from "@/lib/types";
 import { Badge } from "../ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 interface StickerInfoProps {
   sticker: Sticker;
@@ -8,24 +9,46 @@ interface StickerInfoProps {
 
 const StickerInfo = ({ sticker }: StickerInfoProps) => {
   return (
-    <div className="bg-secondary/70 backdrop-blur-sm rounded-lg p-3 space-y-2 text-sm">
-      <div className="grid grid-cols-2 gap-2">
-        <InfoItem label="מספר" value={sticker.number.toString()} />
-        <InfoItem label="שם" value={sticker.name} />
-        <InfoItem label="קבוצה" value={sticker.team} />
-        <InfoItem label="קטגוריה" value={sticker.category} />
+    <div className="bg-secondary/40 backdrop-blur-sm rounded-lg p-4 space-y-3 text-sm shadow-sm border border-border/20">
+      <div className="grid grid-cols-2 gap-3">
+        <InfoItem 
+          label="מספר" 
+          value={sticker.number.toString()} 
+          tooltip="המספר הסידורי של המדבקה"
+        />
+        <InfoItem 
+          label="שם" 
+          value={sticker.name} 
+          tooltip="שם המדבקה"
+        />
+        <InfoItem 
+          label="קבוצה" 
+          value={sticker.team} 
+          tooltip="הקבוצה אליה משתייכת המדבקה"
+        />
+        <InfoItem 
+          label="קטגוריה" 
+          value={sticker.category} 
+          tooltip="קטגוריית המדבקה"
+        />
         
-        <div className="col-span-2 flex items-center justify-between border-t border-border/40 pt-2 mt-1">
-          <span className="text-xs text-muted-foreground">סטטוס:</span>
-          <Badge variant={sticker.isOwned ? "success" : "outline"} className="font-medium">
+        <div className="col-span-2 flex items-center justify-between border-t border-border/30 pt-3 mt-1">
+          <span className="text-xs text-muted-foreground font-medium">סטטוס:</span>
+          <Badge 
+            variant={sticker.isOwned ? "success" : "outline"} 
+            className="font-medium px-3 py-1"
+          >
             {sticker.isOwned ? "נאספה" : "חסרה"}
           </Badge>
         </div>
 
         {sticker.isOwned && (
           <div className="col-span-2 flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">כפולה:</span>
-            <Badge variant={sticker.isDuplicate ? "warning" : "outline"} className="font-medium">
+            <span className="text-xs text-muted-foreground font-medium">כפולה:</span>
+            <Badge 
+              variant={sticker.isDuplicate ? "warning" : "outline"} 
+              className="font-medium px-3 py-1"
+            >
               {sticker.isDuplicate ? 
                 (sticker.duplicateCount && sticker.duplicateCount > 0 ? 
                   `כן (${sticker.duplicateCount + 1})` : 
@@ -39,11 +62,30 @@ const StickerInfo = ({ sticker }: StickerInfoProps) => {
   );
 };
 
-// תת-רכיב ליצירת שורת מידע עקבית
-const InfoItem = ({ label, value }: { label: string, value: string }) => (
+// תת-רכיב ליצירת שורת מידע עקבית עם טולטיפ
+const InfoItem = ({ 
+  label, 
+  value, 
+  tooltip 
+}: { 
+  label: string, 
+  value: string, 
+  tooltip?: string 
+}) => (
   <div className="flex flex-col">
-    <span className="text-xs text-muted-foreground">{label}:</span>
-    <span className="font-medium truncate">{value}</span>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="text-xs text-muted-foreground font-medium cursor-help">{label}:</span>
+        </TooltipTrigger>
+        {tooltip && (
+          <TooltipContent side="top">
+            <p>{tooltip}</p>
+          </TooltipContent>
+        )}
+      </Tooltip>
+    </TooltipProvider>
+    <span className="font-medium truncate text-foreground">{value}</span>
   </div>
 );
 
