@@ -4,7 +4,6 @@ import { exchangeOffers } from '@/lib/data';
 import { 
   getStickersByAlbumId,
   addStickersToInventory,
-  getStickerTransactions
 } from '@/lib/sticker-operations';
 
 type InventoryTab = "all" | "owned" | "needed" | "duplicates";
@@ -75,9 +74,31 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
   },
   
   updateTransactionMap: (albumId) => {
-    // Use the shared transaction data source
-    const transactionMap = getStickerTransactions();
-    set({ transactionMap });
+    const newTransactionMap: Record<string, { person: string, color: string }> = {};
+    
+    // Get relevant exchanges for this album
+    const relevantExchanges = exchangeOffers.filter(exchange => exchange.albumId === albumId);
+    
+    // Map stickers to their transactions
+    relevantExchanges.forEach(exchange => {
+      // Find stickers that the user will receive
+      const stickerNumbers = exchange.wantedStickerId.map(id => parseInt(id));
+      
+      // Get actual stickers
+      const albumStickers = getStickersByAlbumId(albumId);
+      
+      stickerNumbers.forEach(number => {
+        const sticker = albumStickers.find(s => s.number === number);
+        if (sticker) {
+          newTransactionMap[sticker.id] = {
+            person: exchange.userName,
+            color: exchange.color || "bg-secondary"
+          };
+        }
+      });
+    });
+    
+    set({ transactionMap: newTransactionMap });
   },
   
   handleStickerIntake: async (albumId, stickerNumbers) => {
