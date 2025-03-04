@@ -91,10 +91,11 @@ export const exchangeOffers: ExchangeOffer[] = [
     userId: "u1",
     userName: "אלכס כהן",
     userAvatar: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=100&auto=format&fit=crop",
-    offeredStickerId: "1",
+    offeredStickerId: ["1"],  // Changed from string to string array
     offeredStickerName: "ליונל מסי",
-    wantedStickerId: "3",
+    wantedStickerId: ["3"],   // Changed from string to string array
     wantedStickerName: "קיליאן אמבפה",
-    status: "pending"
+    status: "pending",
+    albumId: "album1"
   }
 ];
