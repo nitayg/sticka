@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { getAllAlbums } from "@/lib/data";
 import { getStickersByAlbumId, stickerData } from "@/lib/sticker-operations";
@@ -9,7 +10,6 @@ import TabsContainer from "./album/TabsContainer";
 const AlbumView = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list" | "compact">("grid");
   const [showImages, setShowImages] = useState<boolean>(true);
-  const [selectedCategory, setSelectedCategory] = useState<string>("הכל");
   const [selectedAlbum, setSelectedAlbum] = useState<string>("");
   const [stickers, setStickers] = useState<any[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -19,7 +19,6 @@ const AlbumView = () => {
   const [showAllAlbumStickers, setShowAllAlbumStickers] = useState(false);
   
   const albums = getAllAlbums();
-  const categories = ["הכל"];
   
   useEffect(() => {
     if (albums.length > 0 && !selectedAlbum) {
@@ -90,9 +89,7 @@ const AlbumView = () => {
       ? stickerData 
       : stickers;
     
-    let filtered = allStickers.filter(sticker => 
-      selectedCategory === "הכל" || sticker.category === selectedCategory
-    );
+    let filtered = allStickers;
     
     if (activeTab === "number" && selectedRange) {
       const [rangeStart, rangeEnd] = selectedRange.split('-').map(Number);
@@ -131,7 +128,7 @@ const AlbumView = () => {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-4 animate-fade-in">
       <AlbumHeader 
         albums={albums}
         selectedAlbum={selectedAlbum}
@@ -144,9 +141,6 @@ const AlbumView = () => {
       />
       
       <FilterControls
-        categories={categories}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
         albums={albums}
         selectedAlbum={selectedAlbum}
         handleAlbumChange={handleAlbumChange}

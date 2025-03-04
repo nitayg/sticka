@@ -9,7 +9,8 @@ interface CategorySelectorProps {
 }
 
 const CategorySelector = ({ category, setCategory }: CategorySelectorProps) => {
-  const categories = ["הכל"]; // Simplified to only include "All"
+  // Empty categories list - this component is currently not being used actively
+  const categories: string[] = [];
   
   return (
     <div className="grid grid-cols-4 items-center gap-4">
