@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
@@ -8,6 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Textarea } from "./ui/textarea";
 import { useToast } from "./ui/use-toast";
 import { toggleStickerOwned } from "@/lib/sticker-operations";
+import AlbumSelector from "./sticker-form/AlbumSelector";
+import { getStickersByAlbumId } from "@/lib/sticker-operations";
+import { getAllAlbums } from "@/lib/data";
 
 // Mock exchange partners data - in a real app, this would come from your data store
 const exchangePartners = [
@@ -28,36 +31,38 @@ const StickerIntakeForm = ({ isOpen, onClose, onIntake }: StickerIntakeFormProps
   const [source, setSource] = useState<"exchange" | "pack" | "other">("pack");
   const [exchangePartner, setExchangePartner] = useState("");
   const [otherDetails, setOtherDetails] = useState("");
+  const [albumId, setAlbumId] = useState("");
+  const [validationError, setValidationError] = useState("");
   const { toast } = useToast();
+  const albums = getAllAlbums();
+
+  useEffect(() => {
+    if (isOpen && albums.length > 0 && !albumId) {
+      setAlbumId(albums[0].id);
+    }
+  }, [isOpen, albums, albumId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate input
     if (!stickerNumbers.trim()) {
-      toast({
-        title: "שדות חסרים",
-        description: "אנא הכנס מספרי מדבקות",
-        variant: "destructive"
-      });
+      setValidationError("אנא הכנס מספרי מדבקות");
       return;
     }
 
     if (source === "exchange" && !exchangePartner) {
-      toast({
-        title: "שדות חסרים",
-        description: "אנא בחר שם מחליף",
-        variant: "destructive"
-      });
+      setValidationError("אנא בחר שם מחליף");
       return;
     }
 
     if (source === "other" && !otherDetails) {
-      toast({
-        title: "שדות חסרים",
-        description: "אנא הכנס פרטים על מקור המדבקות",
-        variant: "destructive"
-      });
+      setValidationError("אנא הכנס פרטים על מקור המדבקות");
+      return;
+    }
+
+    if (!albumId) {
+      setValidationError("אנא בחר אלבום");
       return;
     }
 
@@ -68,17 +73,25 @@ const StickerIntakeForm = ({ isOpen, onClose, onIntake }: StickerIntakeFormProps
       .filter(num => num && !isNaN(Number(num)));
 
     if (numbers.length === 0) {
-      toast({
-        title: "קלט לא תקין",
-        description: "אנא הכנס מספרי מדבקות תקינים, מופרדים בפסיקים",
-        variant: "destructive"
-      });
+      setValidationError("אנא הכנס מספרי מדבקות תקינים, מופרדים בפסיקים");
       return;
     }
 
-    // Process the stickers based on their existence in the data
-    // This would normally call a function to update your data store
-    // For now, let's add a simple mock implementation
+    // Validate sticker numbers against album
+    const albumStickers = getStickersByAlbumId(albumId);
+    const albumStickerNumbers = new Set(albumStickers.map(sticker => sticker.number));
+    const invalidNumbers = numbers
+      .map(numStr => parseInt(numStr))
+      .filter(num => !albumStickerNumbers.has(num));
+
+    if (invalidNumbers.length > 0) {
+      setValidationError(
+        `מספרי המדבקות הבאים לא נמצאים באלבום שנבחר: ${invalidNumbers.join(", ")}`
+      );
+      return;
+    }
+
+    // Process the stickers
     const addedStickers = numbers.map(numStr => {
       const num = parseInt(numStr);
       return { number: num };
@@ -106,6 +119,7 @@ const StickerIntakeForm = ({ isOpen, onClose, onIntake }: StickerIntakeFormProps
     setSource("pack");
     setExchangePartner("");
     setOtherDetails("");
+    setValidationError("");
   };
 
   return (
@@ -116,6 +130,8 @@ const StickerIntakeForm = ({ isOpen, onClose, onIntake }: StickerIntakeFormProps
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4">
+            <AlbumSelector albumId={albumId} setAlbumId={setAlbumId} />
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="stickerNumbers" className="text-right">
                 מספרי מדבקות *
@@ -188,6 +204,12 @@ const StickerIntakeForm = ({ isOpen, onClose, onIntake }: StickerIntakeFormProps
                   className="col-span-3 text-right"
                   rows={3}
                 />
+              </div>
+            )}
+
+            {validationError && (
+              <div className="bg-red-50 text-red-800 p-3 rounded-md text-right border border-red-200">
+                {validationError}
               </div>
             )}
           </div>

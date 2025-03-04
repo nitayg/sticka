@@ -1,9 +1,7 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { stickers } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import Header from "./Header";
-import StickerCard from "./StickerCard";
 import { List, Plus } from "lucide-react";
 import EmptyState from "./EmptyState";
 import ViewModeToggle from "./ViewModeToggle";
@@ -11,16 +9,34 @@ import StickerCollection from "./StickerCollection";
 import StickerIntakeForm from "./StickerIntakeForm";
 import { Button } from "./ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { getAllAlbums, getStickersByAlbumId } from "@/lib/data";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 const InventoryView = () => {
   const [activeTab, setActiveTab] = useState<"all" | "owned" | "needed" | "duplicates">("all");
   const [viewMode, setViewMode] = useState<"grid" | "list" | "compact">("grid");
   const [showImages, setShowImages] = useState(true);
   const [isIntakeFormOpen, setIsIntakeFormOpen] = useState(false);
+  const [selectedAlbumId, setSelectedAlbumId] = useState<string>("");
+  const [albumStickers, setAlbumStickers] = useState<any[]>([]);
   const { toast } = useToast();
   
+  const albums = getAllAlbums();
+  
+  useEffect(() => {
+    if (albums.length > 0 && !selectedAlbumId) {
+      setSelectedAlbumId(albums[0].id);
+    }
+  }, [albums, selectedAlbumId]);
+
+  useEffect(() => {
+    if (selectedAlbumId) {
+      setAlbumStickers(getStickersByAlbumId(selectedAlbumId));
+    }
+  }, [selectedAlbumId]);
+  
   // Filter stickers based on active tab
-  const filteredStickers = stickers.filter(sticker => {
+  const filteredStickers = albumStickers.filter(sticker => {
     if (activeTab === "all") return true;
     if (activeTab === "owned") return sticker.isOwned;
     if (activeTab === "needed") return !sticker.isOwned;
@@ -29,18 +45,25 @@ const InventoryView = () => {
   });
 
   const tabStats = {
-    all: stickers.length,
-    owned: stickers.filter(s => s.isOwned).length,
-    needed: stickers.filter(s => !s.isOwned).length,
-    duplicates: stickers.filter(s => s.isDuplicate && s.isOwned).length
+    all: albumStickers.length,
+    owned: albumStickers.filter(s => s.isOwned).length,
+    needed: albumStickers.filter(s => !s.isOwned).length,
+    duplicates: albumStickers.filter(s => s.isDuplicate && s.isOwned).length
   };
 
   const handleRefresh = () => {
     // This would refresh the stickers data
+    if (selectedAlbumId) {
+      setAlbumStickers(getStickersByAlbumId(selectedAlbumId));
+    }
     toast({
       title: "המלאי עודכן",
       description: "הנתונים עודכנו בהצלחה",
     });
+  };
+
+  const handleAlbumChange = (albumId: string) => {
+    setSelectedAlbumId(albumId);
   };
 
   return (
@@ -58,6 +81,32 @@ const InventoryView = () => {
           </Button>
         }
       />
+      
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-2">
+        <div className="w-64">
+          <Select
+            value={selectedAlbumId}
+            onValueChange={handleAlbumChange}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="בחר אלבום" />
+            </SelectTrigger>
+            <SelectContent>
+              {albums.map(album => (
+                <SelectItem key={album.id} value={album.id}>
+                  {album.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <ViewModeToggle 
+          viewMode={viewMode} 
+          setViewMode={setViewMode}
+          showImages={showImages}
+          setShowImages={setShowImages}
+        />
+      </div>
       
       <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 animate-fade-up">
         <InventoryCard 
@@ -93,12 +142,6 @@ const InventoryView = () => {
           {activeTab === "needed" && "מדבקות חסרות"}
           {activeTab === "duplicates" && "מדבקות כפולות"}
         </h2>
-        <ViewModeToggle 
-          viewMode={viewMode} 
-          setViewMode={setViewMode}
-          showImages={showImages}
-          setShowImages={setShowImages}
-        />
       </div>
       
       {filteredStickers.length > 0 ? (
@@ -106,10 +149,10 @@ const InventoryView = () => {
           stickers={filteredStickers}
           viewMode={viewMode}
           showImages={showImages}
-          selectedAlbum="album1" // Default album
+          selectedAlbum={selectedAlbumId}
           onRefresh={handleRefresh}
           activeFilter={activeTab === "all" ? null : activeTab}
-          showMultipleAlbums={true}
+          showMultipleAlbums={false}
         />
       ) : (
         <EmptyState
