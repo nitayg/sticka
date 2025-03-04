@@ -1,14 +1,15 @@
 
 import { useState } from "react";
 import { Sticker } from "@/lib/types";
-import { cn } from "@/lib/utils";
 import { Image } from "lucide-react";
 import StickerCard from "./StickerCard";
 import StickerListItem from "./StickerListItem";
 import EmptyState from "./EmptyState";
 import AddStickerForm from "./AddStickerForm";
 import StickerDetailsDialog from "./StickerDetailsDialog";
-import StickerImage from "./sticker-details/StickerImage";
+import { isRecentlyAdded } from "@/lib/sticker-utils";
+import CompactStickerItem from "./sticker-collection/CompactStickerItem";
+import StickerCollectionGrid from "./sticker-collection/StickerCollectionGrid";
 
 interface StickerCollectionProps {
   stickers: Sticker[];
@@ -20,13 +21,6 @@ interface StickerCollectionProps {
   showMultipleAlbums?: boolean;
   transactionMap?: Record<string, { person: string, color: string }>;
 }
-
-// Utility function to check if a sticker was recently added (within the last 5 minutes)
-const isRecentlyAdded = (sticker: Sticker): boolean => {
-  // Mock implementation - in a real app, you would compare with the actual creation timestamp
-  const recentStickerIds = ["sticker1", "sticker5", "sticker12"]; // Example for demo
-  return recentStickerIds.includes(sticker.id);
-};
 
 const StickerCollection = ({ 
   stickers, 
@@ -40,20 +34,6 @@ const StickerCollection = ({
 }: StickerCollectionProps) => {
   const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  
-  // Adjust card size based on active filter and view mode
-  const getGridColsClass = () => {
-    if (viewMode === "compact") {
-      return "grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-16";
-    }
-    
-    // When filtered, show more cards by reducing their size
-    if (activeFilter) {
-      return "grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8";
-    }
-    // Default size
-    return "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5";
-  };
   
   const handleStickerClick = (sticker: Sticker) => {
     setSelectedSticker(sticker);
@@ -83,32 +63,23 @@ const StickerCollection = ({
 
   return (
     <>
-      <div className={cn(
-        "w-full animate-scale-in",
-        viewMode === "list" 
-          ? "grid grid-cols-1 gap-3" 
-          : `grid ${getGridColsClass()} gap-3 px-0.5`
-      )}>
+      <StickerCollectionGrid 
+        viewMode={viewMode} 
+        activeFilter={activeFilter}
+      >
         {stickers.map(sticker => {
           const transaction = transactionMap[sticker.id];
           const recentlyAdded = isRecentlyAdded(sticker);
           
           if (viewMode === "compact") {
             return (
-              <div key={sticker.id} onClick={() => handleStickerClick(sticker)} className="cursor-pointer">
-                <StickerImage
-                  alt={sticker.name}
-                  stickerNumber={sticker.number}
-                  isOwned={sticker.isOwned}
-                  isDuplicate={sticker.isDuplicate}
-                  duplicateCount={sticker.duplicateCount}
-                  inTransaction={!!transaction}
-                  transactionColor={transaction?.color}
-                  transactionPerson={transaction?.person}
-                  compactView={true}
-                  isRecentlyAdded={recentlyAdded}
-                />
-              </div>
+              <CompactStickerItem
+                key={sticker.id}
+                sticker={sticker}
+                transaction={transaction}
+                isRecentlyAdded={recentlyAdded}
+                onClick={() => handleStickerClick(sticker)}
+              />
             );
           }
           
@@ -134,7 +105,7 @@ const StickerCollection = ({
             />
           );
         })}
-      </div>
+      </StickerCollectionGrid>
       
       <StickerDetailsDialog
         sticker={selectedSticker}
