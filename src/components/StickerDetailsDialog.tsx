@@ -13,6 +13,7 @@ import ImageUploadFile from "./sticker-details/ImageUploadFile";
 import StickerActions from "./sticker-details/StickerActions";
 import StickerImage from "./sticker-details/StickerImage";
 import { useInventoryStore } from "@/store/useInventoryStore";
+import { TooltipProvider } from "./ui/tooltip";
 
 interface StickerDetailsDialogProps {
   sticker: Sticker | null;
@@ -25,6 +26,7 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
   const { toast } = useToast();
   const [showEditForm, setShowEditForm] = useState(false);
   const { transactionMap } = useInventoryStore();
+  const [activeTab, setActiveTab] = useState<'info' | 'image'>('info');
   
   useEffect(() => {
     if (sticker) {
@@ -79,54 +81,66 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader className="pb-1">
             <DialogTitle>פרטי מדבקה</DialogTitle>
             <DialogDescription>
               מדבקה מספר {sticker.number} - {sticker.name}
             </DialogDescription>
           </DialogHeader>
           
-          <div className="grid gap-2 py-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="flex flex-col space-y-2 order-2 md:order-1">
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-3 items-start">
+              {/* Left column with image */}
+              <div className="w-1/3 flex-shrink-0">
+                <StickerImage 
+                  imageUrl={sticker.imageUrl} 
+                  fallbackImage={fallbackImage} 
+                  alt={sticker.name} 
+                  inTransaction={!!transaction}
+                  transactionColor={transaction?.color}
+                  transactionPerson={transaction?.person}
+                />
+              </div>
+              
+              {/* Right column with info */}
+              <div className="flex-1">
                 <StickerInfo sticker={sticker} />
                 
                 {transaction && (
-                  <div className={`p-2 rounded-md mb-2 ${transaction.color} border border-border`}>
-                    <h4 className="text-sm font-semibold mb-1">פרטי החלפה</h4>
+                  <div className={`p-2 rounded-md my-2 ${transaction.color} border border-border`}>
+                    <h4 className="text-sm font-semibold">פרטי החלפה</h4>
                     <p className="text-xs">
                       <span className="font-medium">אדם: </span>
                       {transaction.person}
                     </p>
                   </div>
                 )}
-                
-                <ImageUploadUrl onUpload={handleImageUrlUpdate} />
-                
-                <ImageUploadFile onUpload={handleImageUrlUpdate} />
               </div>
-              
-              <StickerImage 
-                imageUrl={sticker.imageUrl} 
-                fallbackImage={fallbackImage} 
-                alt={sticker.name} 
-                inTransaction={!!transaction}
-                transactionColor={transaction?.color}
-                transactionPerson={transaction?.person}
-              />
             </div>
             
+            {/* Action buttons */}
             <StickerActions 
               sticker={sticker}
               onToggleOwned={handleToggleOwned}
               onToggleDuplicate={handleToggleDuplicate}
               onEdit={handleEditClick}
             />
+            
+            {/* Image upload section (simplified) */}
+            <details className="text-xs">
+              <summary className="cursor-pointer font-medium py-1">
+                ניהול תמונות
+              </summary>
+              <div className="pt-1 space-y-2">
+                <ImageUploadUrl onUpload={handleImageUrlUpdate} />
+                <ImageUploadFile onUpload={handleImageUrlUpdate} />
+              </div>
+            </details>
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" onClick={onClose} size="sm">
               סגור
             </Button>
           </DialogFooter>

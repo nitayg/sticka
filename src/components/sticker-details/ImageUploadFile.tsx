@@ -59,27 +59,21 @@ const ImageUploadFile = ({ onUpload }: ImageUploadFileProps) => {
 
   return (
     <div className="space-y-1">
-      <Label className="text-base font-medium">העלאת תמונה מהמכשיר</Label>
-      <div className="space-y-2">
+      <Label className="text-xs font-medium">העלאת תמונה מהמכשיר</Label>
+      <div className="space-y-1">
         <Input 
           type="file" 
           accept="image/*" 
           ref={fileInputRef}
           onChange={handleFileChange}
+          className="h-8 text-xs"
         />
         {imageFile && (
-          <Button size="sm" onClick={handleImageFileUpload}>
-            <Upload className="h-4 w-4 mr-2" />
-            העלה תמונה
-          </Button>
-        )}
-        {imagePreview && (
-          <div className="mt-2 relative w-full max-w-[150px] aspect-square rounded-lg overflow-hidden border">
-            <img 
-              src={imagePreview} 
-              alt="Preview" 
-              className="w-full h-full object-cover" 
-            />
+          <div className="flex items-center justify-between">
+            <div className="text-xs truncate max-w-[120px]">{imageFile.name}</div>
+            <Button size="sm" onClick={handleImageFileUpload} className="h-7">
+              <Upload className="h-3 w-3" />
+            </Button>
           </div>
         )}
       </div>

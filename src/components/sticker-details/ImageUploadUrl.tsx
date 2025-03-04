@@ -30,16 +30,16 @@ const ImageUploadUrl = ({ onUpload }: ImageUploadUrlProps) => {
 
   return (
     <div className="space-y-1">
-      <Label className="text-base font-medium">עדכון תמונה מקישור URL</Label>
+      <Label className="text-xs font-medium">עדכון תמונה מקישור URL</Label>
       <div className="flex space-x-2">
         <Input 
+          className="h-8 text-xs"
           placeholder="הכנס כתובת URL לתמונה" 
           value={imageUrl} 
           onChange={(e) => setImageUrl(e.target.value)}
         />
-        <Button size="sm" onClick={handleImageUrlUpdate}>
-          <FileImage className="h-4 w-4 mr-2" />
-          עדכן
+        <Button size="sm" onClick={handleImageUrlUpdate} className="h-8">
+          <FileImage className="h-3 w-3" />
         </Button>
       </div>
     </div>

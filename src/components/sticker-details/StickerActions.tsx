@@ -1,9 +1,17 @@
 
 import { Button } from "../ui/button";
-import { PlusCircle, XCircle, Share2, Pencil } from "lucide-react";
+import { 
+  PlusCircle, 
+  XCircle, 
+  Share2, 
+  Pencil, 
+  Copy, 
+  AlertCircle,
+  Check 
+} from "lucide-react";
 import { Sticker } from "@/lib/types";
-import { Label } from "../ui/label";
 import { useToast } from "../ui/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 interface StickerActionsProps {
   sticker: Sticker;
@@ -25,40 +33,70 @@ const StickerActions = ({ sticker, onToggleOwned, onToggleDuplicate, onEdit }: S
 
   return (
     <div className="space-y-1">
-      <Label className="text-base font-medium">פעולות</Label>
-      <div className="grid grid-cols-2 gap-2">
-        <Button variant={sticker.isOwned ? "destructive" : "default"} onClick={onToggleOwned}>
-          {sticker.isOwned ? (
-            <>
-              <XCircle className="h-4 w-4 mr-2" />
-              הסר מהאוסף
-            </>
-          ) : (
-            <>
-              <PlusCircle className="h-4 w-4 mr-2" />
-              הוסף לאוסף
-            </>
-          )}
-        </Button>
-        
-        <Button 
-          variant="outline" 
-          onClick={onToggleDuplicate}
-          disabled={!sticker.isOwned}
-        >
-          {sticker.isDuplicate ? "הסר סימון כפול" : "סמן ככפולה"}
-        </Button>
-        
-        <Button variant="secondary" onClick={shareSticker}>
-          <Share2 className="h-4 w-4 mr-2" />
-          הצע החלפה
-        </Button>
-        
-        <Button variant="secondary" onClick={onEdit}>
-          <Pencil className="h-4 w-4 mr-2" />
-          ערוך מדבקה
-        </Button>
-      </div>
+      <TooltipProvider>
+        <div className="flex gap-2 flex-wrap justify-center">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant={sticker.isOwned ? "destructive" : "default"} 
+                size="icon" 
+                onClick={onToggleOwned}
+              >
+                {sticker.isOwned ? <XCircle /> : <Check />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{sticker.isOwned ? "הסר מהאוסף" : "הוסף לאוסף"}</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={onToggleDuplicate}
+                disabled={!sticker.isOwned}
+              >
+                {sticker.isDuplicate ? <AlertCircle /> : <Copy />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{sticker.isDuplicate ? "הסר סימון כפול" : "סמן ככפולה"}</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="secondary"
+                size="icon"
+                onClick={shareSticker}
+              >
+                <Share2 />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>הצע החלפה</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="secondary"
+                size="icon"
+                onClick={onEdit}
+              >
+                <Pencil />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>ערוך מדבקה</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
     </div>
   );
 };
