@@ -7,19 +7,35 @@ interface StickerListItemProps {
   sticker: Sticker;
   showImages?: boolean;
   onClick?: () => void;
+  transaction?: { person: string, color: string };
+  isRecentlyAdded?: boolean;
 }
 
-const StickerListItem = ({ sticker, showImages = true, onClick }: StickerListItemProps) => {
+const StickerListItem = ({ 
+  sticker, 
+  showImages = true, 
+  onClick,
+  transaction,
+  isRecentlyAdded = false
+}: StickerListItemProps) => {
   return (
     <div 
       onClick={onClick}
       className={cn(
         "flex items-center space-x-4 p-3 rounded-xl bg-white border border-border",
         "transition-all duration-300 ease-out hover:shadow-md",
-        onClick && "cursor-pointer"
+        onClick && "cursor-pointer",
+        isRecentlyAdded && "border-yellow-400"
       )}
     >
-      <div className="h-16 w-16 rounded-md overflow-hidden bg-secondary flex-shrink-0">
+      {isRecentlyAdded && (
+        <div className="absolute top-0 left-0 w-0 h-0 border-solid border-t-[16px] border-t-yellow-400 border-r-[16px] border-r-transparent z-10"></div>
+      )}
+      
+      <div className={cn(
+        "h-16 w-16 rounded-md overflow-hidden flex-shrink-0",
+        transaction ? transaction.color : "bg-secondary"
+      )}>
         {showImages ? (
           <img 
             src={sticker.imageUrl} 
@@ -30,6 +46,11 @@ const StickerListItem = ({ sticker, showImages = true, onClick }: StickerListIte
           <div className="w-full h-full flex flex-col items-center justify-center">
             <Image className="h-4 w-4 text-muted-foreground mb-0.5 opacity-40" />
             <div className="text-sm font-bold">{sticker.number}</div>
+            {transaction && (
+              <div className="mt-0.5 text-[9px] font-medium">
+                {transaction.person}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -48,12 +69,19 @@ const StickerListItem = ({ sticker, showImages = true, onClick }: StickerListIte
         <p className="text-sm text-muted-foreground">{sticker.category}</p>
       </div>
       <div className="flex-shrink-0 flex space-x-2">
+        {transaction && (
+          <div className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium">
+            מ{transaction.person}
+          </div>
+        )}
+        
         {sticker.isDuplicate && sticker.isOwned && (
           <div className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium">
             כפול {sticker.duplicateCount && sticker.duplicateCount > 0 ? `(${sticker.duplicateCount + 1})` : ''}
           </div>
         )}
-        {!sticker.isOwned && (
+        
+        {!sticker.isOwned && !transaction && (
           <div className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium">
             חסר
           </div>

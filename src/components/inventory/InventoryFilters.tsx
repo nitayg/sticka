@@ -1,8 +1,8 @@
 
 import { useState } from "react";
 import { getAllAlbums } from "@/lib/data";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import ViewModeToggle from "../ViewModeToggle";
+import AlbumCarousel from "./AlbumCarousel";
 
 interface InventoryFiltersProps {
   selectedAlbumId: string;
@@ -24,30 +24,20 @@ const InventoryFilters = ({
   const albums = getAllAlbums();
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 py-1">
-      <div className="w-48">
-        <Select
-          value={selectedAlbumId}
-          onValueChange={onAlbumChange}
-        >
-          <SelectTrigger className="h-8 text-sm">
-            <SelectValue placeholder="בחר אלבום" />
-          </SelectTrigger>
-          <SelectContent>
-            {albums.map(album => (
-              <SelectItem key={album.id} value={album.id}>
-                {album.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <ViewModeToggle 
-        viewMode={viewMode} 
-        setViewMode={setViewMode}
-        showImages={showImages}
-        setShowImages={setShowImages}
+    <div className="flex flex-col gap-2 py-1">
+      <AlbumCarousel 
+        albums={albums}
+        selectedAlbumId={selectedAlbumId}
+        onAlbumChange={onAlbumChange}
       />
+      <div className="flex justify-end">
+        <ViewModeToggle 
+          viewMode={viewMode} 
+          setViewMode={setViewMode}
+          showImages={showImages}
+          setShowImages={setShowImages}
+        />
+      </div>
     </div>
   );
 };

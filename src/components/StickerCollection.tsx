@@ -9,6 +9,7 @@ import EmptyState from "./EmptyState";
 import AddStickerForm from "./AddStickerForm";
 import StickerDetailsDialog from "./StickerDetailsDialog";
 import StickerImage from "./sticker-details/StickerImage";
+import { getStickerTransactions } from "@/lib/sticker-operations";
 
 interface StickerCollectionProps {
   stickers: Sticker[];
@@ -19,6 +20,13 @@ interface StickerCollectionProps {
   activeFilter?: string | null;
   showMultipleAlbums?: boolean;
 }
+
+// Utility function to check if a sticker was recently added (within the last 5 minutes)
+const isRecentlyAdded = (sticker: Sticker): boolean => {
+  // Mock implementation - in a real app, you would compare with the actual creation timestamp
+  const recentStickerIds = ["sticker1", "sticker5", "sticker12"]; // Example for demo
+  return recentStickerIds.includes(sticker.id);
+};
 
 const StickerCollection = ({ 
   stickers, 
@@ -31,6 +39,12 @@ const StickerCollection = ({
 }: StickerCollectionProps) => {
   const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [transactionMap, setTransactionMap] = useState<Record<string, { person: string, color: string }>>({}); 
+  
+  useEffect(() => {
+    // Fetch transaction data
+    setTransactionMap(getStickerTransactions());
+  }, [stickers]);
   
   // Adjust card size based on active filter and view mode
   const getGridColsClass = () => {
@@ -72,14 +86,6 @@ const StickerCollection = ({
     );
   }
 
-  // Mock transaction data - in a real app, this would come from your transaction store
-  const transactionMap: Record<string, { person: string, color: string }> = {
-    // These are examples - you would populate this from your actual transaction data
-    "sticker3": { person: "דני", color: "bg-purple-100 border-purple-300" },
-    "sticker7": { person: "יוסי", color: "bg-blue-100 border-blue-300" },
-    "sticker15": { person: "רותי", color: "bg-pink-100 border-pink-300" },
-  };
-
   return (
     <>
       <div className={cn(
@@ -90,6 +96,7 @@ const StickerCollection = ({
       )}>
         {stickers.map(sticker => {
           const transaction = transactionMap[sticker.id];
+          const recentlyAdded = isRecentlyAdded(sticker);
           
           if (viewMode === "compact") {
             return (
@@ -102,7 +109,9 @@ const StickerCollection = ({
                   duplicateCount={sticker.duplicateCount}
                   inTransaction={!!transaction}
                   transactionColor={transaction?.color}
+                  transactionPerson={transaction?.person}
                   compactView={true}
+                  isRecentlyAdded={recentlyAdded}
                 />
               </div>
             );
@@ -116,6 +125,8 @@ const StickerCollection = ({
               showImages={showImages}
               showAlbumInfo={showMultipleAlbums}
               onClick={() => handleStickerClick(sticker)}
+              transaction={transaction}
+              isRecentlyAdded={recentlyAdded}
             />
           ) : (
             <StickerListItem 
@@ -123,6 +134,8 @@ const StickerCollection = ({
               sticker={sticker}
               showImages={showImages}
               onClick={() => handleStickerClick(sticker)}
+              transaction={transaction}
+              isRecentlyAdded={recentlyAdded}
             />
           );
         })}

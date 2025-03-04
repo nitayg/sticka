@@ -12,6 +12,8 @@ interface StickerCardProps {
   showImages?: boolean;
   onClick?: () => void;
   className?: string;
+  transaction?: { person: string, color: string };
+  isRecentlyAdded?: boolean;
 }
 
 const StickerCard = ({ 
@@ -21,7 +23,9 @@ const StickerCard = ({
   showAlbumInfo = false,
   showImages = true,
   onClick, 
-  className 
+  className,
+  transaction,
+  isRecentlyAdded = false
 }: StickerCardProps) => {
   // Get the album to use its image as a fallback
   const album = getAlbumById(sticker.albumId);
@@ -36,6 +40,7 @@ const StickerCard = ({
         "card-hover sticker-shadow",
         onClick && "cursor-pointer",
         compact ? "w-full max-w-[160px]" : "w-full",
+        isRecentlyAdded && "border-yellow-400",
         className
       )}
     >
@@ -56,6 +61,10 @@ const StickerCard = ({
         </div>
       )}
       
+      {isRecentlyAdded && (
+        <div className="absolute top-0 left-0 w-0 h-0 border-solid border-t-[16px] border-t-yellow-400 border-r-[16px] border-r-transparent z-10"></div>
+      )}
+      
       <div className={cn(
         "relative w-full overflow-hidden", 
         compact ? "aspect-[3/4]" : "aspect-square"
@@ -72,21 +81,41 @@ const StickerCard = ({
               )} 
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-muted">
+            <div className={cn(
+              "w-full h-full flex items-center justify-center",
+              transaction ? transaction.color : "bg-muted"
+            )}>
               <span className="text-muted-foreground text-xs">No Image</span>
             </div>
           )
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-muted">
+          <div className={cn(
+            "w-full h-full flex flex-col items-center justify-center",
+            transaction ? transaction.color : "bg-muted"
+          )}>
             <Image className="h-6 w-6 text-muted-foreground mb-1 opacity-40" />
             <div className="text-2xl font-bold">{sticker.number}</div>
+            
+            {transaction && (
+              <div className="mt-1 text-xs font-medium bg-background/80 px-2 py-0.5 rounded-sm">
+                מ{transaction.person}
+              </div>
+            )}
           </div>
         )}
         
-        {!sticker.isOwned && (
+        {!sticker.isOwned && !transaction && (
           <div className="absolute inset-0 bg-background/40 backdrop-blur-[2px] flex items-center justify-center">
             <span className="text-xs font-medium bg-background/80 px-2 py-1 rounded-md">
               Need
+            </span>
+          </div>
+        )}
+        
+        {transaction && !sticker.isOwned && (
+          <div className="absolute inset-0 bg-background/20 backdrop-blur-[1px] flex items-center justify-center">
+            <span className="text-xs font-medium bg-background/80 px-2 py-1 rounded-md flex items-center gap-1">
+              בדרך מ{transaction.person}
             </span>
           </div>
         )}
