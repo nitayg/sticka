@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -114,6 +113,10 @@ export default {
             opacity: '1',
             transform: 'scale(1)'
           }
+        },
+        'pulse-brief': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.7' }
         }
 			},
 			animation: {
@@ -121,7 +124,8 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out',
         'fade-in': 'fade-in 0.4s ease-out',
         'fade-up': 'fade-up 0.5s ease-out',
-        'scale-in': 'scale-in 0.3s ease-out'
+        'scale-in': 'scale-in 0.3s ease-out',
+        'pulse-brief': 'pulse-brief 2s ease-in-out 1'
 			}
 		}
 	},

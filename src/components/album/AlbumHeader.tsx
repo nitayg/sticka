@@ -1,13 +1,14 @@
-
 import { Album } from "@/lib/types";
-import { Button } from "../ui/button";
-import { Plus, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Plus, RefreshCw, Upload } from "lucide-react";
 import AddStickerForm from "../AddStickerForm";
 import ViewModeToggle from "../ViewModeToggle";
 import ImportExcelDialog from "../ImportExcelDialog";
 import { useState } from "react";
 import { useToast } from "../ui/use-toast";
 import AddAlbumForm from "../AddAlbumForm";
+import CollectionStats from "@/components/stats/CollectionStats";
+import TeamStatsChart from "@/components/stats/TeamStatsChart";
 
 interface AlbumHeaderProps {
   albums: Album[];

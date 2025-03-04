@@ -23,9 +23,9 @@ const StickerListItem = ({
       onClick={onClick}
       className={cn(
         "flex items-center space-x-4 p-3 rounded-xl bg-white border border-border",
-        "transition-all duration-300 ease-out hover:shadow-md",
+        "transition-all duration-300 ease-out hover:shadow-md dark:bg-card",
         onClick && "cursor-pointer",
-        isRecentlyAdded && "border-yellow-400"
+        isRecentlyAdded && "border-yellow-400 animate-pulse-brief",
       )}
     >
       {isRecentlyAdded && (
@@ -40,7 +40,10 @@ const StickerListItem = ({
           <img 
             src={sticker.imageUrl} 
             alt={sticker.name} 
-            className="w-full h-full object-cover" 
+            className={cn(
+              "w-full h-full object-cover",
+              isRecentlyAdded && "animate-scale-in"
+            )}
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center">
@@ -62,7 +65,10 @@ const StickerListItem = ({
           </div>
         )}
       </div>
-      <div className="flex-1 min-w-0">
+      <div className={cn(
+        "flex-1 min-w-0",
+        isRecentlyAdded && "animate-fade-up"
+      )}>
         <div className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
           <span>#{sticker.number}</span>
           <span className="mx-1">•</span>
