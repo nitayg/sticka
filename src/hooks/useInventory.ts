@@ -4,7 +4,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { 
   getAllAlbums, 
   getStickersByAlbumId,
-  addStickersToInventory
+  addStickersToInventory,
+  exchangeOffers
 } from "@/lib/data";
 
 export default function useInventory() {
@@ -15,6 +16,7 @@ export default function useInventory() {
   const [selectedAlbumId, setSelectedAlbumId] = useState<string>("");
   const [albumStickers, setAlbumStickers] = useState<any[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [transactionMap, setTransactionMap] = useState<Record<string, { person: string, color: string }>>({});
   const { toast } = useToast();
   
   const albums = getAllAlbums();
@@ -28,6 +30,7 @@ export default function useInventory() {
   useEffect(() => {
     if (selectedAlbumId) {
       setAlbumStickers(getStickersByAlbumId(selectedAlbumId));
+      updateTransactionMap(selectedAlbumId);
     }
   }, [selectedAlbumId, refreshKey]);
   
@@ -43,6 +46,35 @@ export default function useInventory() {
       window.removeEventListener('inventoryDataChanged', handleInventoryDataChanged);
     };
   }, []);
+  
+  // Function to update transaction map based on exchange offers
+  const updateTransactionMap = (albumId: string) => {
+    const newTransactionMap: Record<string, { person: string, color: string }> = {};
+    
+    // Get relevant exchanges for this album
+    const relevantExchanges = exchangeOffers.filter(exchange => exchange.albumId === albumId);
+    
+    // Map stickers to their transactions
+    relevantExchanges.forEach(exchange => {
+      // Find stickers that the user will receive
+      const stickerNumbers = exchange.wantedStickerId.map(id => parseInt(id));
+      
+      // Get actual stickers
+      const albumStickers = getStickersByAlbumId(albumId);
+      
+      stickerNumbers.forEach(number => {
+        const sticker = albumStickers.find(s => s.number === number);
+        if (sticker) {
+          newTransactionMap[sticker.id] = {
+            person: exchange.userName,
+            color: exchange.color || "bg-secondary"
+          };
+        }
+      });
+    });
+    
+    setTransactionMap(newTransactionMap);
+  };
   
   const filteredStickers = albumStickers.filter(sticker => {
     if (activeTab === "all") return true;
@@ -62,6 +94,7 @@ export default function useInventory() {
   const handleRefresh = () => {
     if (selectedAlbumId) {
       setAlbumStickers(getStickersByAlbumId(selectedAlbumId));
+      updateTransactionMap(selectedAlbumId);
     }
     toast({
       title: "המלאי עודכן",
@@ -95,6 +128,9 @@ export default function useInventory() {
     });
     
     handleRefresh();
+    
+    // Notify other components about the change
+    window.dispatchEvent(new CustomEvent('albumDataChanged'));
   };
 
   return {
@@ -109,6 +145,7 @@ export default function useInventory() {
     selectedAlbumId,
     filteredStickers,
     tabStats,
+    transactionMap,
     handleRefresh,
     handleAlbumChange,
     handleStickerIntake

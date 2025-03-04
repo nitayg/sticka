@@ -9,7 +9,8 @@ import EmptyState from "./EmptyState";
 import AddStickerForm from "./AddStickerForm";
 import StickerDetailsDialog from "./StickerDetailsDialog";
 import StickerImage from "./sticker-details/StickerImage";
-import { getStickerTransactions } from "@/lib/sticker-operations";
+import { exchangeOffers } from "@/lib/data";
+import { getStickersByAlbumId } from "@/lib/sticker-operations";
 
 interface StickerCollectionProps {
   stickers: Sticker[];
@@ -39,12 +40,36 @@ const StickerCollection = ({
 }: StickerCollectionProps) => {
   const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [transactionMap, setTransactionMap] = useState<Record<string, { person: string, color: string }>>({}); 
+  const [transactionMap, setTransactionMap] = useState<Record<string, { person: string, color: string }>>({});
   
   useEffect(() => {
-    // Fetch transaction data
-    setTransactionMap(getStickerTransactions());
-  }, [stickers]);
+    // Build transaction map for current album
+    const newTransactionMap: Record<string, { person: string, color: string }> = {};
+    
+    // Get relevant exchanges for this album
+    const relevantExchanges = exchangeOffers.filter(exchange => exchange.albumId === selectedAlbum);
+    
+    // Get all album stickers
+    const albumStickers = getStickersByAlbumId(selectedAlbum);
+    
+    // Map stickers to their transactions
+    relevantExchanges.forEach(exchange => {
+      // Find stickers that the user will receive
+      const stickerNumbers = exchange.wantedStickerId.map(id => parseInt(id));
+      
+      stickerNumbers.forEach(number => {
+        const sticker = albumStickers.find(s => s.number === number);
+        if (sticker) {
+          newTransactionMap[sticker.id] = {
+            person: exchange.userName,
+            color: exchange.color || "bg-secondary"
+          };
+        }
+      });
+    });
+    
+    setTransactionMap(newTransactionMap);
+  }, [selectedAlbum, stickers]);
   
   // Adjust card size based on active filter and view mode
   const getGridColsClass = () => {
@@ -145,7 +170,11 @@ const StickerCollection = ({
         sticker={selectedSticker}
         isOpen={isDialogOpen}
         onClose={handleCloseDialog}
-        onUpdate={onRefresh}
+        onUpdate={() => {
+          onRefresh();
+          window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
+          window.dispatchEvent(new CustomEvent('albumDataChanged'));
+        }}
       />
     </>
   );

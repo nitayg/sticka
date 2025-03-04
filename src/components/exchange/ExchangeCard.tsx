@@ -25,7 +25,8 @@ interface ExchangeCardProps {
 
 const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [selectedStickerId, setSelectedStickerId] = useState<string | null>(null);
+  const [selectedSticker, setSelectedSticker] = useState<any | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   
   const albumStickers = getStickersByAlbumId(exchange.albumId);
@@ -71,6 +72,10 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
         description: `מדבקה #${number} ${actualSticker.isOwned ? "הוסרה מ" : "נוספה ל"}מלאי שלך.`,
       });
       
+      // Notify all components about the inventory change
+      window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
+      window.dispatchEvent(new CustomEvent('albumDataChanged'));
+      
       if (onRefresh) {
         onRefresh();
       }
@@ -81,8 +86,14 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
   const handleStickerDetails = (number: number) => {
     const actualSticker = getActualStickerByNumber(number);
     if (actualSticker) {
-      setSelectedStickerId(actualSticker.id);
+      setSelectedSticker(actualSticker);
+      setIsDialogOpen(true);
     }
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setSelectedSticker(null);
   };
 
   return (
@@ -152,7 +163,7 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
               {stickersToReceive.map(stickerId => {
                 const actualSticker = getActualStickerByNumber(stickerId);
                 return (
-                  <Dialog key={`receive-${stickerId}`}>
+                  <Dialog key={`receive-${stickerId}`} open={isDialogOpen && selectedSticker?.id === actualSticker?.id} onOpenChange={(open) => !open && handleCloseDialog()}>
                     <DialogTrigger asChild>
                       <div 
                         onClick={() => handleStickerDetails(stickerId)}
@@ -168,19 +179,13 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
                           compactView={true}
                           inTransaction={true}
                           transactionColor={exchange.color}
+                          transactionPerson={exchange.userName}
                           isOwned={actualSticker?.isOwned}
                           isDuplicate={actualSticker?.isDuplicate}
                           duplicateCount={actualSticker?.duplicateCount}
                         />
                       </div>
                     </DialogTrigger>
-                    {actualSticker && selectedStickerId === actualSticker.id && (
-                      <StickerDetailsDialog 
-                        stickerId={actualSticker.id}
-                        onClose={() => setSelectedStickerId(null)}
-                        onRefresh={onRefresh}
-                      />
-                    )}
                   </Dialog>
                 );
               })}
@@ -193,7 +198,7 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
               {stickersToGive.map(stickerId => {
                 const actualSticker = getActualStickerByNumber(stickerId);
                 return (
-                  <Dialog key={`give-${stickerId}`}>
+                  <Dialog key={`give-${stickerId}`} open={isDialogOpen && selectedSticker?.id === actualSticker?.id} onOpenChange={(open) => !open && handleCloseDialog()}>
                     <DialogTrigger asChild>
                       <div 
                         onClick={() => handleStickerDetails(stickerId)}
@@ -209,25 +214,33 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
                           compactView={true}
                           inTransaction={true}
                           transactionColor={exchange.color}
+                          transactionPerson={exchange.userName}
                           isOwned={actualSticker?.isOwned}
                           isDuplicate={actualSticker?.isDuplicate}
                           duplicateCount={actualSticker?.duplicateCount}
                         />
                       </div>
                     </DialogTrigger>
-                    {actualSticker && selectedStickerId === actualSticker.id && (
-                      <StickerDetailsDialog 
-                        stickerId={actualSticker.id}
-                        onClose={() => setSelectedStickerId(null)}
-                        onRefresh={onRefresh}
-                      />
-                    )}
                   </Dialog>
                 );
               })}
             </div>
           </div>
         </div>
+      )}
+
+      {selectedSticker && (
+        <StickerDetailsDialog
+          sticker={selectedSticker}
+          isOpen={isDialogOpen}
+          onClose={handleCloseDialog}
+          onUpdate={() => {
+            if (onRefresh) onRefresh();
+            window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
+            window.dispatchEvent(new CustomEvent('albumDataChanged'));
+            handleCloseDialog();
+          }}
+        />
       )}
       
       <div className="mt-4 flex space-x-2">
