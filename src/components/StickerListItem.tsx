@@ -33,7 +33,7 @@ const StickerListItem = ({
       )}
       
       <div className={cn(
-        "h-16 w-16 rounded-md overflow-hidden flex-shrink-0",
+        "h-16 w-16 rounded-md overflow-hidden flex-shrink-0 relative",
         transaction ? transaction.color : "bg-secondary"
       )}>
         {showImages ? (
@@ -51,6 +51,14 @@ const StickerListItem = ({
                 {transaction.person}
               </div>
             )}
+          </div>
+        )}
+        
+        {transaction && showImages && (
+          <div className="absolute bottom-0 left-0 right-0 bg-black/50 px-1 py-0.5 text-center">
+            <span className="text-[9px] text-white font-medium">
+              {transaction.person}
+            </span>
           </div>
         )}
       </div>
