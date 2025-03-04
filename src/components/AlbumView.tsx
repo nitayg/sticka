@@ -1,7 +1,8 @@
+
 import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllAlbums } from "@/lib/queries";
-import { getStickersByAlbumId, stickerData } from "@/lib/sticker-operations";
+import { getStickersByAlbumId, stickerData, getStickerTransactions } from "@/lib/sticker-operations";
 import StickerCollection from "./StickerCollection";
 import AlbumHeader from "./album/AlbumHeader";
 import FilterControls from "./album/FilterControls";
@@ -99,13 +100,9 @@ const AlbumView = () => {
   }, [stickers, activeTab, stickerData, showAllAlbumStickers]);
   
   const transactionMap = useMemo(() => {
-    return {
-      "sticker3": { person: "דני", color: "bg-blue-100" },
-      "sticker7": { person: "מיכל", color: "bg-purple-100" },
-      "sticker14": { person: "יוסי", color: "bg-green-100" },
-      "sticker25": { person: "עדי", color: "bg-yellow-100" }
-    };
-  }, []);
+    // Using the shared transaction data source from sticker-operations
+    return getStickerTransactions();
+  }, [refreshKey]); // Add refreshKey dependency to update when data changes
   
   const getFilteredStickers = () => {
     let allStickers = (activeTab === "manage" && selectedTeam) || (showAllAlbumStickers && selectedTeam) 

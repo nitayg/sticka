@@ -1,4 +1,3 @@
-
 import { Sticker } from './types';
 import { stickers as initialStickers } from './initial-data';
 
@@ -149,9 +148,10 @@ export const getStats = (albumId?: string) => {
 export const getStickerTransactions = () => {
   // This is just a mock - in a real app, this would fetch from your transaction store
   return {
-    "sticker3": { person: "דני", color: "bg-purple-100 border-purple-300" },
-    "sticker7": { person: "יוסי", color: "bg-blue-100 border-blue-300" },
-    "sticker15": { person: "רותי", color: "bg-pink-100 border-pink-300" },
+    "sticker3": { person: "דני", color: "bg-blue-100" },
+    "sticker7": { person: "מיכל", color: "bg-purple-100" },
+    "sticker14": { person: "יוסי", color: "bg-green-100" },
+    "sticker25": { person: "עדי", color: "bg-yellow-100" }
   };
 };
 
