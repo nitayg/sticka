@@ -75,7 +75,7 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
   return (
     <div 
       className={cn(
-        "p-4 rounded-xl border border-border hover:shadow-md transition-shadow",
+        "p-4 rounded-xl border border-border hover:shadow-lg transition-all",
         exchange.color || "bg-card"
       )}
     >
@@ -88,7 +88,7 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
       <ExchangeContactInfo exchange={exchange} />
       
       {isExpanded && (
-        <div className="space-y-4 pt-2 border-t border-border">
+        <div className="space-y-4 pt-2 border-t border-border/40 mt-3">
           <ExchangeStickerGrid
             albumId={exchange.albumId}
             stickerIds={exchange.wantedStickerId}

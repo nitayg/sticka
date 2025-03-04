@@ -1,13 +1,13 @@
 
 import { Button } from "../ui/button";
 import { 
-  PlusCircle, 
-  XCircle, 
+  Check, 
+  Trash2, 
   Share2, 
-  Pencil, 
+  Edit, 
   Copy, 
-  AlertCircle,
-  Check 
+  X,
+  CheckCircle
 } from "lucide-react";
 import { Sticker } from "@/lib/types";
 import { useToast } from "../ui/use-toast";
@@ -32,70 +32,72 @@ const StickerActions = ({ sticker, onToggleOwned, onToggleDuplicate, onEdit }: S
   };
 
   return (
-    <div className="space-y-1">
+    <div className="flex flex-wrap gap-2 justify-center">
       <TooltipProvider>
-        <div className="flex gap-2 flex-wrap justify-center">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant={sticker.isOwned ? "destructive" : "default"} 
-                size="icon" 
-                onClick={onToggleOwned}
-              >
-                {sticker.isOwned ? <XCircle /> : <Check />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{sticker.isOwned ? "הסר מהאוסף" : "הוסף לאוסף"}</p>
-            </TooltipContent>
-          </Tooltip>
-          
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={onToggleDuplicate}
-                disabled={!sticker.isOwned}
-              >
-                {sticker.isDuplicate ? <AlertCircle /> : <Copy />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{sticker.isDuplicate ? "הסר סימון כפול" : "סמן ככפולה"}</p>
-            </TooltipContent>
-          </Tooltip>
-          
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={shareSticker}
-              >
-                <Share2 />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>הצע החלפה</p>
-            </TooltipContent>
-          </Tooltip>
-          
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={onEdit}
-              >
-                <Pencil />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>ערוך מדבקה</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant={sticker.isOwned ? "destructive" : "default"} 
+              size="icon" 
+              onClick={onToggleOwned}
+              className="h-9 w-9"
+            >
+              {sticker.isOwned ? <Trash2 className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>{sticker.isOwned ? "הסר מהאוסף" : "הוסף לאוסף"}</p>
+          </TooltipContent>
+        </Tooltip>
+        
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={onToggleDuplicate}
+              disabled={!sticker.isOwned}
+              className="h-9 w-9"
+            >
+              {sticker.isDuplicate ? <X className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>{sticker.isDuplicate ? "הסר סימון כפול" : "סמן ככפולה"}</p>
+          </TooltipContent>
+        </Tooltip>
+        
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={shareSticker}
+              className="h-9 w-9"
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>הצע החלפה</p>
+          </TooltipContent>
+        </Tooltip>
+        
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={onEdit}
+              className="h-9 w-9"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>ערוך מדבקה</p>
+          </TooltipContent>
+        </Tooltip>
       </TooltipProvider>
     </div>
   );

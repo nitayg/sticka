@@ -51,18 +51,18 @@ const Layout = ({ children }: LayoutProps) => {
       />
 
       <div className="flex flex-1">
-        {/* Desktop Sidebar */}
+        {/* Desktop Sidebar - improved visibility */}
         <DesktopSidebar navigation={navigation} albumId={currentAlbumId} />
 
-        {/* Main Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:py-8 lg:px-10 overflow-x-hidden">
+        {/* Main Content - improved padding for better content presentation */}
+        <main className="flex-1 p-3 sm:p-5 lg:py-6 lg:px-8 overflow-x-hidden pb-16 md:pb-6">
           <div className="max-w-6xl mx-auto">
             {children}
           </div>
         </main>
       </div>
 
-      {/* Mobile Navigation */}
+      {/* Mobile Navigation - improved styling */}
       <MobileNavigation navigation={navigation} />
     </div>
   );
