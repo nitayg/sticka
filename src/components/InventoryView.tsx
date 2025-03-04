@@ -1,6 +1,8 @@
+
 import { useEffect } from "react";
-import { Plus, List } from "lucide-react";
+import { Plus, List, History, ArrowLeftRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import Header from "./Header";
 import EmptyState from "./EmptyState";
 import StickerCollection from "./StickerCollection";
@@ -13,6 +15,7 @@ import { useInventoryStore } from "@/store/useInventoryStore";
 import { getAllAlbums } from "@/lib/data";
 import { fetchStickersByAlbumId } from "@/lib/queries";
 import { useToast } from "@/components/ui/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const InventoryView = () => {
   const {
@@ -104,13 +107,35 @@ const InventoryView = () => {
         title="מלאי" 
         subtitle="ניהול אוסף המדבקות שלך"
         action={
-          <Button 
-            onClick={() => setIsIntakeFormOpen(true)}
-            className="px-2 py-1.5 h-8 text-xs rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground font-medium transition-colors flex items-center gap-1"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            הוספה
-          </Button>
+          <div className="flex gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    asChild
+                  >
+                    <Link to="/inventory/history" className="flex items-center gap-1.5">
+                      <History className="h-3.5 w-3.5" />
+                      היסטוריה
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>היסטוריית קליטת מדבקות</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <Button 
+              onClick={() => setIsIntakeFormOpen(true)}
+              className="px-2 py-1.5 h-8 text-xs rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground font-medium transition-colors flex items-center gap-1"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              הוספה
+            </Button>
+          </div>
         }
       />
       

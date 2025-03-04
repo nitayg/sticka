@@ -3,7 +3,7 @@ import { Button } from "../ui/button";
 import { 
   Check, 
   Trash2, 
-  Share2, 
+  ArrowLeftRight, 
   Edit, 
   Copy, 
   X,
@@ -75,7 +75,7 @@ const StickerActions = ({ sticker, onToggleOwned, onToggleDuplicate, onEdit }: S
               onClick={shareSticker}
               className="h-9 w-9"
             >
-              <Share2 className="h-4 w-4" />
+              <ArrowLeftRight className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom">

@@ -8,6 +8,7 @@ const AlbumView = lazy(() => import("@/components/AlbumView"));
 const InventoryView = lazy(() => import("@/components/InventoryView"));
 const ExchangeView = lazy(() => import("@/components/ExchangeView"));
 const ScanView = lazy(() => import("@/components/ScanView"));
+const IntakeHistoryView = lazy(() => import("@/components/inventory/IntakeHistoryView"));
 
 // Loading fallback for route components
 const PageLoadingFallback = () => (
@@ -27,6 +28,7 @@ const Index = () => {
           <Routes>
             <Route path="/" element={<AlbumView />} />
             <Route path="/inventory" element={<InventoryView />} />
+            <Route path="/inventory/history" element={<IntakeHistoryView />} />
             <Route path="/exchange" element={<ExchangeView />} />
             <Route path="/scan" element={<ScanView />} />
             <Route path="*" element={<Navigate to="/" replace />} />
