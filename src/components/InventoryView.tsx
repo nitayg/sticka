@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, List, History, ArrowLeftRight, FileMinus, FileCopy, ClipboardCopy, Copy } from "lucide-react";
+import { Plus, List, History, ArrowLeftRight, FileMinus, Copy, ClipboardCopy } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import Header from "./Header";
@@ -223,7 +223,7 @@ const InventoryView = () => {
                         size="sm"
                         className="flex gap-1.5"
                       >
-                        <FileCopy className="h-3.5 w-3.5" />
+                        <Copy className="h-3.5 w-3.5" />
                         <span className="sr-only md:not-sr-only md:inline-block">דו״ח כפולים</span>
                       </Button>
                     </DropdownMenuTrigger>

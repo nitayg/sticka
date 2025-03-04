@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
-import { Plus, History, RefreshCcw, FileMinus, FileCopy, ClipboardCopy, Copy } from 'lucide-react';
+import { Plus, History, RefreshCcw, FileMinus, Copy, ClipboardCopy } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { ViewModeToggle } from "@/components/ViewModeToggle";
+import ViewModeToggle from "@/components/ViewModeToggle";
 import { Album } from "@/lib/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getStickersByAlbumId } from '@/lib/sticker-operations';
@@ -40,7 +39,6 @@ const AlbumHeader = ({
   
   const selectedAlbumData = albums.find(album => album.id === selectedAlbum);
   
-  // Copy missing stickers to clipboard
   const copyMissingStickers = () => {
     if (!selectedAlbum) return;
     
@@ -68,7 +66,6 @@ const AlbumHeader = ({
     }
   };
   
-  // Copy duplicate stickers to clipboard
   const copyDuplicateStickers = () => {
     if (!selectedAlbum) return;
     
@@ -166,7 +163,7 @@ const AlbumHeader = ({
                       className="flex gap-1.5"
                       disabled={!selectedAlbum}
                     >
-                      <FileCopy className="h-3.5 w-3.5" />
+                      <Copy className="h-3.5 w-3.5" />
                       <span className="sr-only md:not-sr-only md:inline-block">דו״ח כפולים</span>
                     </Button>
                   </DropdownMenuTrigger>
@@ -201,4 +198,3 @@ const AlbumHeader = ({
 };
 
 export default AlbumHeader;
-
