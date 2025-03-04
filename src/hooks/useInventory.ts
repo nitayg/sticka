@@ -9,7 +9,7 @@ import {
 
 export default function useInventory() {
   const [activeTab, setActiveTab] = useState<"all" | "owned" | "needed" | "duplicates">("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "compact">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "compact">("compact");
   const [showImages, setShowImages] = useState(true);
   const [isIntakeFormOpen, setIsIntakeFormOpen] = useState(false);
   const [selectedAlbumId, setSelectedAlbumId] = useState<string>("");
