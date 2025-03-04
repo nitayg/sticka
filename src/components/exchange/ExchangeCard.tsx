@@ -20,18 +20,8 @@ interface ExchangeCardProps {
 const ExchangeCard = ({ exchange }: ExchangeCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // מידע מדומה על החלפה (בפרויקט אמיתי, זה יגיע מה-API)
-  const mockExchangeDetails = {
-    location: "תל אביב",
-    phone: "050-1234567",
-    exchangeMethod: "pickup", // pickup, mail, other
-    color: "bg-purple-100",
-    stickersToReceive: [1, 3, 5, 7, 9, 11],
-    stickersToGive: [2, 4, 6, 8, 10]
-  };
-  
   const getExchangeMethodIcon = () => {
-    switch (mockExchangeDetails.exchangeMethod) {
+    switch (exchange.exchangeMethod) {
       case "pickup":
         return <Package className="h-4 w-4" />;
       case "mail":
@@ -42,7 +32,7 @@ const ExchangeCard = ({ exchange }: ExchangeCardProps) => {
   };
   
   const getExchangeMethodText = () => {
-    switch (mockExchangeDetails.exchangeMethod) {
+    switch (exchange.exchangeMethod) {
       case "pickup":
         return "איסוף עצמי";
       case "mail":
@@ -52,11 +42,15 @@ const ExchangeCard = ({ exchange }: ExchangeCardProps) => {
     }
   };
 
+  // Parse sticker numbers from arrays
+  const stickersToReceive = exchange.wantedStickerId.map(id => parseInt(id));
+  const stickersToGive = exchange.offeredStickerId.map(id => parseInt(id));
+
   return (
     <div 
       className={cn(
-        "p-4 rounded-xl border border-border bg-card hover:shadow-md transition-shadow",
-        mockExchangeDetails.color
+        "p-4 rounded-xl border border-border hover:shadow-md transition-shadow",
+        exchange.color || "bg-card"
       )}
     >
       <div className="flex items-center space-x-3 mb-4">
@@ -89,18 +83,26 @@ const ExchangeCard = ({ exchange }: ExchangeCardProps) => {
       </div>
       
       <div className="flex flex-wrap gap-3 mb-4">
-        <div className="flex items-center text-sm">
-          <MapPin className="h-4 w-4 ml-1" />
-          <span>{mockExchangeDetails.location}</span>
-        </div>
-        <div className="flex items-center text-sm">
-          <Phone className="h-4 w-4 ml-1" />
-          <span>{mockExchangeDetails.phone}</span>
-        </div>
-        <div className="flex items-center text-sm">
-          {getExchangeMethodIcon()}
-          <span className="mr-1">{getExchangeMethodText()}</span>
-        </div>
+        {exchange.location && (
+          <div className="flex items-center text-sm">
+            <MapPin className="h-4 w-4 ml-1" />
+            <span>{exchange.location}</span>
+          </div>
+        )}
+        
+        {exchange.phone && (
+          <div className="flex items-center text-sm">
+            <Phone className="h-4 w-4 ml-1" />
+            <span>{exchange.phone}</span>
+          </div>
+        )}
+        
+        {exchange.exchangeMethod && (
+          <div className="flex items-center text-sm">
+            {getExchangeMethodIcon()}
+            <span className="mr-1">{getExchangeMethodText()}</span>
+          </div>
+        )}
       </div>
       
       {isExpanded && (
@@ -108,14 +110,15 @@ const ExchangeCard = ({ exchange }: ExchangeCardProps) => {
           <div>
             <h4 className="text-sm font-medium mb-2">מקבל</h4>
             <div className="grid grid-cols-8 gap-2">
-              {mockExchangeDetails.stickersToReceive.map(stickerId => (
+              {stickersToReceive.map(stickerId => (
                 <StickerImage
                   key={`receive-${stickerId}`}
                   alt={`מדבקה ${stickerId}`}
                   stickerNumber={stickerId}
                   compactView={true}
                   inTransaction={true}
-                  transactionColor={mockExchangeDetails.color}
+                  transactionColor={exchange.color}
+                  transactionPerson={exchange.userName}
                 />
               ))}
             </div>
@@ -124,14 +127,15 @@ const ExchangeCard = ({ exchange }: ExchangeCardProps) => {
           <div>
             <h4 className="text-sm font-medium mb-2">נותן</h4>
             <div className="grid grid-cols-8 gap-2">
-              {mockExchangeDetails.stickersToGive.map(stickerId => (
+              {stickersToGive.map(stickerId => (
                 <StickerImage
                   key={`give-${stickerId}`}
                   alt={`מדבקה ${stickerId}`}
                   stickerNumber={stickerId}
                   compactView={true}
                   inTransaction={true}
-                  transactionColor={mockExchangeDetails.color}
+                  transactionColor={exchange.color}
+                  transactionPerson={exchange.userName}
                 />
               ))}
             </div>

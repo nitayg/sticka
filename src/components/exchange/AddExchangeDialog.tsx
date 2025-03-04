@@ -15,15 +15,31 @@ import {
   User 
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ExchangeOffer } from "@/lib/types";
+import { exchangeOffers } from "@/lib/data";
 
 interface AddExchangeDialogProps {
   onClose: () => void;
   selectedAlbumId: string;
+  onExchangeAdded: () => void;
 }
 
 type ExchangeMethod = "pickup" | "mail" | "other";
 
-const AddExchangeDialog = ({ onClose, selectedAlbumId }: AddExchangeDialogProps) => {
+// Colors for different exchanges
+const exchangeColors = [
+  "bg-purple-100 border-purple-300",
+  "bg-blue-100 border-blue-300",
+  "bg-pink-100 border-pink-300",
+  "bg-green-100 border-green-300",
+  "bg-orange-100 border-orange-300",
+  "bg-yellow-100 border-yellow-300",
+  "bg-indigo-100 border-indigo-300",
+  "bg-red-100 border-red-300",
+  "bg-teal-100 border-teal-300"
+];
+
+const AddExchangeDialog = ({ onClose, selectedAlbumId, onExchangeAdded }: AddExchangeDialogProps) => {
   const [personName, setPersonName] = useState("");
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
@@ -36,7 +52,7 @@ const AddExchangeDialog = ({ onClose, selectedAlbumId }: AddExchangeDialogProps)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!personName || !phone || !location || !stickersToReceive || !stickersToGive) {
+    if (!personName || !phone || !location || !stickersToReceive || !stickersToGive || !selectedAlbumId) {
       toast({
         title: "שגיאה",
         description: "אנא מלא את כל השדות הנדרשים",
@@ -45,12 +61,43 @@ const AddExchangeDialog = ({ onClose, selectedAlbumId }: AddExchangeDialogProps)
       return;
     }
     
-    // בפרויקט אמיתי, כאן נשלח את הנתונים לשרת
+    // Parse sticker IDs from comma-separated strings
+    const stickersToReceiveArray = stickersToReceive.split(',').map(s => s.trim());
+    const stickersToGiveArray = stickersToGive.split(',').map(s => s.trim());
+    
+    // Get a random color for this exchange person
+    const randomColor = exchangeColors[Math.floor(Math.random() * exchangeColors.length)];
+    
+    // Create new exchange offer
+    const newExchange: ExchangeOffer = {
+      id: `e${exchangeOffers.length + 1}`,
+      userId: "u1", // Current user ID (in a real app, this would be dynamic)
+      userName: personName,
+      offeredStickerId: stickersToGiveArray,
+      offeredStickerName: stickersToGive, // Using the raw input as name for simplicity
+      wantedStickerId: stickersToReceiveArray,
+      wantedStickerName: stickersToReceive, // Using the raw input as name for simplicity
+      status: "pending",
+      exchangeMethod: exchangeMethod,
+      location: location,
+      phone: phone,
+      color: randomColor,
+      albumId: selectedAlbumId
+    };
+    
+    // Add to exchanges (in a real app, this would send to an API)
+    exchangeOffers.push(newExchange);
+    
+    // Notify success
     toast({
       title: "הצלחה",
       description: "עסקת ההחלפה נוצרה בהצלחה",
     });
     
+    // Trigger refresh in parent component
+    onExchangeAdded();
+    
+    // Close dialog
     onClose();
   };
   

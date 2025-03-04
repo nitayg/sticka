@@ -1,10 +1,9 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { exchangeOffers, users } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import Header from "./Header";
 import AlbumCarousel from "./inventory/AlbumCarousel";
-import { Album } from "@/lib/types";
 import { getAllAlbums } from "@/lib/data";
 import { 
   Plus, 
@@ -17,21 +16,36 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import EmptyState from "./EmptyState";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Dialog, DialogTrigger } from "./ui/dialog";
 import AddExchangeDialog from "./exchange/AddExchangeDialog";
 import ExchangeCard from "./exchange/ExchangeCard";
 
 const ExchangeView = () => {
   const [selectedAlbumId, setSelectedAlbumId] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   
   const albums = getAllAlbums();
   
-  // Exchange offers
-  const activeExchanges = exchangeOffers;
+  // Set initial album
+  useEffect(() => {
+    if (albums.length > 0 && !selectedAlbumId) {
+      setSelectedAlbumId(albums[0].id);
+    }
+  }, [albums]);
+  
+  // Filter exchanges by selected album
+  const filteredExchanges = selectedAlbumId 
+    ? exchangeOffers.filter(exchange => exchange.albumId === selectedAlbumId)
+    : [];
   
   const handleAlbumChange = (albumId: string) => {
     setSelectedAlbumId(albumId);
+  };
+  
+  const handleExchangeAdded = () => {
+    // Refresh the view when a new exchange is added
+    setRefreshKey(prev => prev + 1);
   };
 
   return (
@@ -50,6 +64,7 @@ const ExchangeView = () => {
             <AddExchangeDialog 
               onClose={() => setIsDialogOpen(false)}
               selectedAlbumId={selectedAlbumId}
+              onExchangeAdded={handleExchangeAdded}
             />
           </Dialog>
         }
@@ -65,9 +80,9 @@ const ExchangeView = () => {
         {/* Active Exchanges */}
         <div className="space-y-4">
           <h2 className="text-lg font-semibold">עסקאות החלפה פעילות</h2>
-          {activeExchanges.length > 0 ? (
+          {filteredExchanges.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-scale-in">
-              {activeExchanges.map(exchange => (
+              {filteredExchanges.map(exchange => (
                 <ExchangeCard 
                   key={exchange.id}
                   exchange={exchange}
@@ -78,7 +93,7 @@ const ExchangeView = () => {
             <EmptyState
               icon={<ArrowRightLeft className="h-12 w-12" />}
               title="אין עסקאות פעילות"
-              description="אין לך עסקאות החלפה פעילות כרגע."
+              description={`אין לך עסקאות החלפה פעילות לאלבום זה כרגע.`}
               action={
                 <Button 
                   onClick={() => setIsDialogOpen(true)}
