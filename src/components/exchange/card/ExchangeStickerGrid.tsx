@@ -3,6 +3,12 @@ import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import StickerImage from "../../sticker-details/StickerImage";
 import { getStickersByAlbumId } from "@/lib/sticker-operations";
 
+// Helper function to get first name only
+const getFirstName = (fullName: string): string => {
+  if (!fullName) return '';
+  return fullName.split(' ')[0];
+};
+
 interface ExchangeStickerGridProps {
   albumId: string;
   stickerIds: string[];
@@ -63,7 +69,7 @@ const ExchangeStickerGrid = ({
                     compactView={true}
                     inTransaction={true}
                     transactionColor={exchangeColor}
-                    transactionPerson={exchangeUserName}
+                    transactionPerson={getFirstName(exchangeUserName)}
                     isOwned={actualSticker?.isOwned}
                     isDuplicate={actualSticker?.isDuplicate}
                     duplicateCount={actualSticker?.duplicateCount}

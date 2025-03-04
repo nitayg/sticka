@@ -12,6 +12,7 @@ import ImageUploadUrl from "./sticker-details/ImageUploadUrl";
 import ImageUploadFile from "./sticker-details/ImageUploadFile";
 import StickerActions from "./sticker-details/StickerActions";
 import StickerImage from "./sticker-details/StickerImage";
+import { useInventoryStore } from "@/store/useInventoryStore";
 
 interface StickerDetailsDialogProps {
   sticker: Sticker | null;
@@ -23,6 +24,7 @@ interface StickerDetailsDialogProps {
 const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDetailsDialogProps) => {
   const { toast } = useToast();
   const [showEditForm, setShowEditForm] = useState(false);
+  const { transactionMap } = useInventoryStore();
   
   useEffect(() => {
     if (sticker) {
@@ -34,6 +36,9 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
   
   const album = getAlbumById(sticker.albumId);
   const fallbackImage = album?.coverImage;
+  
+  // Check if this sticker is part of a transaction
+  const transaction = sticker ? transactionMap[sticker.id] : undefined;
   
   const handleImageUrlUpdate = (imageUrl: string) => {
     updateSticker(sticker.id, { imageUrl });
@@ -74,7 +79,7 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[95vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>פרטי מדבקה</DialogTitle>
             <DialogDescription>
@@ -87,6 +92,16 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
               <div className="flex flex-col space-y-2 order-2 md:order-1">
                 <StickerInfo sticker={sticker} />
                 
+                {transaction && (
+                  <div className={`p-2 rounded-md mb-2 ${transaction.color} border border-border`}>
+                    <h4 className="text-sm font-semibold mb-1">פרטי החלפה</h4>
+                    <p className="text-xs">
+                      <span className="font-medium">אדם: </span>
+                      {transaction.person}
+                    </p>
+                  </div>
+                )}
+                
                 <ImageUploadUrl onUpload={handleImageUrlUpdate} />
                 
                 <ImageUploadFile onUpload={handleImageUrlUpdate} />
@@ -96,6 +111,9 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
                 imageUrl={sticker.imageUrl} 
                 fallbackImage={fallbackImage} 
                 alt={sticker.name} 
+                inTransaction={!!transaction}
+                transactionColor={transaction?.color}
+                transactionPerson={transaction?.person}
               />
             </div>
             

@@ -11,6 +11,11 @@ interface StickerListItemProps {
   isRecentlyAdded?: boolean;
 }
 
+// Helper function to get first name only
+const getFirstName = (fullName: string): string => {
+  return fullName.split(' ')[0];
+};
+
 const StickerListItem = ({ 
   sticker, 
   showImages = true, 
@@ -52,7 +57,7 @@ const StickerListItem = ({
             <div className="text-sm font-bold">{sticker.number}</div>
             {transaction && (
               <div className="mt-0.5 text-[9px] font-medium">
-                {transaction.person}
+                {getFirstName(transaction.person)}
               </div>
             )}
           </div>
@@ -61,7 +66,7 @@ const StickerListItem = ({
         {transaction && showImages && (
           <div className="absolute bottom-0 left-0 right-0 bg-black/50 px-1 py-0.5 text-center">
             <span className="text-[9px] text-white font-medium">
-              {transaction.person}
+              {getFirstName(transaction.person)}
             </span>
           </div>
         )}
@@ -86,7 +91,7 @@ const StickerListItem = ({
       <div className="flex-shrink-0 flex space-x-2">
         {transaction && (
           <div className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium">
-            מ{transaction.person}
+            {getFirstName(transaction.person)}
           </div>
         )}
         

@@ -17,6 +17,11 @@ interface StickerCardProps {
   isRecentlyAdded?: boolean;
 }
 
+// Helper function to get first name only
+const getFirstName = (fullName: string): string => {
+  return fullName.split(' ')[0];
+};
+
 const StickerCard = ({ 
   sticker, 
   compact = false, 
@@ -124,8 +129,8 @@ const StickerCard = ({
         
         {transaction && (
           <div className="pt-1">
-            <div className="text-xs font-medium text-foreground bg-background/80 rounded-sm px-2 py-0.5 text-center">
-              {transaction.person}
+            <div className="text-xs font-medium text-foreground bg-background/80 rounded-sm px-2 py-0.5 text-center truncate">
+              {getFirstName(transaction.person)}
             </div>
           </div>
         )}

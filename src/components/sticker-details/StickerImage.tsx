@@ -3,6 +3,12 @@ import { Image } from "lucide-react";
 import { Album } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+// Helper function to get first name only
+const getFirstName = (fullName: string): string => {
+  if (!fullName) return '';
+  return fullName.split(' ')[0];
+};
+
 interface StickerImageProps {
   imageUrl?: string;
   fallbackImage?: string;
@@ -68,7 +74,7 @@ const StickerImage = ({
         )}
         {inTransaction && transactionPerson && (
           <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-center text-[8px] py-0.5 truncate">
-            {transactionPerson}
+            {getFirstName(transactionPerson)}
           </div>
         )}
       </div>
@@ -90,7 +96,7 @@ const StickerImage = ({
             />
             {inTransaction && transactionPerson && (
               <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-center py-1 text-xs">
-                {transactionPerson}
+                {getFirstName(transactionPerson)}
               </div>
             )}
           </>
@@ -103,7 +109,7 @@ const StickerImage = ({
             />
             {inTransaction && transactionPerson && (
               <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-center py-1 text-xs">
-                {transactionPerson}
+                {getFirstName(transactionPerson)}
               </div>
             )}
           </>
@@ -122,7 +128,7 @@ const StickerImage = ({
           
           {inTransaction && transactionPerson && (
             <div className="mt-2 text-xs font-medium bg-background/80 px-2 py-1 rounded-sm">
-              {transactionPerson}
+              {getFirstName(transactionPerson)}
             </div>
           )}
         </div>
