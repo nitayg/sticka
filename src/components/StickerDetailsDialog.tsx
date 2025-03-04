@@ -79,7 +79,7 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="sm:max-w-[500px] max-h-[95vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>פרטי מדבקה</DialogTitle>
             <DialogDescription>
@@ -87,8 +87,8 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
             </DialogDescription>
           </DialogHeader>
           
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid gap-2 py-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="flex flex-col space-y-2 order-2 md:order-1">
                 <StickerInfo sticker={sticker} />
                 

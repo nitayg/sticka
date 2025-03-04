@@ -192,3 +192,11 @@ html, body {
   transform: scale(0.98);
   transition: opacity 300ms, transform 300ms;
 }
+
+/* Dialog content fit screen */
+.radix-dialog-content {
+  max-height: 90vh !important;
+  max-width: 90vw !important;
+  overflow: visible !important;
+  padding: 16px !important;
+}
