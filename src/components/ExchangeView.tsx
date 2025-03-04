@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { exchangeOffers, users } from "@/lib/data";
 import { cn } from "@/lib/utils";
@@ -18,7 +17,7 @@ import { Button } from "./ui/button";
 import EmptyState from "./EmptyState";
 import { Dialog, DialogTrigger } from "./ui/dialog";
 import AddExchangeDialog from "./exchange/AddExchangeDialog";
-import ExchangeCard from "./exchange/ExchangeCard";
+import ExchangeCard from "./exchange/card";
 
 const ExchangeView = () => {
   const [selectedAlbumId, setSelectedAlbumId] = useState<string>("");
