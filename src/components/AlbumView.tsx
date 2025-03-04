@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllAlbums } from "@/lib/queries";
@@ -29,27 +28,23 @@ const AlbumView = () => {
     handleTeamsManagement
   } = useAlbumStore();
   
-  // Get all albums using React Query
   const { data: albums = [] } = useQuery({
     queryKey: ['albums', refreshKey],
     queryFn: fetchAllAlbums
   });
   
-  // Get stickers for selected album
   const { data: stickers = [] } = useQuery({
     queryKey: ['stickers', selectedAlbumId, refreshKey],
     queryFn: () => selectedAlbumId ? getStickersByAlbumId(selectedAlbumId) : [],
     enabled: !!selectedAlbumId
   });
   
-  // Set default album if none selected
   useEffect(() => {
     if (albums.length > 0 && !selectedAlbumId) {
       handleAlbumChange(albums[0].id);
     }
   }, [albums, selectedAlbumId, handleAlbumChange]);
   
-  // Listen for album data changes
   useEffect(() => {
     const handleAlbumDataChanged = () => {
       handleRefresh();
@@ -62,7 +57,6 @@ const AlbumView = () => {
     };
   }, [handleRefresh]);
   
-  // Calculate unique teams
   const teams = useMemo(() => {
     const teamSet = new Set<string>();
     const stickersToCheck = activeTab === "manage" || showAllAlbumStickers ? stickerData : stickers;
@@ -75,7 +69,6 @@ const AlbumView = () => {
     return Array.from(teamSet).sort();
   }, [stickers, activeTab, stickerData, showAllAlbumStickers]);
 
-  // Calculate number ranges
   const numberRanges = useMemo(() => {
     if (!stickers.length) return [];
     
@@ -93,7 +86,6 @@ const AlbumView = () => {
     });
   }, [stickers]);
   
-  // Team logos map
   const teamLogos = useMemo(() => {
     const logoMap: Record<string, string> = {};
     const stickersToCheck = activeTab === "manage" || showAllAlbumStickers ? stickerData : stickers;
@@ -106,7 +98,15 @@ const AlbumView = () => {
     return logoMap;
   }, [stickers, activeTab, stickerData, showAllAlbumStickers]);
   
-  // Get filtered stickers based on current selections
+  const transactionMap = useMemo(() => {
+    return {
+      "sticker3": { person: "דני", color: "bg-blue-100" },
+      "sticker7": { person: "מיכל", color: "bg-purple-100" },
+      "sticker14": { person: "יוסי", color: "bg-green-100" },
+      "sticker25": { person: "עדי", color: "bg-yellow-100" }
+    };
+  }, []);
+  
   const getFilteredStickers = () => {
     let allStickers = (activeTab === "manage" && selectedTeam) || (showAllAlbumStickers && selectedTeam) 
       ? stickerData 
@@ -170,6 +170,7 @@ const AlbumView = () => {
         onRefresh={handleRefresh}
         activeFilter={activeTab === "number" ? selectedRange : selectedTeam}
         showMultipleAlbums={showAllAlbumStickers || (activeTab === "manage" && selectedTeam !== null)}
+        transactionMap={transactionMap}
       />
     </div>
   );
