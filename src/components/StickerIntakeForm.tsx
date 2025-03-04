@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Label } from "./ui/label";
@@ -7,7 +6,6 @@ import { Button } from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import { useToast } from "./ui/use-toast";
-import { toggleStickerOwned } from "@/lib/sticker-operations";
 import AlbumSelector from "./sticker-form/AlbumSelector";
 import { getStickersByAlbumId } from "@/lib/sticker-operations";
 import { getAllAlbums } from "@/lib/data";
@@ -23,7 +21,7 @@ const exchangePartners = [
 interface StickerIntakeFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onIntake: () => void;
+  onIntake: (albumId: string, stickerNumbers: number[]) => void;
 }
 
 const StickerIntakeForm = ({ isOpen, onClose, onIntake }: StickerIntakeFormProps) => {
@@ -70,7 +68,8 @@ const StickerIntakeForm = ({ isOpen, onClose, onIntake }: StickerIntakeFormProps
     const numbers = stickerNumbers
       .split(",")
       .map(num => num.trim())
-      .filter(num => num && !isNaN(Number(num)));
+      .filter(num => num && !isNaN(Number(num)))
+      .map(num => parseInt(num));
 
     if (numbers.length === 0) {
       setValidationError("אנא הכנס מספרי מדבקות תקינים, מופרדים בפסיקים");
@@ -81,7 +80,6 @@ const StickerIntakeForm = ({ isOpen, onClose, onIntake }: StickerIntakeFormProps
     const albumStickers = getStickersByAlbumId(albumId);
     const albumStickerNumbers = new Set(albumStickers.map(sticker => sticker.number));
     const invalidNumbers = numbers
-      .map(numStr => parseInt(numStr))
       .filter(num => !albumStickerNumbers.has(num));
 
     if (invalidNumbers.length > 0) {
@@ -91,26 +89,11 @@ const StickerIntakeForm = ({ isOpen, onClose, onIntake }: StickerIntakeFormProps
       return;
     }
 
-    // Process the stickers
-    const addedStickers = numbers.map(numStr => {
-      const num = parseInt(numStr);
-      return { number: num };
-    });
-
-    // Here you would normally update your data store with the new stickers
-    // For demonstration purposes, let's just show a success message
-    const sourceText = source === "pack" ? "מעטפה" : 
-                     source === "exchange" ? `החלפה עם ${exchangePartner}` : 
-                     `אחר: ${otherDetails}`;
-
-    toast({
-      title: "מדבקות נוספו בהצלחה",
-      description: `${addedStickers.length} מדבקות נוספו למלאי (מקור: ${sourceText})`,
-    });
-
+    // Call the onIntake function with albumId and numbers
+    onIntake(albumId, numbers);
+    
     // Reset form and close
     resetForm();
-    onIntake();
     onClose();
   };
 
