@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllAlbums } from "@/lib/queries";
