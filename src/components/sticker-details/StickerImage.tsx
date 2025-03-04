@@ -42,20 +42,24 @@ const StickerImage = ({
       <div className={cn(
         "relative aspect-square rounded-lg overflow-hidden border flex items-center justify-center transition-all",
         getBgColor(),
-        isDuplicate && isOwned && "ring-2 ring-interactive"
+        isDuplicate && isOwned && "ring-1 ring-interactive"
       )}>
         {stickerNumber && (
           <div className={cn(
-            "text-lg font-bold",
+            "font-bold",
             isOwned ? "text-green-800" : "text-muted-foreground",
-            inTransaction && "text-foreground"
+            inTransaction && "text-foreground",
+            // Adjust text size based on number length
+            stickerNumber > 999 ? "text-[10px]" : 
+            stickerNumber > 99 ? "text-xs" : 
+            "text-sm"
           )}>
             {stickerNumber}
           </div>
         )}
-        {isDuplicate && isOwned && (
-          <div className="absolute top-1 right-1 text-xs font-semibold text-interactive">
-            {duplicateCount > 0 ? duplicateCount + 1 : '2+'}
+        {isDuplicate && isOwned && duplicateCount > 0 && (
+          <div className="absolute bottom-0.5 right-0.5 text-[10px] font-semibold text-interactive">
+            {duplicateCount + 1}
           </div>
         )}
       </div>

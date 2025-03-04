@@ -31,20 +31,31 @@ const StickerCollection = ({
 }: StickerCollectionProps) => {
   const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [gridColsClass, setGridColsClass] = useState("");
   
-  // Adjust card size based on active filter and view mode
-  const getGridColsClass = () => {
+  // Calculate the appropriate grid layout based on sticker count and view mode
+  useEffect(() => {
     if (viewMode === "compact") {
-      return "grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-16";
+      // Dynamic grid sizing based on sticker count
+      const count = stickers.length;
+      
+      if (count > 200) {
+        setGridColsClass("grid-cols-8 sm:grid-cols-12 md:grid-cols-16 lg:grid-cols-20 xl:grid-cols-24");
+      } else if (count > 100) {
+        setGridColsClass("grid-cols-6 sm:grid-cols-10 md:grid-cols-14 lg:grid-cols-18 xl:grid-cols-20");
+      } else if (count > 50) {
+        setGridColsClass("grid-cols-5 sm:grid-cols-8 md:grid-cols-12 lg:grid-cols-16 xl:grid-cols-18");
+      } else {
+        setGridColsClass("grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-16");
+      }
+    } else if (activeFilter) {
+      // When filtered, show more cards by reducing their size
+      setGridColsClass("grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8");
+    } else {
+      // Default size
+      setGridColsClass("grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5");
     }
-    
-    // When filtered, show more cards by reducing their size
-    if (activeFilter) {
-      return "grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8";
-    }
-    // Default size
-    return "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5";
-  };
+  }, [stickers.length, viewMode, activeFilter]);
   
   const handleStickerClick = (sticker: Sticker) => {
     setSelectedSticker(sticker);
@@ -85,8 +96,10 @@ const StickerCollection = ({
       <div className={cn(
         "w-full animate-scale-in",
         viewMode === "list" 
-          ? "grid grid-cols-1 gap-3" 
-          : `grid ${getGridColsClass()} gap-3 px-0.5`
+          ? "grid grid-cols-1 gap-2" 
+          : viewMode === "compact"
+            ? `grid ${gridColsClass} gap-1.5`
+            : `grid ${gridColsClass} gap-3 px-0.5`
       )}>
         {stickers.map(sticker => {
           const transaction = transactionMap[sticker.id];
