@@ -41,6 +41,7 @@ const StickerCard = ({
         onClick && "cursor-pointer",
         compact ? "w-full max-w-[160px]" : "w-full",
         isRecentlyAdded && "border-yellow-400",
+        transaction && transaction.color,
         className
       )}
     >
@@ -118,6 +119,14 @@ const StickerCard = ({
             <button className="w-[calc(50%-0.25rem)] py-1.5 bg-muted hover:bg-muted/80 text-muted-foreground text-xs font-medium rounded-md transition-colors duration-200">
               <X className="h-4 w-4 mx-auto" />
             </button>
+          </div>
+        )}
+        
+        {transaction && (
+          <div className="pt-1">
+            <div className="text-xs font-medium text-foreground bg-background/80 rounded-sm px-2 py-0.5 text-center">
+              {transaction.person}
+            </div>
           </div>
         )}
       </div>

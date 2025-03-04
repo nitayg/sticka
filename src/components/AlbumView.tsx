@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllAlbums } from "@/lib/queries";
@@ -7,6 +8,7 @@ import AlbumHeader from "./album/AlbumHeader";
 import FilterControls from "./album/FilterControls";
 import TabsContainer from "./album/TabsContainer";
 import { useAlbumStore } from "@/store/useAlbumStore";
+import { exchangeOffers } from "@/lib/data";
 
 const AlbumView = () => {
   const {
@@ -39,9 +41,35 @@ const AlbumView = () => {
     enabled: !!selectedAlbumId
   });
 
+  // Create transaction map from exchange offers
   const transactionMap = useMemo(() => {
-    return getStickerTransactions();
-  }, [refreshKey]);
+    if (!selectedAlbumId) return {};
+    
+    const map: Record<string, { person: string, color: string }> = {};
+    
+    // Get relevant exchanges for this album
+    const relevantExchanges = exchangeOffers.filter(
+      exchange => exchange.albumId === selectedAlbumId
+    );
+    
+    // Map stickers to their transactions
+    relevantExchanges.forEach(exchange => {
+      // Find stickers that the user will receive
+      const stickerNumbers = exchange.wantedStickerId.map(id => parseInt(id));
+      
+      stickerNumbers.forEach(number => {
+        const sticker = stickers.find(s => s.number === number);
+        if (sticker) {
+          map[sticker.id] = {
+            person: exchange.userName,
+            color: exchange.color || "bg-secondary"
+          };
+        }
+      });
+    });
+    
+    return map;
+  }, [selectedAlbumId, stickers, refreshKey]);
   
   useEffect(() => {
     if (albums.length > 0 && !selectedAlbumId) {

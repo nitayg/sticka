@@ -26,6 +26,7 @@ const StickerListItem = ({
         "transition-all duration-300 ease-out hover:shadow-md dark:bg-card",
         onClick && "cursor-pointer",
         isRecentlyAdded && "border-yellow-400 animate-pulse-brief",
+        transaction && transaction.color
       )}
     >
       {isRecentlyAdded && (

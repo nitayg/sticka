@@ -74,6 +74,8 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
   },
   
   updateTransactionMap: (albumId) => {
+    if (!albumId) return;
+    
     const newTransactionMap: Record<string, { person: string, color: string }> = {};
     
     // Get relevant exchanges for this album
