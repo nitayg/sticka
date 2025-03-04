@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
@@ -14,9 +14,27 @@ const exchangePartners = [
 interface ExchangePartnerSelectorProps {
   exchangePartner: string;
   setExchangePartner: (partner: string) => void;
+  defaultPartner?: string;
 }
 
-const ExchangePartnerSelector = ({ exchangePartner, setExchangePartner }: ExchangePartnerSelectorProps) => {
+const ExchangePartnerSelector = ({ 
+  exchangePartner, 
+  setExchangePartner,
+  defaultPartner
+}: ExchangePartnerSelectorProps) => {
+  
+  // Set default partner when provided
+  useEffect(() => {
+    if (defaultPartner && !exchangePartner) {
+      setExchangePartner(defaultPartner);
+    }
+  }, [defaultPartner, exchangePartner, setExchangePartner]);
+  
+  // Add the default partner to the list if it's not already there
+  const allPartners = defaultPartner && !exchangePartners.some(p => p.name === defaultPartner) 
+    ? [...exchangePartners, { id: `user${exchangePartners.length + 1}`, name: defaultPartner }]
+    : exchangePartners;
+    
   return (
     <div className="grid grid-cols-4 items-center gap-4">
       <Label htmlFor="exchangePartner" className="text-right">
@@ -30,7 +48,7 @@ const ExchangePartnerSelector = ({ exchangePartner, setExchangePartner }: Exchan
           <SelectValue placeholder="בחר מחליף" />
         </SelectTrigger>
         <SelectContent>
-          {exchangePartners.map(partner => (
+          {allPartners.map(partner => (
             <SelectItem key={partner.id} value={partner.name}>
               {partner.name}
             </SelectItem>

@@ -5,6 +5,8 @@ import {
   getStickersByAlbumId,
   addStickersToInventory,
 } from '@/lib/sticker-operations';
+import { useIntakeLogStore } from './useIntakeLogStore';
+import { getAlbumById } from '@/lib/data';
 
 type InventoryTab = "all" | "owned" | "needed" | "duplicates";
 type ViewMode = "grid" | "list" | "compact";
@@ -107,15 +109,64 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
     const result = addStickersToInventory(albumId, stickerNumbers);
     get().handleRefresh();
     
+    // Get stickers for logging
+    const albumStickers = getStickersByAlbumId(albumId);
+    const numbers = stickerNumbers.map(num => num);
+    
+    // Identify which stickers were newly owned vs duplicates updated
+    const newlyOwned: number[] = [];
+    const newDuplicates: number[] = [];
+    const updatedDuplicates: number[] = [];
+    
+    // Process result for the log
+    if (result.newlyOwned > 0) {
+      newlyOwned.push(...numbers.slice(0, result.newlyOwned));
+    }
+    
+    if (result.duplicatesUpdated > 0) {
+      updatedDuplicates.push(...numbers.slice(result.newlyOwned, result.newlyOwned + result.duplicatesUpdated));
+    }
+    
+    // Update the most recent log entry with the real results
+    const album = getAlbumById(albumId);
+    const { addLogEntry } = useIntakeLogStore.getState();
+    const logEntries = useIntakeLogStore.getState().intakeLog;
+    
+    if (logEntries.length > 0) {
+      // Remove the first entry (most recent)
+      const [firstEntry, ...restEntries] = logEntries;
+      
+      // Create updated entry
+      const updatedEntry = {
+        ...firstEntry,
+        newStickers: newlyOwned,
+        newDuplicates: newDuplicates,
+        updatedDuplicates: updatedDuplicates
+      };
+      
+      // Clear and then restore the log with the updated entry
+      useIntakeLogStore.setState({ intakeLog: [updatedEntry, ...restEntries] });
+    } else {
+      // If no existing entry, create a new one
+      addLogEntry({
+        albumId,
+        albumName: album?.name || "אלבום לא ידוע",
+        source: "קליטה ישירה",
+        newStickers: newlyOwned,
+        newDuplicates: newDuplicates,
+        updatedDuplicates: updatedDuplicates,
+      });
+    }
+    
     // Notify other components about the change
     window.dispatchEvent(new CustomEvent('albumDataChanged'));
+    window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
     
-    // Convert the result to match the expected return type with arrays
-    // Now handling as a resolved Promise, not a direct return
+    // Return the information about which stickers were processed
     return Promise.resolve({
-      newlyOwned: result.newlyOwned > 0 ? stickerNumbers.slice(0, result.newlyOwned) : [],
-      duplicatesUpdated: result.duplicatesUpdated > 0 ? stickerNumbers.slice(result.newlyOwned, result.newlyOwned + result.duplicatesUpdated) : [],
-      notFound: result.notFound > 0 ? stickerNumbers.slice(result.newlyOwned + result.duplicatesUpdated, result.newlyOwned + result.duplicatesUpdated + result.notFound) : []
+      newlyOwned: newlyOwned,
+      duplicatesUpdated: [...newDuplicates, ...updatedDuplicates],
+      notFound: result.notFound > 0 ? numbers.slice(result.newlyOwned + result.duplicatesUpdated) : []
     });
   }
 }));

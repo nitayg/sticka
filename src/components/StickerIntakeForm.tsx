@@ -10,15 +10,24 @@ import ExchangePartnerSelector from "./sticker-intake/ExchangePartnerSelector";
 import OtherDetailsInput from "./sticker-intake/OtherDetailsInput";
 import ValidationError from "./sticker-intake/ValidationError";
 import { getStickersByAlbumId } from "@/lib/sticker-operations";
-import { getAllAlbums } from "@/lib/data";
+import { getAllAlbums, getAlbumById } from "@/lib/data";
+import { useIntakeLogStore } from "@/store/useIntakeLogStore";
 
 interface StickerIntakeFormProps {
   isOpen: boolean;
   onClose: () => void;
   onIntake: (albumId: string, stickerNumbers: number[]) => void;
+  defaultStickerNumbers?: string;
+  defaultExchangePartner?: string;
 }
 
-const StickerIntakeForm = ({ isOpen, onClose, onIntake }: StickerIntakeFormProps) => {
+const StickerIntakeForm = ({ 
+  isOpen, 
+  onClose, 
+  onIntake,
+  defaultStickerNumbers = "",
+  defaultExchangePartner = ""
+}: StickerIntakeFormProps) => {
   const [stickerNumbers, setStickerNumbers] = useState("");
   const [source, setSource] = useState<"exchange" | "pack" | "other">("pack");
   const [exchangePartner, setExchangePartner] = useState("");
@@ -26,13 +35,26 @@ const StickerIntakeForm = ({ isOpen, onClose, onIntake }: StickerIntakeFormProps
   const [albumId, setAlbumId] = useState("");
   const [validationError, setValidationError] = useState("");
   const { toast } = useToast();
+  const { addLogEntry } = useIntakeLogStore();
   const albums = getAllAlbums();
 
   useEffect(() => {
     if (isOpen && albums.length > 0 && !albumId) {
       setAlbumId(albums[0].id);
     }
-  }, [isOpen, albums, albumId]);
+    
+    // Set default values when provided and form is opened
+    if (isOpen) {
+      if (defaultStickerNumbers) {
+        setStickerNumbers(defaultStickerNumbers);
+      }
+      
+      if (defaultExchangePartner) {
+        setExchangePartner(defaultExchangePartner);
+        setSource("exchange");
+      }
+    }
+  }, [isOpen, albums, albumId, defaultStickerNumbers, defaultExchangePartner]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,7 +106,27 @@ const StickerIntakeForm = ({ isOpen, onClose, onIntake }: StickerIntakeFormProps
     }
 
     // Call the onIntake function with albumId and numbers
+    // Also track the results to add to the log
     onIntake(albumId, numbers);
+    
+    // Get source details for log
+    const sourceText = source === "exchange" 
+      ? `החלפה עם ${exchangePartner}` 
+      : source === "other" 
+        ? otherDetails 
+        : "קנייה של חבילת מדבקות";
+    
+    // Add entry to log - we'll set the results later in the actual sticker intake function
+    const album = getAlbumById(albumId);
+    addLogEntry({
+      albumId,
+      albumName: album?.name || "אלבום לא ידוע",
+      source: sourceText,
+      sourceDetails: source === "other" ? otherDetails : undefined,
+      newStickers: [],
+      newDuplicates: [],
+      updatedDuplicates: [],
+    });
     
     // Reset form and close
     resetForm();
@@ -120,6 +162,7 @@ const StickerIntakeForm = ({ isOpen, onClose, onIntake }: StickerIntakeFormProps
               <ExchangePartnerSelector 
                 exchangePartner={exchangePartner} 
                 setExchangePartner={setExchangePartner} 
+                defaultPartner={defaultExchangePartner}
               />
             )}
 

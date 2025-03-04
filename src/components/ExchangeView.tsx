@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { exchangeOffers, users } from "@/lib/data";
 import { cn } from "@/lib/utils";
@@ -6,11 +7,6 @@ import AlbumCarousel from "./inventory/AlbumCarousel";
 import { getAllAlbums } from "@/lib/data";
 import { 
   Plus, 
-  MapPin, 
-  Phone, 
-  Package, 
-  Mail, 
-  User, 
   ArrowRightLeft
 } from "lucide-react";
 import { Button } from "./ui/button";
@@ -18,6 +14,9 @@ import EmptyState from "./EmptyState";
 import { Dialog, DialogTrigger } from "./ui/dialog";
 import AddExchangeDialog from "./exchange/AddExchangeDialog";
 import ExchangeCard from "./exchange/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { useInventoryStore } from "@/store/useInventoryStore";
+import ExchangeHistoryButton from "./exchange/ExchangeHistoryButton";
 
 const ExchangeView = () => {
   const [selectedAlbumId, setSelectedAlbumId] = useState<string>("");
@@ -57,19 +56,31 @@ const ExchangeView = () => {
         title="מערכת החלפות" 
         subtitle="החלף מדבקות עם אספנים אחרים"
         action={
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                עסקת החלפה חדשה
-              </Button>
-            </DialogTrigger>
-            <AddExchangeDialog 
-              onClose={() => setIsDialogOpen(false)}
-              selectedAlbumId={selectedAlbumId}
-              onExchangeAdded={handleExchangeAdded}
-            />
-          </Dialog>
+          <div className="flex gap-2">
+            <ExchangeHistoryButton />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        עסקת החלפה חדשה
+                      </Button>
+                    </DialogTrigger>
+                    <AddExchangeDialog 
+                      onClose={() => setIsDialogOpen(false)}
+                      selectedAlbumId={selectedAlbumId}
+                      onExchangeAdded={handleExchangeAdded}
+                    />
+                  </Dialog>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>צור עסקת החלפה חדשה</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         }
       />
       

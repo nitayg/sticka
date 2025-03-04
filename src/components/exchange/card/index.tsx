@@ -136,8 +136,8 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
       )}
       
       <ExchangeActions 
-        onUpdate={() => console.log("Update exchange")}
-        onCancel={() => console.log("Cancel exchange")}
+        exchange={exchange}
+        onRefresh={onRefresh || (() => {})}
       />
     </div>
   );
