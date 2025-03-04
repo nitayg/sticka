@@ -1,3 +1,4 @@
+
 import { Image } from "lucide-react";
 import { Album } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -39,26 +40,22 @@ const StickerImage = ({
   if (compactView) {
     return (
       <div className={cn(
-        "relative h-5 w-5 xxs:h-6 xxs:w-6 xs:h-7 xs:w-7 sm:h-6 sm:w-6 md:h-5 md:w-5 lg:h-5 lg:w-5 xl:h-5 xl:w-5 rounded border flex items-center justify-center transition-all",
+        "relative aspect-square rounded-lg overflow-hidden border flex items-center justify-center transition-all",
         getBgColor(),
-        isDuplicate && isOwned && "ring-[0.5px] ring-interactive"
+        isDuplicate && isOwned && "ring-2 ring-interactive"
       )}>
         {stickerNumber && (
           <div className={cn(
-            "font-medium",
+            "text-lg font-bold",
             isOwned ? "text-green-800" : "text-muted-foreground",
-            inTransaction && "text-foreground",
-            // Adjust text size based on number length
-            stickerNumber > 999 ? "text-[5px] xxs:text-[6px] xs:text-[7px]" : 
-            stickerNumber > 99 ? "text-[6px] xxs:text-[7px] xs:text-[8px]" : 
-            "text-[7px] xxs:text-[8px] xs:text-[9px]"
+            inTransaction && "text-foreground"
           )}>
             {stickerNumber}
           </div>
         )}
-        {isDuplicate && isOwned && duplicateCount > 0 && (
-          <div className="absolute bottom-0 right-0 text-[4px] font-semibold text-interactive">
-            {duplicateCount + 1}
+        {isDuplicate && isOwned && (
+          <div className="absolute top-1 right-1 text-xs font-semibold text-interactive">
+            {duplicateCount > 0 ? duplicateCount + 1 : '2+'}
           </div>
         )}
       </div>

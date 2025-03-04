@@ -29,39 +29,35 @@ const InventoryView = () => {
   } = useInventory();
 
   return (
-    <div className="space-y-1 animate-fade-in">
+    <div className="space-y-8 animate-fade-in">
       <Header 
         title="מלאי" 
         subtitle="ניהול אוסף המדבקות שלך"
         action={
           <Button 
             onClick={() => setIsIntakeFormOpen(true)}
-            className="px-2 py-1 rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground text-sm font-medium transition-colors flex items-center gap-1"
-            size="sm"
+            className="px-3 py-2 rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
           >
-            <Plus className="h-3 w-3" />
+            <Plus className="h-4 w-4" />
             הוספה
           </Button>
         }
-        className="pb-2"
       />
       
-      <div className="space-y-1">
-        <InventoryFilters
-          selectedAlbumId={selectedAlbumId}
-          onAlbumChange={handleAlbumChange}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          showImages={showImages}
-          setShowImages={setShowImages}
-        />
-        
-        <InventoryStats 
-          stats={tabStats} 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-        />
-      </div>
+      <InventoryFilters
+        selectedAlbumId={selectedAlbumId}
+        onAlbumChange={handleAlbumChange}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        showImages={showImages}
+        setShowImages={setShowImages}
+      />
+      
+      <InventoryStats 
+        stats={tabStats} 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+      />
       
       <InventoryTitle activeTab={activeTab} />
       
@@ -83,10 +79,9 @@ const InventoryView = () => {
           action={
             <Button 
               onClick={() => setIsIntakeFormOpen(true)}
-              className="px-3 py-1 rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground text-sm font-medium transition-colors flex items-center gap-1"
-              size="sm"
+              className="px-4 py-2 rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground text-sm font-medium transition-colors flex items-center gap-1.5"
             >
-              <Plus className="h-3 w-3" />
+              <Plus className="h-4 w-4" />
               הוספת מדבקה
             </Button>
           }

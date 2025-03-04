@@ -5,8 +5,8 @@ interface InventoryTitleProps {
 
 const InventoryTitle = ({ activeTab }: InventoryTitleProps) => {
   return (
-    <div className="flex justify-between items-center py-1">
-      <h2 className="text-sm font-semibold text-foreground">
+    <div className="flex justify-between items-center">
+      <h2 className="text-xl font-semibold text-foreground">
         {activeTab === "all" && "כל המדבקות"}
         {activeTab === "owned" && "מדבקות ברשותי"}
         {activeTab === "needed" && "מדבקות חסרות"}
