@@ -1,3 +1,4 @@
+
 import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -6,10 +7,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/hooks/use-theme";
 import SplashScreen from "@/components/SplashScreen";
 import ManifestUpdater from "@/components/settings/ManifestUpdater";
-import SupabaseInitializer from "@/components/SupabaseInitializer";
 
+// Lazy-load the main Index component
 const Index = lazy(() => import("./pages/Index"));
 
+// Create a loading fallback with improved visual indicators
 const LoadingFallback = () => (
   <div className="h-screen w-full flex items-center justify-center bg-background">
     <div className="flex flex-col items-center space-y-4">
@@ -27,6 +29,7 @@ const LoadingFallback = () => (
   </div>
 );
 
+// Create QueryClient with improved configuration
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -39,6 +42,7 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
+  // החלת הגדרות ה-manifest המותאמות בטעינת האפליקציה
   useEffect(() => {
     ManifestUpdater.applyManifestOverrides();
   }, []);
@@ -50,7 +54,6 @@ const App = () => {
           <SplashScreen minDisplayTime={1800} />
           <Toaster />
           <Sonner position="top-center" closeButton />
-          <SupabaseInitializer />
           <Suspense fallback={<LoadingFallback />}>
             <Index />
           </Suspense>
