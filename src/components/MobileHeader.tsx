@@ -32,7 +32,7 @@ const MobileHeader = ({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) => {
           <span className="sr-only">Toggle Menu</span>
         </Button>
         
-        <h1 className="text-lg font-bold">אוסף מדבקות</h1>
+        <h1 className="text-lg font-bold">STICKA</h1>
         
         <div className="flex items-center gap-2">
           <Button

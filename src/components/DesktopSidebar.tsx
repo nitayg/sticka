@@ -40,14 +40,14 @@ const DesktopSidebar = ({
         )}>
           {!collapsed && (
             <div>
-              <h2 className="text-xl font-semibold">אוסף מדבקות</h2>
+              <h2 className="text-xl font-semibold">STICKA</h2>
               <p className="text-xs text-muted-foreground mt-1">נהל את האוסף שלך</p>
             </div>
           )}
           
           {collapsed && (
             <div className="h-10 w-10 bg-interactive/10 rounded-full flex items-center justify-center">
-              <span className="text-lg font-bold text-interactive">A</span>
+              <span className="text-lg font-bold text-interactive">S</span>
             </div>
           )}
           

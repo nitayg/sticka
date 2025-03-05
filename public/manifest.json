@@ -1,7 +1,7 @@
 
 {
-  "name": "Sticker Swapper",
-  "short_name": "מחליף מדבקות",
+  "name": "STICKA",
+  "short_name": "STICKA",
   "description": "אפליקציה לניהול אוסף מדבקות והחלפות",
   "start_url": "/",
   "display": "standalone",

@@ -49,7 +49,7 @@ const SplashScreen = ({ minDisplayTime = 1500 }: SplashScreenProps) => {
           alt="Logo" 
           className="splash-logo" 
         />
-        <h1 className="text-2xl font-bold mt-4">מחליף המדבקות</h1>
+        <h1 className="text-2xl font-bold mt-4">STICKA</h1>
       </div>
     </div>
   );
