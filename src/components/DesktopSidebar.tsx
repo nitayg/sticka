@@ -3,9 +3,10 @@ import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
 import StatsPanel from "./StatsPanel";
 import { NavigationItem } from "@/lib/types";
-import { ChevronRight, ChevronLeft } from "lucide-react";
+import { ChevronRight, ChevronLeft, Settings } from "lucide-react";
 import { Button } from "./ui/button";
 import { useTheme } from "@/hooks/use-theme";
+import SettingsButton from "./settings/SettingsButton";
 
 interface DesktopSidebarProps {
   navigation: NavigationItem[];
@@ -96,7 +97,15 @@ const DesktopSidebar = ({
           "mt-auto",
           collapsed ? "px-1 py-2" : "px-2 py-4"
         )}>
-          {!collapsed && <StatsPanel albumId={albumId} />}
+          {!collapsed && (
+            <>
+              <StatsPanel albumId={albumId} />
+              
+              <div className="mt-6 border-t border-border pt-4">
+                <SettingsButton variant="ghost" />
+              </div>
+            </>
+          )}
           
           {collapsed && albumId && (
             <div className="flex flex-col items-center py-2">
@@ -104,6 +113,10 @@ const DesktopSidebar = ({
                 <span className="text-xs font-medium">S</span>
               </div>
               <div className="text-[10px] text-muted-foreground">סטטיסטיקה</div>
+              
+              <div className="mt-4 border-t border-border pt-4 w-full flex justify-center">
+                <SettingsButton iconOnly />
+              </div>
             </div>
           )}
         </div>

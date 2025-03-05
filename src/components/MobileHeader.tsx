@@ -1,7 +1,8 @@
 
-import { Menu, X, Sun, Moon } from "lucide-react";
+import { Menu, X, Sun, Moon, Settings } from "lucide-react";
 import { Button } from "./ui/button";
 import { useTheme } from "@/hooks/use-theme";
+import SettingsButton from "./settings/SettingsButton";
 
 interface MobileHeaderProps {
   isMenuOpen: boolean;
@@ -34,19 +35,23 @@ const MobileHeader = ({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) => {
         
         <h1 className="text-base font-bold">STICKA</h1>
         
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 p-0"
-          onClick={toggleTheme}
-        >
-          {theme === 'dark' ? (
-            <Sun className="h-4 w-4" />
-          ) : (
-            <Moon className="h-4 w-4" />
-          )}
-          <span className="sr-only">Toggle Theme</span>
-        </Button>
+        <div className="flex items-center gap-1">
+          <SettingsButton iconOnly />
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 p-0"
+            onClick={toggleTheme}
+          >
+            {theme === 'dark' ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
+            <span className="sr-only">Toggle Theme</span>
+          </Button>
+        </div>
       </div>
     </div>
   );
