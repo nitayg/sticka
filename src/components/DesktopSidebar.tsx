@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
 import StatsPanel from "./StatsPanel";
 import { NavigationItem } from "@/lib/types";
-import { ChevronRight, ChevronLeft, Settings } from "lucide-react";
+import { ChevronRight, ChevronLeft } from "lucide-react";
 import { Button } from "./ui/button";
 import { useTheme } from "@/hooks/use-theme";
 import SettingsButton from "./settings/SettingsButton";
@@ -41,7 +41,7 @@ const DesktopSidebar = ({
         )}>
           {!collapsed && (
             <div>
-              <h2 className="text-xl font-semibold">STICKA</h2>
+              <h2 className="text-xl font-semibold">STICKA'</h2>
               <p className="text-xs text-muted-foreground mt-1">נהל את האוסף שלך</p>
             </div>
           )}

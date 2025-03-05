@@ -28,7 +28,7 @@ const ApplicationDetails = ({ onSave }: ApplicationDetailsProps) => {
         const response = await fetch('/manifest.json');
         const data = await response.json();
         
-        setAppName(data.name || "STICKA");
+        setAppName(data.name || "STICKA'");
         setAppDescription(data.description || "אפליקציה לניהול אוסף מדבקות והחלפות");
         setThemeColor(data.theme_color || "#0077ff");
         setBgColor(data.background_color || "#ffffff");

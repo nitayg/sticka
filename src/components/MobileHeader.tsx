@@ -1,5 +1,5 @@
 
-import { Menu, X, Sun, Moon, Settings } from "lucide-react";
+import { Menu, X, Sun, Moon } from "lucide-react";
 import { Button } from "./ui/button";
 import { useTheme } from "@/hooks/use-theme";
 import SettingsButton from "./settings/SettingsButton";
@@ -33,7 +33,7 @@ const MobileHeader = ({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) => {
           <span className="sr-only">Toggle Menu</span>
         </Button>
         
-        <h1 className="text-base font-bold">STICKA</h1>
+        <h1 className="text-base font-bold">STICKA'</h1>
         
         <div className="flex items-center gap-1">
           <SettingsButton iconOnly />
