@@ -1,56 +1,66 @@
-import { Album } from './types';
-import { albums as initialAlbums } from './initial-data';
-import { stickerData, setStickerData } from './sticker-operations';
-import { saveToStorage } from './sync-manager';
+// album-operations.ts
+import { supabase } from './supabase-client'; // ודא שהנתיב נכון
+import { Album } from './types'; // או הנתיב בו מוגדרים האינטרפייסים
 
-// Maintain data state
-let albumData = [...initialAlbums];
+// שליפת כל האלבומים
+export async function getAlbums(): Promise<Album[]> {
+  const { data, error } = await supabase.from('albums').select('*');
+  if (error) {
+    console.error('Error fetching albums:', error);
+    throw error;
+  }
+  return data as Album[];
+}
 
-export const getAlbumData = () => albumData;
-export const setAlbumData = (data: Album[]) => {
-  albumData = data;
-  // Save to localStorage whenever data changes
-  saveToStorage('albums', albumData);
-};
+// שליפת אלבום לפי מזהה
+export async function getAlbumById(albumId: string): Promise<Album | null> {
+  const { data, error } = await supabase
+    .from('albums')
+    .select('*')
+    .eq('id', albumId)
+    .single();
+  if (error) {
+    console.error('Error fetching album:', error);
+    throw error;
+  }
+  return data as Album;
+}
 
-export const getAllAlbums = () => {
-  return albumData;
-};
+// יצירת אלבום חדש
+export async function createAlbum(album: Omit<Album, 'id'>): Promise<Album> {
+  const { data, error } = await supabase
+    .from('albums')
+    .insert(album)
+    .single();
+  if (error) {
+    console.error('Error creating album:', error);
+    throw error;
+  }
+  return data as Album;
+}
 
-export const getAlbumById = (id: string) => {
-  return albumData.find(album => album.id === id);
-};
+// עדכון אלבום קיים
+export async function updateAlbum(albumId: string, updates: Partial<Album>): Promise<Album> {
+  const { data, error } = await supabase
+    .from('albums')
+    .update(updates)
+    .eq('id', albumId)
+    .single();
+  if (error) {
+    console.error('Error updating album:', error);
+    throw error;
+  }
+  return data as Album;
+}
 
-export const addAlbum = (album: Omit<Album, "id">) => {
-  const newAlbum = {
-    ...album,
-    id: `album${albumData.length + 1}`
-  };
-  setAlbumData([...albumData, newAlbum]);
-  
-  // Trigger a custom event to notify components that album data has changed
-  window.dispatchEvent(new CustomEvent('albumDataChanged'));
-  
-  return newAlbum;
-};
-
-export const updateAlbum = (id: string, data: Partial<Album>) => {
-  setAlbumData(albumData.map(album => 
-    album.id === id ? { ...album, ...data } : album
-  ));
-  
-  // Trigger a custom event to notify components that album data has changed
-  window.dispatchEvent(new CustomEvent('albumDataChanged'));
-  
-  return albumData.find(album => album.id === id);
-};
-
-export const deleteAlbum = (id: string) => {
-  setAlbumData(albumData.filter(album => album.id !== id));
-  // מחיקת כל המדבקות השייכות לאלבום זה
-  const updatedStickers = stickerData.filter(sticker => sticker.albumId !== id);
-  setStickerData(updatedStickers);
-  
-  // Trigger a custom event to notify components that album data has changed
-  window.dispatchEvent(new CustomEvent('albumDataChanged'));
-};
+// מחיקת אלבום
+export async function deleteAlbum(albumId: string): Promise<void> {
+  const { error } = await supabase
+    .from('albums')
+    .delete()
+    .eq('id', albumId);
+  if (error) {
+    console.error('Error deleting album:', error);
+    throw error;
+  }
+}
