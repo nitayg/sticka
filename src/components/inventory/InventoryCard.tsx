@@ -30,7 +30,7 @@ const InventoryCard = ({ title, value, active, onClick }: InventoryCardProps) =>
     <button
       onClick={onClick}
       className={cn(
-        "flex-1 rounded-lg p-2 transition-all duration-300",
+        "flex-1 min-w-[80px] rounded-lg p-2 transition-all duration-300",
         "border",
         active 
           ? "border-interactive bg-interactive/5 shadow-sm" 

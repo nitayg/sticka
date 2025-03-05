@@ -57,3 +57,17 @@
 .dark .card-hover:hover {
   box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.3);
 }
+
+/* Stats cards on mobile */
+@media (max-width: 640px) {
+  .stats-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+  }
+  
+  .stats-container::-webkit-scrollbar {
+    height: 4px;
+  }
+}
