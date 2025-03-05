@@ -35,11 +35,10 @@ const MobileHeader = ({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) => {
         
         <div className="flex items-center">
           <img 
-            src="/lovable-uploads/80bc7c9a-8b70-4206-808e-1f48225246f4.png" 
+            src="/lovable-uploads/f11addb3-a4c2-4a3a-a33c-0d2fac95d93f.png" 
             alt="STICKA Logo" 
-            className="h-6 w-6 mr-2" 
+            className="h-6" 
           />
-          <h1 className="text-base font-bold">STICKA</h1>
         </div>
         
         <div className="flex items-center gap-1">

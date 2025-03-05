@@ -45,9 +45,9 @@ const SplashScreen = ({ minDisplayTime = 1500 }: SplashScreenProps) => {
     <div className={`splash-screen ${hidden ? 'hidden' : ''}`}>
       <div className="flex flex-col items-center justify-center">
         <img 
-          src="/lovable-uploads/80bc7c9a-8b70-4206-808e-1f48225246f4.png" 
+          src="/lovable-uploads/f11addb3-a4c2-4a3a-a33c-0d2fac95d93f.png" 
           alt="STICKA Logo" 
-          className="splash-logo w-48 h-48 object-contain" 
+          className="splash-logo w-48 object-contain" 
         />
         <p className="text-sm text-muted-foreground mt-2">STICKER COLLECTOR APP</p>
       </div>

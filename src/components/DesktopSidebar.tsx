@@ -42,21 +42,17 @@ const DesktopSidebar = ({
           {!collapsed && (
             <div className="flex items-center">
               <img 
-                src="/lovable-uploads/80bc7c9a-8b70-4206-808e-1f48225246f4.png" 
+                src="/lovable-uploads/f11addb3-a4c2-4a3a-a33c-0d2fac95d93f.png" 
                 alt="STICKA Logo" 
-                className="h-10 w-10 mr-3" 
+                className="h-10" 
               />
-              <div>
-                <h2 className="text-xl font-semibold">STICKA</h2>
-                <p className="text-xs text-muted-foreground mt-1">נהל את האוסף שלך</p>
-              </div>
             </div>
           )}
           
           {collapsed && (
             <img 
               src="/lovable-uploads/80bc7c9a-8b70-4206-808e-1f48225246f4.png" 
-              alt="STICKA Logo" 
+              alt="STICKA Icon" 
               className="h-8 w-8" 
             />
           )}
