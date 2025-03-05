@@ -14,13 +14,13 @@ const InventoryCard = ({ title, value, active, onClick }: InventoryCardProps) =>
   const getIcon = () => {
     switch (title) {
       case "סך הכל":
-        return <Grid className="h-3.5 w-3.5" />;
+        return <Grid className="h-5 w-5" />;
       case "ברשותי":
-        return <Check className="h-3.5 w-3.5" />;
+        return <Check className="h-5 w-5" />;
       case "חסרים":
-        return <AlertCircle className="h-3.5 w-3.5" />;
+        return <AlertCircle className="h-5 w-5" />;
       case "כפולים":
-        return <Copy className="h-3.5 w-3.5" />;
+        return <Copy className="h-5 w-5" />;
       default:
         return null;
     }
@@ -30,27 +30,27 @@ const InventoryCard = ({ title, value, active, onClick }: InventoryCardProps) =>
     <button
       onClick={onClick}
       className={cn(
-        "flex-1 min-w-[80px] rounded-lg p-2 transition-all duration-300",
-        "border",
+        "w-full rounded-xl p-4 transition-all duration-300",
+        "border flex items-center justify-between",
+        "text-right",
         active 
           ? "border-interactive bg-interactive/5 shadow-sm" 
           : "border-border bg-card hover:bg-secondary"
       )}
     >
-      <div className="flex justify-between items-center">
-        <div className="text-xs font-medium text-muted-foreground">{title}</div>
+      <div className="text-lg font-bold">
+        {value}
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="text-base font-medium">
+          {title}
+        </div>
         <div className={cn(
-          "w-5 h-5 flex items-center justify-center rounded-full",
+          "flex items-center justify-center",
           active ? "text-interactive" : "text-muted-foreground"
         )}>
           {getIcon()}
         </div>
-      </div>
-      <div className={cn(
-        "text-xl font-bold",
-        active ? "text-interactive" : "text-foreground"
-      )}>
-        {value}
       </div>
     </button>
   );
