@@ -32,6 +32,7 @@ const AlbumHeader = ({
         <AlbumTitle selectedAlbumData={selectedAlbumData} />
         
         <AlbumHeaderActions
+          albums={albums} // Pass the albums prop
           selectedAlbum={selectedAlbum}
           viewMode={viewMode}
           setViewMode={setViewMode}

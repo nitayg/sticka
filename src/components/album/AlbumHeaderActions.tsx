@@ -5,6 +5,7 @@ import { Button } from "../ui/button";
 import ViewModeToggle from "../ViewModeToggle";
 import AddAlbumForm from "../add-album-form";
 import ImportExcelDialog from "../ImportExcelDialog";
+import { Album } from "@/lib/types";
 
 interface AlbumHeaderActionsProps {
   selectedAlbum: string;
@@ -13,6 +14,7 @@ interface AlbumHeaderActionsProps {
   showImages: boolean;
   setShowImages: (show: boolean) => void;
   onRefresh: () => void;
+  albums: Album[]; // Add this prop
 }
 
 const AlbumHeaderActions = ({
@@ -21,13 +23,19 @@ const AlbumHeaderActions = ({
   setViewMode,
   showImages,
   setShowImages,
-  onRefresh
+  onRefresh,
+  albums // Receive the albums prop
 }: AlbumHeaderActionsProps) => {
   return (
     <div className="flex items-center justify-end space-x-2">
       <AddAlbumForm onAlbumAdded={onRefresh} />
       
-      <ImportExcelDialog onImportComplete={onRefresh} />
+      <ImportExcelDialog 
+        albums={albums} 
+        selectedAlbum={selectedAlbum} 
+        setSelectedAlbum={() => {}} // This is a placeholder since we don't need to change albums from here
+        onImportComplete={onRefresh} 
+      />
       
       <ViewModeToggle
         viewMode={viewMode}
