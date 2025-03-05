@@ -71,8 +71,8 @@ const Layout = ({ children }: LayoutProps) => {
           onToggle={toggleSidebar}
         />
 
-        {/* Main Content - with sidebar toggle and improved responsive padding */}
-        <main className={`flex-1 p-3 sm:p-5 lg:py-6 lg:px-8 overflow-x-hidden pb-16 md:pb-6 transition-all duration-300 ${sidebarCollapsed ? 'lg:pr-20' : 'lg:pr-8'}`}>
+        {/* Main Content - with improved padding and scrolling */}
+        <main className={`flex-1 md:pt-0 pt-12 p-3 sm:p-5 lg:py-6 lg:px-8 overflow-y-auto overflow-x-hidden pb-16 md:pb-6 transition-all duration-300 ${sidebarCollapsed ? 'lg:pr-20' : 'lg:pr-8'}`}>
           <div className="max-w-6xl mx-auto w-full">
             <div className="hidden lg:flex justify-between items-center mb-4">
               <Button 

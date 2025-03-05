@@ -1,7 +1,6 @@
 
 import { Menu, X, Sun, Moon } from "lucide-react";
 import { Button } from "./ui/button";
-import { ThemeToggle } from "./ui/theme-toggle";
 import { useTheme } from "@/hooks/use-theme";
 
 interface MobileHeaderProps {
@@ -17,38 +16,37 @@ const MobileHeader = ({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) => {
   };
 
   return (
-    <div className="md:hidden fixed top-0 inset-x-0 h-14 border-b border-border/70 bg-background/80 backdrop-blur-sm z-50 flex items-center px-4">
-      <div className="flex w-full justify-between items-center">
+    <div className="md:hidden fixed top-0 inset-x-0 h-12 border-b border-border/70 bg-background/90 backdrop-blur-sm z-50">
+      <div className="flex h-full items-center px-3 justify-between">
         <Button
           variant="ghost"
+          size="icon"
           className="h-8 w-8 p-0"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           {isMenuOpen ? (
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           ) : (
-            <Menu className="h-5 w-5" />
+            <Menu className="h-4 w-4" />
           )}
           <span className="sr-only">Toggle Menu</span>
         </Button>
         
-        <h1 className="text-lg font-bold">STICKA</h1>
+        <h1 className="text-base font-bold">STICKA</h1>
         
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={toggleTheme}
-          >
-            {theme === 'dark' ? (
-              <Sun className="h-5 w-5" />
-            ) : (
-              <Moon className="h-5 w-5" />
-            )}
-            <span className="sr-only">Toggle Theme</span>
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 p-0"
+          onClick={toggleTheme}
+        >
+          {theme === 'dark' ? (
+            <Sun className="h-4 w-4" />
+          ) : (
+            <Moon className="h-4 w-4" />
+          )}
+          <span className="sr-only">Toggle Theme</span>
+        </Button>
       </div>
     </div>
   );
