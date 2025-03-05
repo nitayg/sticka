@@ -1,3 +1,4 @@
+
 import { Album } from "@/lib/types";
 import AlbumTitle from "./AlbumTitle";
 import AlbumHeaderActions from "./AlbumHeaderActions";
@@ -31,13 +32,14 @@ const AlbumHeader = ({
         <AlbumTitle selectedAlbumData={selectedAlbumData} />
         
         <AlbumHeaderActions
-          albums={albums} // Pass the albums prop
+          albums={albums}
           selectedAlbum={selectedAlbum}
           viewMode={viewMode}
           setViewMode={setViewMode}
           showImages={showImages}
           setShowImages={setShowImages}
           onRefresh={onRefresh}
+          onImportComplete={onImportComplete}
         />
       </div>
     </div>
