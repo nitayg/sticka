@@ -1,4 +1,3 @@
-
 import { Album } from "@/lib/types";
 import AlbumTitle from "./AlbumTitle";
 import AlbumHeaderActions from "./AlbumHeaderActions";
