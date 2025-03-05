@@ -1,0 +1,73 @@
+
+/* סגנונות PWA מותאמים אישית */
+body {
+  overscroll-behavior-y: none; /* מונע scroll bounce באייפון */
+  user-select: none; /* מונע בחירת טקסט - שימושי לחוויית מובייל */
+  -webkit-tap-highlight-color: transparent; /* מסיר הבהוב בלחיצה על אנדרואיד */
+}
+
+/* שיפור חוויית משתמש במכשירים ניידים */
+@media (display-mode: standalone) {
+  /* סגנונות שיחולו רק כאשר האפליקציה מותקנת */
+  .pwa-only {
+    display: block;
+  }
+  
+  .browser-only {
+    display: none;
+  }
+  
+  /* תיקון למסכי iOS עם notch */
+  .safe-area-inset-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* תצוגה רגילה במצב דפדפן */
+.pwa-only {
+  display: none;
+}
+
+.browser-only {
+  display: block;
+}
+
+/* תמיכה ב-splash screen */
+.splash-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.5s ease-out;
+}
+
+.dark .splash-screen {
+  background-color: #1a1a1a;
+}
+
+.splash-screen.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-logo {
+  width: 128px;
+  height: 128px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.7; }
+}
