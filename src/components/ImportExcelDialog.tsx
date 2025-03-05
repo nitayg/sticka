@@ -134,7 +134,7 @@ const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum, onImportCo
             ייבוא אקסל
           </Button>
         </DialogTrigger>
-        <DialogContent dir="rtl">
+        <DialogContent dir="rtl" className="sm:max-w-[500px] md:max-w-[600px] w-[90vw]">
           <DialogHeader>
             <DialogTitle>ייבוא מדבקות מקובץ CSV</DialogTitle>
             <DialogDescription>
