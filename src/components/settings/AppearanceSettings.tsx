@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Input } from "@/components/ui/input";
 import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun, Monitor } from "lucide-react";
@@ -12,9 +11,12 @@ interface AppearanceSettingsProps {
   onSave: () => void;
 }
 
+// Define the Theme type to match what's in use-theme.tsx
+type Theme = "dark" | "light" | "system";
+
 const AppearanceSettings = ({ onSave }: AppearanceSettingsProps) => {
   const { theme, setTheme } = useTheme();
-  const [selectedTheme, setSelectedTheme] = useState(theme);
+  const [selectedTheme, setSelectedTheme] = useState<Theme>(theme);
   const [fontSize, setFontSize] = useState(localStorage.getItem("app-font-size") || "medium");
 
   // עדכון הערך הנבחר כאשר התימה משתנה
@@ -50,6 +52,14 @@ const AppearanceSettings = ({ onSave }: AppearanceSettingsProps) => {
     onSave();
   };
 
+  // Helper function to handle theme change with proper typing
+  const handleThemeChange = (value: string) => {
+    // Only set if it's a valid theme value
+    if (value === "dark" || value === "light" || value === "system") {
+      setSelectedTheme(value);
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -64,7 +74,7 @@ const AppearanceSettings = ({ onSave }: AppearanceSettingsProps) => {
           <RadioGroup 
             id="theme" 
             value={selectedTheme} 
-            onValueChange={setSelectedTheme}
+            onValueChange={handleThemeChange}
             className="flex flex-col space-y-2"
           >
             <div className="flex items-center space-x-2 space-x-reverse">
