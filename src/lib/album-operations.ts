@@ -9,6 +9,8 @@ let albumData = [...initialAlbums];
 export const getAlbumData = () => albumData;
 export const setAlbumData = (data: Album[]) => {
   albumData = data;
+  // Save to localStorage whenever data changes
+  localStorage.setItem('albums', JSON.stringify(albumData));
 };
 
 export const getAllAlbums = () => {
@@ -46,7 +48,8 @@ export const updateAlbum = (id: string, data: Partial<Album>) => {
 export const deleteAlbum = (id: string) => {
   setAlbumData(albumData.filter(album => album.id !== id));
   // מחיקת כל המדבקות השייכות לאלבום זה
-  setStickerData(stickerData.filter(sticker => sticker.albumId !== id));
+  const updatedStickers = stickerData.filter(sticker => sticker.albumId !== id);
+  setStickerData(updatedStickers);
   
   // Trigger a custom event to notify components that album data has changed
   window.dispatchEvent(new CustomEvent('albumDataChanged'));

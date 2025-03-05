@@ -14,7 +14,8 @@ interface AlbumHeaderActionsProps {
   showImages: boolean;
   setShowImages: (show: boolean) => void;
   onRefresh: () => void;
-  albums: Album[]; // Add this prop
+  albums: Album[]; // Add albums prop
+  onImportComplete: () => void; // Add onImportComplete prop
 }
 
 const AlbumHeaderActions = ({
@@ -24,7 +25,8 @@ const AlbumHeaderActions = ({
   showImages,
   setShowImages,
   onRefresh,
-  albums // Receive the albums prop
+  albums,
+  onImportComplete
 }: AlbumHeaderActionsProps) => {
   return (
     <div className="flex items-center justify-end space-x-2">
@@ -34,7 +36,7 @@ const AlbumHeaderActions = ({
         albums={albums} 
         selectedAlbum={selectedAlbum} 
         setSelectedAlbum={() => {}} // This is a placeholder since we don't need to change albums from here
-        onImportComplete={onRefresh} 
+        onImportComplete={onImportComplete} 
       />
       
       <ViewModeToggle

@@ -1,4 +1,3 @@
-
 import { Sticker } from './types';
 import { stickers as initialStickers } from './initial-data';
 
@@ -7,6 +6,8 @@ export let stickerData = [...initialStickers];
 
 export const setStickerData = (data: Sticker[]) => {
   stickerData = data;
+  // Save to localStorage whenever data changes
+  localStorage.setItem('stickers', JSON.stringify(stickerData));
 };
 
 export const getStickersByAlbumId = (albumId: string) => {
