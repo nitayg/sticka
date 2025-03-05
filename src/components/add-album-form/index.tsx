@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Plus } from "lucide-react";
-import { createAlbum } from "@/lib/album-operations";
+import { addAlbum } from "@/lib/album-operations";
 import { useToast } from "../ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { importStickersFromCSV } from "@/lib/sticker-operations";
