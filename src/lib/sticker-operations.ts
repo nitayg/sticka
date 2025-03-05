@@ -1,5 +1,6 @@
 import { Sticker } from './types';
 import { stickers as initialStickers } from './initial-data';
+import { saveToStorage } from './sync-manager';
 
 // Maintain data state
 export let stickerData = [...initialStickers];
@@ -7,7 +8,7 @@ export let stickerData = [...initialStickers];
 export const setStickerData = (data: Sticker[]) => {
   stickerData = data;
   // Save to localStorage whenever data changes
-  localStorage.setItem('stickers', JSON.stringify(stickerData));
+  saveToStorage('stickers', stickerData);
 };
 
 export const getStickersByAlbumId = (albumId: string) => {

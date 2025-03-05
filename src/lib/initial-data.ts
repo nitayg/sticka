@@ -1,11 +1,12 @@
 
 import { Album, Sticker, User, ExchangeOffer } from './types';
+import { getFromStorage } from './sync-manager';
 
 // Initialize data from localStorage or use empty arrays as defaults
-export const albums: Album[] = JSON.parse(localStorage.getItem('albums') || '[]');
+export const albums: Album[] = getFromStorage<Album[]>('albums', []);
 
-export const stickers: Sticker[] = JSON.parse(localStorage.getItem('stickers') || '[]');
+export const stickers: Sticker[] = getFromStorage<Sticker[]>('stickers', []);
 
-export const users: User[] = JSON.parse(localStorage.getItem('users') || '[]');
+export const users: User[] = getFromStorage<User[]>('users', []);
 
-export const exchangeOffers: ExchangeOffer[] = JSON.parse(localStorage.getItem('exchangeOffers') || '[]');
+export const exchangeOffers: ExchangeOffer[] = getFromStorage<ExchangeOffer[]>('exchangeOffers', []);

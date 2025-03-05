@@ -1,7 +1,7 @@
-
 import { Album } from './types';
 import { albums as initialAlbums } from './initial-data';
 import { stickerData, setStickerData } from './sticker-operations';
+import { saveToStorage } from './sync-manager';
 
 // Maintain data state
 let albumData = [...initialAlbums];
@@ -10,7 +10,7 @@ export const getAlbumData = () => albumData;
 export const setAlbumData = (data: Album[]) => {
   albumData = data;
   // Save to localStorage whenever data changes
-  localStorage.setItem('albums', JSON.stringify(albumData));
+  saveToStorage('albums', albumData);
 };
 
 export const getAllAlbums = () => {
