@@ -33,7 +33,7 @@ const StickerActions = ({ sticker, onToggleOwned, onToggleDuplicate, onEdit }: S
 
   return (
     <div className="flex flex-wrap gap-2 justify-center">
-      <TooltipProvider>
+      <TooltipProvider delayDuration={0}>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button 

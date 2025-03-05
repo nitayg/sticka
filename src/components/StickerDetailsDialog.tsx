@@ -58,6 +58,11 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
       description: `מדבקה ${sticker.number} - ${sticker.name} עודכנה בהצלחה`,
     });
     onUpdate();
+    
+    // אם מסירים מהאוסף, סוגרים את החלון
+    if (sticker.isOwned) {
+      onClose();
+    }
   };
   
   const handleToggleDuplicate = () => {
