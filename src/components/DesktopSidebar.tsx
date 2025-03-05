@@ -40,16 +40,25 @@ const DesktopSidebar = ({
           collapsed ? "justify-center px-0" : "px-2"
         )}>
           {!collapsed && (
-            <div>
-              <h2 className="text-xl font-semibold">STICKA'</h2>
-              <p className="text-xs text-muted-foreground mt-1">נהל את האוסף שלך</p>
+            <div className="flex items-center">
+              <img 
+                src="/lovable-uploads/38a92b8b-bd90-442f-b21a-fc868063cbe5.png" 
+                alt="STICKA Logo" 
+                className="h-8 w-8 mr-3" 
+              />
+              <div>
+                <h2 className="text-xl font-semibold">STICKA</h2>
+                <p className="text-xs text-muted-foreground mt-1">נהל את האוסף שלך</p>
+              </div>
             </div>
           )}
           
           {collapsed && (
-            <div className="h-10 w-10 bg-interactive/10 rounded-full flex items-center justify-center">
-              <span className="text-lg font-bold text-interactive">S</span>
-            </div>
+            <img 
+              src="/lovable-uploads/38a92b8b-bd90-442f-b21a-fc868063cbe5.png" 
+              alt="STICKA Logo" 
+              className="h-8 w-8" 
+            />
           )}
           
           {onToggle && (

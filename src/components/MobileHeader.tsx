@@ -33,7 +33,14 @@ const MobileHeader = ({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) => {
           <span className="sr-only">Toggle Menu</span>
         </Button>
         
-        <h1 className="text-base font-bold">STICKA'</h1>
+        <div className="flex items-center">
+          <img 
+            src="/lovable-uploads/38a92b8b-bd90-442f-b21a-fc868063cbe5.png" 
+            alt="STICKA Logo" 
+            className="h-6 w-6 mr-2" 
+          />
+          <h1 className="text-base font-bold">STICKA</h1>
+        </div>
         
         <div className="flex items-center gap-1">
           <SettingsButton iconOnly />

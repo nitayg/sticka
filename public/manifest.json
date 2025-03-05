@@ -1,7 +1,7 @@
 
 {
-  "name": "STICKA'",
-  "short_name": "STICKA'",
+  "name": "STICKA",
+  "short_name": "STICKA",
   "description": "אפליקציה לניהול אוסף מדבקות והחלפות",
   "start_url": "/",
   "display": "standalone",
@@ -9,6 +9,12 @@
   "theme_color": "#0077ff",
   "orientation": "portrait-primary",
   "icons": [
+    {
+      "src": "/lovable-uploads/38a92b8b-bd90-442f-b21a-fc868063cbe5.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
     {
       "src": "/icons/icon-72x72.png",
       "sizes": "72x72",
@@ -48,12 +54,6 @@
     {
       "src": "/icons/icon-384x384.png",
       "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-512x512.png",
-      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
