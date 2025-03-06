@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { getStats } from "@/lib/sticker-operations";
 import { getStickersByAlbumId } from "@/lib/sticker-operations";
 import { getAllAlbums } from "@/lib/album-operations";
+import { Dialog } from "@/components/ui/dialog";
 import SyncInstructionsDialog from "./sync/SyncInstructionsDialog";
 
 interface MobileHeaderProps {
@@ -29,13 +30,15 @@ const MobileHeader = ({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) => {
       </Button>
       
       <div className="flex items-center gap-2">
-        <SyncInstructionsDialog 
-          trigger={
-            <Button size="sm" variant="outline" className="text-xs px-2 h-7">
-              סנכרון
-            </Button>
-          } 
-        />
+        <Dialog>
+          <SyncInstructionsDialog 
+            trigger={
+              <Button size="sm" variant="outline" className="text-xs px-2 h-7">
+                סנכרון
+              </Button>
+            } 
+          />
+        </Dialog>
         <div className="text-xs font-medium">
           {stats.owned}/{stats.total}
           <span className="text-muted-foreground"> מדבקות</span>
