@@ -1,62 +1,44 @@
 
-import { Menu, X, Sun, Moon } from "lucide-react";
-import { Button } from "./ui/button";
-import { useTheme } from "@/hooks/use-theme";
-import SettingsButton from "./settings/SettingsButton";
+import { Menu } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { getStats } from "@/lib/sticker-operations";
+import { getStickersByAlbumId } from "@/lib/sticker-operations";
+import { getAllAlbums } from "@/lib/album-operations";
+import SyncInstructionsDialog from "./sync/SyncInstructionsDialog";
 
 interface MobileHeaderProps {
   isMenuOpen: boolean;
-  setIsMenuOpen: (isOpen: boolean) => void;
+  setIsMenuOpen: (open: boolean) => void;
 }
 
 const MobileHeader = ({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) => {
-  const { theme, setTheme } = useTheme();
-
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
-
+  // חישוב הסטטיסטיקות בזמן הרנדור
+  const allAlbums = getAllAlbums();
+  const stats = getStats();
+  
   return (
-    <div className="md:hidden fixed top-0 inset-x-0 h-12 border-b border-border/70 bg-background/90 backdrop-blur-sm z-50">
-      <div className="flex h-full items-center px-3 justify-between">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 p-0"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-        >
-          {isMenuOpen ? (
-            <X className="h-4 w-4" />
-          ) : (
-            <Menu className="h-4 w-4" />
-          )}
-          <span className="sr-only">Toggle Menu</span>
-        </Button>
-        
-        <div className="flex items-center justify-center absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-          <img 
-            src="/lovable-uploads/46e6bbf0-717d-461d-95e4-1584072c6ff0.png" 
-            alt="STICKA Logo" 
-            className="h-8" 
-          />
-        </div>
-        
-        <div className="flex items-center gap-1">
-          <SettingsButton iconOnly />
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 p-0"
-            onClick={toggleTheme}
-          >
-            {theme === 'dark' ? (
-              <Sun className="h-4 w-4" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )}
-            <span className="sr-only">Toggle Theme</span>
-          </Button>
+    <div className="fixed top-0 left-0 right-0 h-12 bg-card border-b z-30 md:hidden flex items-center justify-between px-3">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setIsMenuOpen(!isMenuOpen)}
+        className="h-9 w-9"
+      >
+        <Menu className="h-5 w-5" />
+        <span className="sr-only">תפריט</span>
+      </Button>
+      
+      <div className="flex items-center gap-2">
+        <SyncInstructionsDialog 
+          trigger={
+            <Button size="sm" variant="outline" className="text-xs px-2 h-7">
+              סנכרון
+            </Button>
+          } 
+        />
+        <div className="text-xs font-medium">
+          {stats.owned}/{stats.total}
+          <span className="text-muted-foreground"> מדבקות</span>
         </div>
       </div>
     </div>
