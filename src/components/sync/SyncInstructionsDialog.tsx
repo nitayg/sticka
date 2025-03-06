@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Cloud, Database, Github, Server, Box, HardDrive, Smartphone, Laptop, BookOpen } from "lucide-react";
+import { Cloud, Database, Github, Server, Box, HardDrive, Smartphone, Laptop, BookOpen, AlertCircle } from "lucide-react";
 import { Copy } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
