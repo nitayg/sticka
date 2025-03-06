@@ -40,3 +40,10 @@ export {
   deleteAlbumPermanently,
   emptyRecycleBin
 } from './recycle-bin';
+
+// Export Supabase functions
+export {
+  initializeFromStorage,
+  syncWithSupabase,
+  StorageEvents
+} from './sync-manager';

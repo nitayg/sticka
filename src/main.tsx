@@ -9,9 +9,11 @@ import './styles/theme.css'
 import './styles/animations.css'
 import './styles/pwa.css'
 import './styles/smooth-animations.css'
+import SyncIndicator from './components/SyncIndicator.tsx'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
+    <SyncIndicator />
   </React.StrictMode>,
 )
