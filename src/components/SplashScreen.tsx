@@ -5,13 +5,16 @@ import "../styles/smooth-animations.css";
 
 interface SplashScreenProps {
   onComplete: () => void;
+  minDisplayTime?: number; // Added optional prop for minimum display time
 }
 
-const SplashScreen = ({ onComplete }: SplashScreenProps) => {
+const SplashScreen = ({ onComplete, minDisplayTime = 0 }: SplashScreenProps) => {
   const [progress, setProgress] = useState(0);
   const [isShowing, setIsShowing] = useState(true);
 
   useEffect(() => {
+    const startTime = Date.now();
+    
     // סימולציה של טעינה מהירה יותר
     const interval = setInterval(() => {
       setProgress(prev => {
@@ -22,12 +25,16 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
         if (newProgress >= 100) {
           clearInterval(interval);
           
+          // חשב את הזמן שעבר מתחילת הטעינה
+          const elapsedTime = Date.now() - startTime;
+          const remainingTime = Math.max(0, minDisplayTime - elapsedTime);
+          
           // הוסף השהייה קצרה לפני שתסיר את מסך ההתחלה
           setTimeout(() => {
             setIsShowing(false);
             // חכה שהאנימציה תסתיים לפני שתקרא ל-onComplete
             setTimeout(onComplete, 450);
-          }, 300);
+          }, 300 + remainingTime);
           
           return 100;
         }
@@ -37,7 +44,7 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
     
     // נקה את הטיימר כאשר הרכיב נעלם
     return () => clearInterval(interval);
-  }, [onComplete]);
+  }, [onComplete, minDisplayTime]);
 
   if (!isShowing) {
     return null;
