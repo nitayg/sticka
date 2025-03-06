@@ -31,3 +31,12 @@ export {
   getStats,
   addStickersToInventory
 } from './sticker-operations';
+
+// Export recycle bin operations
+export {
+  getRecycleBin,
+  moveAlbumToRecycleBin,
+  restoreAlbumFromRecycleBin,
+  deleteAlbumPermanently,
+  emptyRecycleBin
+} from './recycle-bin';

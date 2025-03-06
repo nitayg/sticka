@@ -1,0 +1,70 @@
+
+/* אנימציות מותאמות אישית */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.smooth-fade-in {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.smooth-scale-in {
+  animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* שיפורים לאנימציות קיימות */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(15px) scale(0.98);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity 450ms ease-out, transform 450ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.page-transition-exit {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.page-transition-exit-active {
+  opacity: 0;
+  transform: translateY(15px) scale(0.98);
+  transition: opacity 300ms ease-in, transform 300ms cubic-bezier(0.6, 0.04, 0.98, 0.335);
+}
+
+/* שיפורים לאנימציות מעבר */
+.animate-scale-in {
+  animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* הוספת השהייה לאלמנטים רבים */
+@for $i from 1 through 10 {
+  .delay-$(i*50) {
+    animation-delay: $(i*50)ms;
+  }
+}

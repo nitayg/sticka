@@ -1,55 +1,83 @@
 
-import { useState, useEffect } from 'react';
+import React, { useEffect, useState } from "react";
+import { MoreHorizontal } from "lucide-react";
+import "../styles/smooth-animations.css";
 
 interface SplashScreenProps {
-  minDisplayTime?: number; // זמן מינימלי להצגה במילישניות
+  onComplete: () => void;
 }
 
-const SplashScreen = ({ minDisplayTime = 1500 }: SplashScreenProps) => {
-  const [hidden, setHidden] = useState(false);
+const SplashScreen = ({ onComplete }: SplashScreenProps) => {
+  const [progress, setProgress] = useState(0);
+  const [isShowing, setIsShowing] = useState(true);
 
   useEffect(() => {
-    const startTime = Date.now();
+    // סימולציה של טעינה מהירה יותר
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        // האץ את הקצב כאשר מגיעים לחצי הדרך
+        const increment = prev > 50 ? 5 : 3;
+        const newProgress = prev + increment;
+        
+        if (newProgress >= 100) {
+          clearInterval(interval);
+          
+          // הוסף השהייה קצרה לפני שתסיר את מסך ההתחלה
+          setTimeout(() => {
+            setIsShowing(false);
+            // חכה שהאנימציה תסתיים לפני שתקרא ל-onComplete
+            setTimeout(onComplete, 450);
+          }, 300);
+          
+          return 100;
+        }
+        return newProgress;
+      });
+    }, 40); // מהירות טעינה מהירה יותר
     
-    // תפקיד הפונקציה הזו הוא להסתיר את מסך הפתיחה
-    const hideSplash = () => {
-      const elapsedTime = Date.now() - startTime;
-      
-      // אם עבר זמן מספיק, הסתר מיד
-      if (elapsedTime >= minDisplayTime) {
-        setHidden(true);
-      } else {
-        // אחרת, המתן עד שיעבור הזמן המינימלי
-        const remainingTime = minDisplayTime - elapsedTime;
-        setTimeout(() => setHidden(true), remainingTime);
-      }
-    };
-    
-    // הסתר את ה-splash אחרי שהאפליקציה נטענה
-    window.addEventListener('load', hideSplash);
-    
-    // במקרה ש-window.load כבר התרחש
-    if (document.readyState === 'complete') {
-      hideSplash();
-    }
-    
-    // ניקוי
-    return () => {
-      window.removeEventListener('load', hideSplash);
-    };
-  }, [minDisplayTime]);
+    // נקה את הטיימר כאשר הרכיב נעלם
+    return () => clearInterval(interval);
+  }, [onComplete]);
 
-  if (hidden) return null;
+  if (!isShowing) {
+    return null;
+  }
 
   return (
-    <div className={`splash-screen ${hidden ? 'hidden' : ''}`}>
-      <div className="flex flex-col items-center justify-center">
-        <img 
-          src="/lovable-uploads/46e6bbf0-717d-461d-95e4-1584072c6ff0.png" 
-          alt="STICKA Logo" 
-          className="splash-logo w-56 object-contain" 
-        />
-        <p className="text-sm text-muted-foreground mt-4">STICKER COLLECTOR APP</p>
+    <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center page-transition-exit-active">
+      <div className="w-full max-w-md px-8 flex flex-col items-center space-y-6 text-center">
+        <div className="flex flex-col items-center space-y-4 smooth-scale-in">
+          <img
+            src="/placeholder.svg"
+            alt="Logo"
+            className="w-24 h-24 animate-pulse"
+          />
+          <h1 className="text-2xl font-bold">אוסף המדבקות שלי</h1>
+          <p className="text-sm text-muted-foreground">
+            טוען את האפליקציה...
+          </p>
+        </div>
+
+        {/* פס התקדמות משופר */}
+        <div className="w-full h-2 bg-muted rounded-full overflow-hidden mt-4 smooth-fade-in">
+          <div
+            className="h-full bg-primary rounded-full transition-all duration-200 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        {/* אנימציית טעינה */}
+        <div className="smooth-fade-in delay-200">
+          {progress < 100 ? (
+            <div className="flex space-x-2 items-center justify-center">
+              <span className="animate-bounce delay-0 h-2 w-2 bg-primary rounded-full"></span>
+              <span className="animate-bounce delay-100 h-2 w-2 bg-primary rounded-full"></span>
+              <span className="animate-bounce delay-200 h-2 w-2 bg-primary rounded-full"></span>
+            </div>
+          ) : (
+            <p className="text-primary text-sm font-medium">מוכן!</p>
+          )}
+        </div>
       </div>
     </div>
   );
