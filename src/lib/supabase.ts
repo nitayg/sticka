@@ -1,9 +1,8 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { Album, Sticker, ExchangeOffer, User } from './types';
 
 const supabaseUrl = 'https://xdvhjraiqilmcsydkaos.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkdmhqcmFpcWlsbWNzeWRrYW9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDExODM5OTEsImV4cCI6MjA1Njc1OTk5MX0.m3gYUVysgOw97zTVB8TCqPt9Yf0_3lueAssw3B30miA';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkdmhqcmFpcWxtY3N5ZGthb3MiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0MTE4Mzk5MSwiZXhwIjoyMDU2NzU5OTkxfQ.m3gYUVysgOw97zTVB8TCqPt9Yf0_3lueAssw3B30miA';
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -18,10 +17,7 @@ export async function fetchAlbums() {
 }
 
 export async function saveAlbum(album: Album) {
-  const { data, error } = await supabase
-    .from('albums')
-    .upsert(album, { onConflict: 'id' });
-  
+  const { data, error } = await supabase.from('albums').upsert(album, { onConflict: 'id' });
   if (error) {
     console.error('Error saving album:', error);
     return false;
@@ -30,11 +26,7 @@ export async function saveAlbum(album: Album) {
 }
 
 export async function deleteAlbumFromSupabase(id: string) {
-  const { error } = await supabase
-    .from('albums')
-    .delete()
-    .eq('id', id);
-  
+  const { error } = await supabase.from('albums').delete().eq('id', id);
   if (error) {
     console.error('Error deleting album:', error);
     return false;
@@ -53,10 +45,7 @@ export async function fetchStickers() {
 }
 
 export async function saveSticker(sticker: Sticker) {
-  const { data, error } = await supabase
-    .from('stickers')
-    .upsert(sticker, { onConflict: 'id' });
-  
+  const { data, error } = await supabase.from('stickers').upsert(sticker, { onConflict: 'id' });
   if (error) {
     console.error('Error saving sticker:', error);
     return false;
@@ -65,11 +54,7 @@ export async function saveSticker(sticker: Sticker) {
 }
 
 export async function deleteStickerFromSupabase(id: string) {
-  const { error } = await supabase
-    .from('stickers')
-    .delete()
-    .eq('id', id);
-  
+  const { error } = await supabase.from('stickers').delete().eq('id', id);
   if (error) {
     console.error('Error deleting sticker:', error);
     return false;
@@ -88,10 +73,7 @@ export async function fetchExchangeOffers() {
 }
 
 export async function saveExchangeOffer(offer: ExchangeOffer) {
-  const { data, error } = await supabase
-    .from('exchange_offers')
-    .upsert(offer, { onConflict: 'id' });
-  
+  const { data, error } = await supabase.from('exchange_offers').upsert(offer, { onConflict: 'id' });
   if (error) {
     console.error('Error saving exchange offer:', error);
     return false;
@@ -100,11 +82,7 @@ export async function saveExchangeOffer(offer: ExchangeOffer) {
 }
 
 export async function deleteExchangeOfferFromSupabase(id: string) {
-  const { error } = await supabase
-    .from('exchange_offers')
-    .delete()
-    .eq('id', id);
-  
+  const { error } = await supabase.from('exchange_offers').delete().eq('id', id);
   if (error) {
     console.error('Error deleting exchange offer:', error);
     return false;
@@ -123,10 +101,7 @@ export async function fetchUsers() {
 }
 
 export async function saveUser(user: User) {
-  const { data, error } = await supabase
-    .from('users')
-    .upsert(user, { onConflict: 'id' });
-  
+  const { data, error } = await supabase.from('users').upsert(user, { onConflict: 'id' });
   if (error) {
     console.error('Error saving user:', error);
     return false;
@@ -135,16 +110,11 @@ export async function saveUser(user: User) {
 }
 
 // Create or update multiple items in a transaction
-export async function saveBatch<T extends {id: string}>(
-  tableName: string, 
-  items: T[]
-) {
+export async function saveBatch<T extends { id: string }>(tableName: string, items: T[]) {
   if (!items.length) return true;
-  
-  const { error } = await supabase
-    .from(tableName)
-    .upsert(items, { onConflict: 'id' });
-  
+
+  const { error } = await supabase.from(tableName).upsert(items, { onConflict: 'id' });
+
   if (error) {
     console.error(`Error saving batch to ${tableName}:`, error);
     return false;
