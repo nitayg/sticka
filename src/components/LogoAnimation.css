@@ -1,0 +1,23 @@
+.logo-animation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100vh;
+  background-color: #fff; /* Adjust the background color as needed */
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.logo-animation.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.logo-animation img {
+  width: 200px; /* Adjust the logo size as needed */
+  height: auto;
+}
