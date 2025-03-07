@@ -1,4 +1,3 @@
-
 import { albums, stickers, users, exchangeOffers } from './initial-data';
 import { Album, Sticker, User, ExchangeOffer } from './types';
 import { 
@@ -127,11 +126,7 @@ const setupRealtimeSubscriptions = () => {
         syncWithSupabase();
       }
     })
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public',
-      table: 'stickers' 
-    }, (payload) => {
+    .on('*', (payload) => {
       console.log('עדכון בזמן אמת עבור מדבקות:', payload);
       // עדכון סנכרון במקרה של שינוי במחיקות
       if (payload.new && payload.old && 
