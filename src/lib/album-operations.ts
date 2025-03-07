@@ -42,6 +42,9 @@ export const addAlbum = (album: Omit<Album, "id">) => {
   // Trigger a custom event to notify components that album data has changed
   window.dispatchEvent(new CustomEvent('albumDataChanged'));
   
+  // Force a sync with Supabase to ensure real-time updates
+  syncWithSupabase();
+  
   return newAlbum;
 };
 
@@ -57,6 +60,9 @@ export const updateAlbum = (id: string, data: Partial<Album>) => {
   // Trigger a custom event to notify components that album data has changed
   window.dispatchEvent(new CustomEvent('albumDataChanged'));
   
+  // Force a sync with Supabase to ensure real-time updates
+  syncWithSupabase();
+  
   return albumData.find(album => album.id === id);
 };
 
@@ -68,4 +74,7 @@ export const deleteAlbum = (id: string) => {
   
   // Trigger a custom event to notify components that album data has changed
   window.dispatchEvent(new CustomEvent('albumDataChanged'));
+  
+  // Force a sync with Supabase to ensure real-time updates
+  syncWithSupabase();
 };
