@@ -43,10 +43,18 @@ export async function fetchAlbums() {
 
 export async function saveAlbum(album: Album) {
   console.log('Saving album to Supabase:', album.id);
-  console.log('JSON שנשלח:', JSON.stringify(album, null, 2)); // הוסף שורה זו
+  const supabaseAlbum = {
+    id: album.id,
+    name: album.name,
+    totalstickers: album.totalStickers, // תיקון שם
+    description: album.description,
+    year: album.year,
+    coverimage: album.coverImage, // תיקון שם
+  };
+  console.log('JSON שנשלח:', JSON.stringify(supabaseAlbum, null, 2));
   const { data, error } = await supabase
     .from('albums')
-    .upsert(album, { onConflict: 'id' });
+    .upsert(supabaseAlbum, { onConflict: 'id' });
   
   if (error) {
     console.error('Error saving album:', error);
