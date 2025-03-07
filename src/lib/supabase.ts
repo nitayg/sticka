@@ -43,6 +43,7 @@ export async function fetchAlbums() {
 
 export async function saveAlbum(album: Album) {
   console.log('Saving album to Supabase:', album.id);
+  console.log('JSON שנשלח:', JSON.stringify(album, null, 2)); // הוסף שורה זו
   const { data, error } = await supabase
     .from('albums')
     .upsert(album, { onConflict: 'id' });
