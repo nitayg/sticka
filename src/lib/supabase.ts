@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { Album, Sticker, ExchangeOffer, User } from './types';
 
@@ -38,19 +37,19 @@ export async function fetchAlbums() {
     return null;
   }
   console.log(`Fetched ${data?.length || 0} albums from Supabase`);
-  console.log('Fetched data:', JSON.stringify(data, null, 2)); // הדפסת הנתונים המקוריים
+  console.log('Fetched data:', JSON.stringify(data, null, 2));
 
   // התאמת שמות השדות לממשק Album
   const adjustedData = data.map((album) => ({
     id: album.id,
     name: album.name,
-    totalStickers: album.totalstickers, // התאמה מ-totalstickers ל-totalStickers
+    totalStickers: album.totalstickers,
     description: album.description,
     year: album.year,
-    coverImage: album.coverimage, // התאמה מ-coverimage ל-coverImage
+    coverImage: album.coverimage,
   }));
 
-  console.log('Adjusted data:', JSON.stringify(adjustedData, null, 2)); // הדפסת הנתונים לאחר ההתאמה
+  console.log('Adjusted data:', JSON.stringify(adjustedData, null, 2));
   return adjustedData as Album[];
 }
 
@@ -59,16 +58,16 @@ export async function saveAlbum(album: Album) {
   const supabaseAlbum = {
     id: album.id,
     name: album.name,
-    totalstickers: album.totalStickers, // תיקון שם
+    totalstickers: album.totalStickers,
     description: album.description,
     year: album.year,
-    coverimage: album.coverImage, // תיקון שם
+    coverimage: album.coverImage,
   };
   console.log('JSON שנשלח:', JSON.stringify(supabaseAlbum, null, 2));
   const { data, error } = await supabase
     .from('albums')
-    .upsert(supabaseAlbum, { onConflict: 'id' });
-  
+    .upsert(supabaseAlbum, { onConflict: 'id' })
+    .select('*'); // ודא שהבקשה כוללת את כל העמודות
   if (error) {
     console.error('Error saving album:', error);
     return false;
@@ -82,7 +81,6 @@ export async function deleteAlbumFromSupabase(id: string) {
     .from('albums')
     .delete()
     .eq('id', id);
-  
   if (error) {
     console.error('Error deleting album:', error);
     return false;
@@ -99,15 +97,47 @@ export async function fetchStickers() {
     return null;
   }
   console.log(`Fetched ${data?.length || 0} stickers from Supabase`);
-  return data as Sticker[];
+  console.log('Fetched data:', JSON.stringify(data, null, 2));
+
+  // התאמת שמות השדות לממשק Sticker
+  const adjustedData = data.map((sticker) => ({
+    id: sticker.id,
+    name: sticker.name,
+    team: sticker.team,
+    teamLogo: sticker.teamlogo,
+    category: sticker.category,
+    imageUrl: sticker.imageurl,
+    number: sticker.number,
+    isOwned: sticker.isowned,
+    isDuplicate: sticker.isduplicate,
+    duplicateCount: sticker.duplicatecount,
+    albumId: sticker.albumid,
+  }));
+
+  console.log('Adjusted data:', JSON.stringify(adjustedData, null, 2));
+  return adjustedData as Sticker[];
 }
 
 export async function saveSticker(sticker: Sticker) {
   console.log('Saving sticker to Supabase:', sticker.id);
+  const supabaseSticker = {
+    id: sticker.id,
+    name: sticker.name,
+    team: sticker.team,
+    teamlogo: sticker.teamLogo,
+    category: sticker.category,
+    imageurl: sticker.imageUrl,
+    number: sticker.number,
+    isowned: sticker.isOwned,
+    isduplicate: sticker.isDuplicate,
+    duplicatecount: sticker.duplicateCount,
+    albumid: sticker.albumId,
+  };
+  console.log('JSON שנשלח:', JSON.stringify(supabaseSticker, null, 2));
   const { data, error } = await supabase
     .from('stickers')
-    .upsert(sticker, { onConflict: 'id' });
-  
+    .upsert(supabaseSticker, { onConflict: 'id' })
+    .select('*');
   if (error) {
     console.error('Error saving sticker:', error);
     return false;
@@ -121,7 +151,6 @@ export async function deleteStickerFromSupabase(id: string) {
     .from('stickers')
     .delete()
     .eq('id', id);
-  
   if (error) {
     console.error('Error deleting sticker:', error);
     return false;
@@ -138,15 +167,53 @@ export async function fetchExchangeOffers() {
     return null;
   }
   console.log(`Fetched ${data?.length || 0} exchange offers from Supabase`);
-  return data as ExchangeOffer[];
+  console.log('Fetched data:', JSON.stringify(data, null, 2));
+
+  // התאמת שמות השדות לממשק ExchangeOffer
+  const adjustedData = data.map((offer) => ({
+    id: offer.id,
+    userId: offer.userid,
+    userName: offer.username,
+    userAvatar: offer.useravatar,
+    offeredStickerId: offer.offeredstickerid,
+    offeredStickerName: offer.offeredstickername,
+    wantedStickerId: offer.wantedstickerid,
+    wantedStickerName: offer.wantedstickername,
+    status: offer.status,
+    exchangeMethod: offer.exchangemethod,
+    location: offer.location,
+    phone: offer.phone,
+    color: offer.color,
+    albumId: offer.albumid,
+  }));
+
+  console.log('Adjusted data:', JSON.stringify(adjustedData, null, 2));
+  return adjustedData as ExchangeOffer[];
 }
 
 export async function saveExchangeOffer(offer: ExchangeOffer) {
   console.log('Saving exchange offer to Supabase:', offer.id);
+  const supabaseOffer = {
+    id: offer.id,
+    userid: offer.userId,
+    username: offer.userName,
+    useravatar: offer.userAvatar,
+    offeredstickerid: offer.offeredStickerId,
+    offeredstickername: offer.offeredStickerName,
+    wantedstickerid: offer.wantedStickerId,
+    wantedstickername: offer.wantedStickerName,
+    status: offer.status,
+    exchangemethod: offer.exchangeMethod,
+    location: offer.location,
+    phone: offer.phone,
+    color: offer.color,
+    albumid: offer.albumId,
+  };
+  console.log('JSON שנשלח:', JSON.stringify(supabaseOffer, null, 2));
   const { data, error } = await supabase
     .from('exchange_offers')
-    .upsert(offer, { onConflict: 'id' });
-  
+    .upsert(supabaseOffer, { onConflict: 'id' })
+    .select('*');
   if (error) {
     console.error('Error saving exchange offer:', error);
     return false;
@@ -160,7 +227,6 @@ export async function deleteExchangeOfferFromSupabase(id: string) {
     .from('exchange_offers')
     .delete()
     .eq('id', id);
-  
   if (error) {
     console.error('Error deleting exchange offer:', error);
     return false;
@@ -177,15 +243,45 @@ export async function fetchUsers() {
     return null;
   }
   console.log(`Fetched ${data?.length || 0} users from Supabase`);
-  return data as User[];
+  console.log('Fetched data:', JSON.stringify(data, null, 2));
+
+  // התאמת שמות השדות לממשק User
+  const adjustedData = data.map((user) => ({
+    id: user.id,
+    name: user.name,
+    avatar: user.avatar,
+    stickerCount: {
+      total: user.totalstickers,
+      owned: user.ownedstickers,
+      needed: user.neededstickers,
+      duplicates: user.duplicatestickers,
+    },
+    location: user.location,
+    phone: user.phone,
+  }));
+
+  console.log('Adjusted data:', JSON.stringify(adjustedData, null, 2));
+  return adjustedData as User[];
 }
 
 export async function saveUser(user: User) {
   console.log('Saving user to Supabase:', user.id);
+  const supabaseUser = {
+    id: user.id,
+    name: user.name,
+    avatar: user.avatar,
+    totalstickers: user.stickerCount?.total,
+    ownedstickers: user.stickerCount?.owned,
+    neededstickers: user.stickerCount?.needed,
+    duplicatestickers: user.stickerCount?.duplicates,
+    location: user.location,
+    phone: user.phone,
+  };
+  console.log('JSON שנשלח:', JSON.stringify(supabaseUser, null, 2));
   const { data, error } = await supabase
     .from('users')
-    .upsert(user, { onConflict: 'id' });
-  
+    .upsert(supabaseUser, { onConflict: 'id' })
+    .select('*');
   if (error) {
     console.error('Error saving user:', error);
     return false;
@@ -200,23 +296,20 @@ export async function saveBatch<T extends { id: string }>(
 ) {
   if (!items.length) return true;
 
+  console.log(`Received items for ${tableName}:`, JSON.stringify(items, null, 2));
   console.log(`Saving ${items.length} items to ${tableName}`);
 
-  // *** כאן מתחיל התיקון ***
-  // התאמת שמות השדות לפי הטבלה
   const adjustedItems = items.map((item) => {
     if (tableName === 'albums') {
-      // התאמת שמות השדות לטבלת albums
       return {
         id: item.id,
         name: item.name,
-        totalstickers: item.totalStickers, // תיקון שם: מ-totalStickers ל-totalstickers
+        totalstickers: item.totalStickers,
         description: item.description,
         year: item.year,
-        coverimage: item.coverImage, // תיקון שם: מ-coverImage ל-coverimage
+        coverimage: item.coverImage,
       };
     } else if (tableName === 'stickers') {
-      // התאמת שמות השדות לטבלת stickers (למקרה שתצטרך גם כאן)
       return {
         id: item.id,
         name: item.name,
@@ -231,7 +324,6 @@ export async function saveBatch<T extends { id: string }>(
         albumid: item.albumId,
       };
     } else if (tableName === 'exchange_offers') {
-      // התאמת שמות השדות לטבלת exchange_offers
       return {
         id: item.id,
         userid: item.userId,
@@ -249,7 +341,6 @@ export async function saveBatch<T extends { id: string }>(
         albumid: item.albumId,
       };
     } else if (tableName === 'users') {
-      // התאמת שמות השדות לטבלת users
       return {
         id: item.id,
         name: item.name,
@@ -262,11 +353,10 @@ export async function saveBatch<T extends { id: string }>(
         phone: item.phone,
       };
     }
-    return item; // עבור טבלאות אחרות שלא צריכות התאמה
+    return item;
   });
 
   console.log('JSON שנשלח:', JSON.stringify(adjustedItems, null, 2));
-  // *** כאן מסתיים התיקון ***
 
   try {
     const chunkSize = 100;
@@ -278,7 +368,8 @@ export async function saveBatch<T extends { id: string }>(
         .upsert(chunk, {
           onConflict: 'id',
           ignoreDuplicates: false,
-        });
+        })
+        .select('*');
 
       if (error) {
         console.error(
