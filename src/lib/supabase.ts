@@ -181,40 +181,107 @@ export async function saveUser(user: User) {
 }
 
 // Create or update multiple items in a transaction
-export async function saveBatch<T extends {id: string}>(
-  tableName: string, 
+export async function saveBatch<T extends { id: string }>(
+  tableName: string,
   items: T[]
 ) {
   if (!items.length) return true;
-  
+
   console.log(`Saving ${items.length} items to ${tableName}`);
-  
+
+  // *** כאן מתחיל התיקון ***
+  // התאמת שמות השדות לפי הטבלה
+  const adjustedItems = items.map((item) => {
+    if (tableName === 'albums') {
+      // התאמת שמות השדות לטבלת albums
+      return {
+        id: item.id,
+        name: item.name,
+        totalstickers: item.totalStickers, // תיקון שם: מ-totalStickers ל-totalstickers
+        description: item.description,
+        year: item.year,
+        coverimage: item.coverImage, // תיקון שם: מ-coverImage ל-coverimage
+      };
+    } else if (tableName === 'stickers') {
+      // התאמת שמות השדות לטבלת stickers (למקרה שתצטרך גם כאן)
+      return {
+        id: item.id,
+        name: item.name,
+        team: item.team,
+        teamlogo: item.teamLogo,
+        category: item.category,
+        imageurl: item.imageUrl,
+        number: item.number,
+        isowned: item.isOwned,
+        isduplicate: item.isDuplicate,
+        duplicatecount: item.duplicateCount,
+        albumid: item.albumId,
+      };
+    } else if (tableName === 'exchange_offers') {
+      // התאמת שמות השדות לטבלת exchange_offers
+      return {
+        id: item.id,
+        userid: item.userId,
+        username: item.userName,
+        useravatar: item.userAvatar,
+        offeredstickerid: item.offeredStickerId,
+        offeredstickername: item.offeredStickerName,
+        wantedstickerid: item.wantedStickerId,
+        wantedstickername: item.wantedStickerName,
+        status: item.status,
+        exchangemethod: item.exchangeMethod,
+        location: item.location,
+        phone: item.phone,
+        color: item.color,
+        albumid: item.albumId,
+      };
+    } else if (tableName === 'users') {
+      // התאמת שמות השדות לטבלת users
+      return {
+        id: item.id,
+        name: item.name,
+        avatar: item.avatar,
+        totalstickers: item.stickerCount?.total,
+        ownedstickers: item.stickerCount?.owned,
+        neededstickers: item.stickerCount?.needed,
+        duplicatestickers: item.stickerCount?.duplicates,
+        location: item.location,
+        phone: item.phone,
+      };
+    }
+    return item; // עבור טבלאות אחרות שלא צריכות התאמה
+  });
+
+  console.log('JSON שנשלח:', JSON.stringify(adjustedItems, null, 2));
+  // *** כאן מסתיים התיקון ***
+
   try {
-    // Split into chunks to avoid Supabase's row limit
-    const chunkSize = 100; // Reduced chunk size for better reliability
-    for (let i = 0; i < items.length; i += chunkSize) {
-      const chunk = items.slice(i, i + chunkSize);
-      
+    const chunkSize = 100;
+    for (let i = 0; i < adjustedItems.length; i += chunkSize) {
+      const chunk = adjustedItems.slice(i, i + chunkSize);
+
       const { error } = await supabase
         .from(tableName)
-        .upsert(chunk, { 
+        .upsert(chunk, {
           onConflict: 'id',
-          ignoreDuplicates: false
+          ignoreDuplicates: false,
         });
-        
+
       if (error) {
-        console.error(`Error saving batch to ${tableName} (chunk ${i}-${i+chunk.length}):`, error);
+        console.error(
+          `Error saving batch to ${tableName} (chunk ${i}-${i + chunk.length}):`,
+          error
+        );
         console.error('Error details:', JSON.stringify(error));
         return false;
       }
-      
-      // Add a small delay between chunks to prevent rate limiting
-      if (items.length > chunkSize && i + chunkSize < items.length) {
-        await new Promise(resolve => setTimeout(resolve, 300));
+
+      if (adjustedItems.length > chunkSize && i + chunkSize < adjustedItems.length) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
       }
     }
-    
-    console.log(`Successfully saved ${items.length} items to ${tableName}`);
+
+    console.log(`Successfully saved ${adjustedItems.length} items to ${tableName}`);
     return true;
   } catch (error) {
     console.error(`Error in saveBatch for ${tableName}:`, error);
