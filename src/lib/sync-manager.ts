@@ -28,11 +28,11 @@ export const initializeFromStorage = async () => {
       return;
     }
 
-    // Listen for Supabase real-time updates
-    setupRealtimeSubscriptions();
-
     // Initial load from Supabase
     await syncWithSupabase();
+    
+    // Listen for Supabase real-time updates
+    setupRealtimeSubscriptions();
 
     // Handle storage events from other tabs/windows
     window.addEventListener('storage', (event) => {
@@ -72,63 +72,54 @@ export const initializeFromStorage = async () => {
 
 // Set up real-time subscriptions to Supabase
 const setupRealtimeSubscriptions = () => {
-  // Subscribe to albums changes
-  supabase
-    .channel('albums-changes')
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public', 
-      table: 'albums' 
+  console.log('Setting up real-time subscriptions...');
+  
+  // Enable Supabase realtime for all tables
+  supabase.channel('schema-db-changes')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'albums',
     }, (payload) => {
-      // Fetch fresh data when a change is detected
+      console.log('Real-time update for albums:', payload);
       syncWithSupabase();
     })
-    .subscribe();
-
-  // Subscribe to stickers changes
-  supabase
-    .channel('stickers-changes')
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public', 
-      table: 'stickers' 
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'stickers',
     }, (payload) => {
-      // Fetch fresh data when a change is detected
+      console.log('Real-time update for stickers:', payload);
       syncWithSupabase();
     })
-    .subscribe();
-
-  // Subscribe to users changes
-  supabase
-    .channel('users-changes')
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public', 
-      table: 'users' 
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'users',
     }, (payload) => {
-      // Fetch fresh data when a change is detected
+      console.log('Real-time update for users:', payload);
       syncWithSupabase();
     })
-    .subscribe();
-
-  // Subscribe to exchange_offers changes
-  supabase
-    .channel('exchange-offers-changes')
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public', 
-      table: 'exchange_offers' 
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'exchange_offers',
     }, (payload) => {
-      // Fetch fresh data when a change is detected
+      console.log('Real-time update for exchange offers:', payload);
       syncWithSupabase();
     })
-    .subscribe();
+    .subscribe((status) => {
+      console.log('Supabase channel status:', status);
+    });
 };
 
 // Sync local data with Supabase
 export const syncWithSupabase = async () => {
   try {
     console.log('Syncing with Supabase...');
+    
+    // Let the UI know we're starting a sync
+    window.dispatchEvent(new CustomEvent('sync-start'));
     
     // Fetch data from Supabase
     const [albumsData, stickersData, usersData, exchangeOffersData] = await Promise.all([
@@ -140,19 +131,19 @@ export const syncWithSupabase = async () => {
 
     // If we have data from Supabase, update localStorage
     if (albumsData) {
-      saveToStorage('albums', albumsData);
+      saveToStorage('albums', albumsData, false);
     }
 
     if (stickersData) {
-      saveToStorage('stickers', stickersData);
+      saveToStorage('stickers', stickersData, false);
     }
 
     if (usersData) {
-      saveToStorage('users', usersData);
+      saveToStorage('users', usersData, false);
     }
 
     if (exchangeOffersData) {
-      saveToStorage('exchangeOffers', exchangeOffersData);
+      saveToStorage('exchangeOffers', exchangeOffersData, false);
     }
 
     // Dispatch sync complete event
@@ -164,8 +155,8 @@ export const syncWithSupabase = async () => {
   }
 };
 
-// Save data to localStorage and Supabase
-export const saveToStorage = <T>(key: string, data: T): void => {
+// Save data to localStorage and optionally Supabase
+export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void => {
   try {
     if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
       console.warn('Storage not available - running in a non-browser environment');
@@ -175,8 +166,13 @@ export const saveToStorage = <T>(key: string, data: T): void => {
     const jsonData = JSON.stringify(data);
     localStorage.setItem(key, jsonData);
     
-    // Sync to Supabase
-    syncToSupabase(key, data);
+    // Sync to Supabase if required
+    if (syncToCloud) {
+      sendToSupabase(key, data);
+      
+      // Trigger a sync-start event to show indicator
+      window.dispatchEvent(new CustomEvent('sync-start'));
+    }
     
     // Dispatch a custom event to notify other components
     const eventName = key === 'albums' 
@@ -194,7 +190,7 @@ export const saveToStorage = <T>(key: string, data: T): void => {
 };
 
 // Sync data to Supabase
-const syncToSupabase = async <T>(key: string, data: T): Promise<void> => {
+const sendToSupabase = async <T>(key: string, data: T): Promise<void> => {
   if (Array.isArray(data)) {
     // Determine the table name based on the key
     let tableName = '';
@@ -216,8 +212,14 @@ const syncToSupabase = async <T>(key: string, data: T): Promise<void> => {
         return;
     }
     
+    console.log(`Sending ${data.length} items to Supabase table: ${tableName}`);
+    
     // Save the data to Supabase
-    await saveBatch(tableName, data);
+    try {
+      await saveBatch(tableName, data);
+    } catch (error) {
+      console.error(`Error sending data to Supabase (${tableName}):`, error);
+    }
   }
 };
 

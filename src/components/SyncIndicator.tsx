@@ -6,15 +6,19 @@ import { StorageEvents } from "@/lib/sync-manager";
 
 const SyncIndicator = () => {
   const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
   useEffect(() => {
     // Listen for sync events
     const handleSyncStart = () => {
+      console.log("Sync started");
       setIsSyncing(true);
     };
 
     const handleSyncComplete = () => {
+      console.log("Sync completed");
       setIsSyncing(false);
+      setLastSyncTime(new Date());
       toast({
         title: "סנכרון הושלם",
         description: "הנתונים עודכנו בהצלחה",

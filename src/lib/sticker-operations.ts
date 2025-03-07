@@ -1,13 +1,14 @@
+
 import { Sticker } from './types';
 import { stickers as initialStickers } from './initial-data';
-import { saveToStorage } from './sync-manager';
+import { saveToStorage, syncWithSupabase } from './sync-manager';
 
 // Maintain data state
 export let stickerData = [...initialStickers];
 
 export const setStickerData = (data: Sticker[]) => {
   stickerData = data;
-  // Save to localStorage whenever data changes
+  // Save to localStorage and Supabase whenever data changes
   saveToStorage('stickers', stickerData);
 };
 
@@ -18,9 +19,15 @@ export const getStickersByAlbumId = (albumId: string) => {
 export const addSticker = (sticker: Omit<Sticker, "id">) => {
   const newSticker = {
     ...sticker,
-    id: `sticker${stickerData.length + 1}`
+    id: `sticker${Date.now()}_${Math.floor(Math.random() * 1000)}`, // More unique IDs
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   };
   setStickerData([...stickerData, newSticker]);
+  
+  // Force a sync with Supabase to ensure real-time updates
+  syncWithSupabase();
+  
   return newSticker;
 };
 
@@ -82,7 +89,7 @@ export const updateTeamNameAcrossStickers = (oldTeamName: string, newTeamName: s
 
 export const importStickersFromCSV = (albumId: string, csvData: Array<[number, string, string]>) => {
   const newStickers = csvData.map(([number, name, team], index) => ({
-    id: `sticker${stickerData.length + index + 1}`,
+    id: `sticker${Date.now()}_${index}`, // More unique IDs
     number,
     name,
     team,
@@ -90,10 +97,16 @@ export const importStickersFromCSV = (albumId: string, csvData: Array<[number, s
     isOwned: false,
     isDuplicate: false,
     duplicateCount: 0,
-    albumId
+    albumId,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   }));
   
   setStickerData([...stickerData, ...newStickers]);
+  
+  // Force a sync with Supabase to ensure real-time updates
+  syncWithSupabase();
+  
   return newStickers;
 };
 

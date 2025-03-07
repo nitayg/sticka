@@ -1,7 +1,8 @@
+
 import { Album } from './types';
 import { albums as initialAlbums } from './initial-data';
 import { stickerData, setStickerData } from './sticker-operations';
-import { saveToStorage } from './sync-manager';
+import { saveToStorage, syncWithSupabase } from './sync-manager';
 
 // Maintain data state
 let albumData = [...initialAlbums];
@@ -9,7 +10,7 @@ let albumData = [...initialAlbums];
 export const getAlbumData = () => albumData;
 export const setAlbumData = (data: Album[]) => {
   albumData = data;
-  // Save to localStorage whenever data changes
+  // Save to localStorage and Supabase whenever data changes
   saveToStorage('albums', albumData);
 };
 
@@ -24,23 +25,35 @@ export const getAlbumById = (id: string) => {
 export const addAlbum = (album: Omit<Album, "id">) => {
   const newAlbum = {
     ...album,
-    id: `album${albumData.length + 1}`
+    id: `album${Date.now()}`, // Use timestamp for more unique IDs
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   };
   setAlbumData([...albumData, newAlbum]);
   
   // Trigger a custom event to notify components that album data has changed
   window.dispatchEvent(new CustomEvent('albumDataChanged'));
   
+  // Force a sync with Supabase to ensure real-time updates
+  syncWithSupabase();
+  
   return newAlbum;
 };
 
 export const updateAlbum = (id: string, data: Partial<Album>) => {
   setAlbumData(albumData.map(album => 
-    album.id === id ? { ...album, ...data } : album
+    album.id === id ? { 
+      ...album, 
+      ...data, 
+      updatedAt: new Date().toISOString() 
+    } : album
   ));
   
   // Trigger a custom event to notify components that album data has changed
   window.dispatchEvent(new CustomEvent('albumDataChanged'));
+  
+  // Force a sync with Supabase to ensure real-time updates
+  syncWithSupabase();
   
   return albumData.find(album => album.id === id);
 };
@@ -53,4 +66,7 @@ export const deleteAlbum = (id: string) => {
   
   // Trigger a custom event to notify components that album data has changed
   window.dispatchEvent(new CustomEvent('albumDataChanged'));
+  
+  // Force a sync with Supabase to ensure real-time updates
+  syncWithSupabase();
 };

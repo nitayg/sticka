@@ -1,11 +1,20 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { Album, Sticker, ExchangeOffer, User } from './types';
 
 const supabaseUrl = 'https://xdvhjraiqilmcsydkaos.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkdmhqcmFpcWlsbWNzeWRrYW9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDExODM5OTEsImV4cCI6MjA1Njc1OTk5MX0.m3gYUVysgOw97zTVB8TCqPt9Yf0_3lueAssw3B30miA';
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// Create a Supabase client with realtime enabled
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
+  }
+});
+
+// Enable realtime on all tables
+supabase.channel('schema-db-changes');
 
 // Functions for albums
 export async function fetchAlbums() {
@@ -141,13 +150,20 @@ export async function saveBatch<T extends {id: string}>(
 ) {
   if (!items.length) return true;
   
+  console.log(`Saving ${items.length} items to ${tableName}`);
+  
   const { error } = await supabase
     .from(tableName)
-    .upsert(items, { onConflict: 'id' });
+    .upsert(items, { 
+      onConflict: 'id',
+      ignoreDuplicates: false
+    });
   
   if (error) {
     console.error(`Error saving batch to ${tableName}:`, error);
     return false;
   }
+  
+  console.log(`Successfully saved ${items.length} items to ${tableName}`);
   return true;
 }

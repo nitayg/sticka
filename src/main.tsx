@@ -10,6 +10,12 @@ import './styles/animations.css'
 import './styles/pwa.css'
 import './styles/smooth-animations.css'
 import SyncIndicator from './components/SyncIndicator.tsx'
+import { initializeFromStorage } from './lib/sync-manager.ts'
+
+// Initialize Supabase synchronization
+initializeFromStorage()
+  .then(() => console.log('Supabase connection initialized'))
+  .catch(err => console.error('Failed to initialize Supabase:', err));
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
