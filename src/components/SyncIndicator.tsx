@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { Loader2, CheckCircle, WifiOff, RefreshCcw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { StorageEvents, isSyncInProgress, getLastSyncTime, forceSync, isOnline } from "@/lib/sync-manager";
+import { StorageEvents, isSyncInProgress, getLastSyncTime, forceSync, isOnline } from "@/lib/sync/index";
 
 const SyncIndicator = () => {
   const [isSyncing, setIsSyncing] = useState(false);
