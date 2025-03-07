@@ -151,7 +151,7 @@ const setupRealtimeSubscriptions = () => {
   });
 };
 
-// Sync local data with Supabase
+// Sync local data with Supabase - only triggered by explicit actions, not automatically
 export const syncWithSupabase = async (isInitialSync = false) => {
   if (syncInProgress) {
     pendingSync = true;
@@ -163,7 +163,7 @@ export const syncWithSupabase = async (isInitialSync = false) => {
     console.log('Syncing with Supabase...');
     syncInProgress = true;
     
-    // Let the UI know we're starting a sync (no toast, just updating state)
+    // Let the UI know we're starting a sync
     window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_START));
     
     // Fetch data from Supabase
@@ -256,7 +256,7 @@ export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void
       console.log(`Syncing ${key} to Supabase`);
       sendToSupabase(key, data);
       
-      // Trigger a sync-start event to show indicator (without toast)
+      // Trigger a sync-start event to show indicator
       window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_START));
     }
     

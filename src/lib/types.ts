@@ -75,3 +75,20 @@ export type TableItems = {
   'exchange_offers': ExchangeOfferTableItem;
   'users': UserTableItem;
 };
+
+// Type guards for type checking in the saveBatch function
+export function isAlbum(item: any): item is Album {
+  return 'totalStickers' in item && 'name' in item;
+}
+
+export function isSticker(item: any): item is Sticker {
+  return 'albumId' in item && 'team' in item && 'number' in item;
+}
+
+export function isExchangeOffer(item: any): item is ExchangeOffer {
+  return 'offeredStickerId' in item && 'wantedStickerId' in item;
+}
+
+export function isUser(item: any): item is User {
+  return 'stickerCount' in item;
+}
