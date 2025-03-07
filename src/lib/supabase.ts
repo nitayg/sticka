@@ -423,7 +423,11 @@ export async function saveBatch<T extends { id: string }>(
   const existingItems = await supabase.from(tableName).select('id');
   const existingIds = existingItems.data.map((item) => item.id);
 
-  const filteredItems = adjustedItems.filter((item) => existingIds.includes(item.id));
+  const filteredItems = adjustedItems.filter((item) => 
+  // אם הפריט לא קיים בשרת, כנראה שהוא נמחק במקום אחר
+  // אז אנחנו לא רוצים להחזיר אותו לשרת
+  existingIds.includes(item.id)
+);
 
   if (filteredItems.length !== adjustedItems.length) {
     console.log(`Filtered out ${adjustedItems.length - filteredItems.length} items that no longer exist on the server`);
