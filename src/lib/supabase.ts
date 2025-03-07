@@ -38,7 +38,20 @@ export async function fetchAlbums() {
     return null;
   }
   console.log(`Fetched ${data?.length || 0} albums from Supabase`);
-  return data as Album[];
+  console.log('Fetched data:', JSON.stringify(data, null, 2)); // הדפסת הנתונים המקוריים
+
+  // התאמת שמות השדות לממשק Album
+  const adjustedData = data.map((album) => ({
+    id: album.id,
+    name: album.name,
+    totalStickers: album.totalstickers, // התאמה מ-totalstickers ל-totalStickers
+    description: album.description,
+    year: album.year,
+    coverImage: album.coverimage, // התאמה מ-coverimage ל-coverImage
+  }));
+
+  console.log('Adjusted data:', JSON.stringify(adjustedData, null, 2)); // הדפסת הנתונים לאחר ההתאמה
+  return adjustedData as Album[];
 }
 
 export async function saveAlbum(album: Album) {
