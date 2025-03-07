@@ -32,6 +32,8 @@ const AlbumHeader = ({
         <AlbumTitle selectedAlbumData={selectedAlbumData} />
         
         <AlbumHeaderActions
+          albums={albums}
+          selectedAlbum={selectedAlbum}
           viewMode={viewMode}
           setViewMode={setViewMode}
           showImages={showImages}
