@@ -11,7 +11,7 @@ import './styles/pwa.css'
 import './styles/smooth-animations.css'
 import SyncIndicator from './components/SyncIndicator.tsx'
 import { initializeFromStorage, syncWithSupabase } from './lib/sync-manager.ts'
-import { toast } from './components/ui/use-toast.tsx'
+import { toast } from './hooks/use-toast'
 
 // Log the app version and initialization
 console.log('App starting - initializing...');
