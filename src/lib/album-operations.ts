@@ -18,11 +18,12 @@ export const setAlbumData = (data: Album[]) => {
 };
 
 export const getAllAlbums = () => {
-  return albumData;
+  // Filter out deleted albums
+  return albumData.filter(album => !album.isDeleted);
 };
 
 export const getAlbumById = (id: string) => {
-  return albumData.find(album => album.id === id);
+  return albumData.find(album => album.id === id && !album.isDeleted);
 };
 
 export const addAlbum = (album: Omit<Album, "id">) => {
@@ -33,6 +34,8 @@ export const addAlbum = (album: Omit<Album, "id">) => {
   const newAlbum = {
     ...album,
     id: `album_${timestamp}_${random}`,
+    lastModified: timestamp,
+    isDeleted: false
   };
   
   setAlbumData([...albumData, newAlbum]);
@@ -47,10 +50,13 @@ export const addAlbum = (album: Omit<Album, "id">) => {
 };
 
 export const updateAlbum = (id: string, data: Partial<Album>) => {
+  const timestamp = Date.now();
+  
   setAlbumData(albumData.map(album => 
     album.id === id ? { 
       ...album, 
-      ...data
+      ...data,
+      lastModified: timestamp
     } : album
   ));
   
@@ -64,10 +70,25 @@ export const updateAlbum = (id: string, data: Partial<Album>) => {
 };
 
 export const deleteAlbum = (id: string) => {
-  setAlbumData(albumData.filter(album => album.id !== id));
-  // מחיקת כל המדבקות השייכות לאלבום זה
-  const updatedStickers = stickerData.filter(sticker => sticker.albumId !== id);
-  setStickerData(updatedStickers);
+  const timestamp = Date.now();
+  
+  // Soft delete - mark as deleted instead of removing
+  setAlbumData(albumData.map(album => 
+    album.id === id ? {
+      ...album,
+      isDeleted: true,
+      lastModified: timestamp
+    } : album
+  ));
+  
+  // Mark all related stickers as deleted too
+  setStickerData(stickerData.map(sticker => 
+    sticker.albumId === id ? {
+      ...sticker,
+      isDeleted: true,
+      lastModified: timestamp
+    } : sticker
+  ));
   
   // Trigger a custom event to notify components that album data has changed
   window.dispatchEvent(new CustomEvent('albumDataChanged'));

@@ -48,8 +48,18 @@ export const moveAlbumToRecycleBin = (albumId: string): void => {
   saveRecycleBin(recycleBin);
   
   // הסר את האלבום והמדבקות שלו מהנתונים הפעילים
-  setAlbumData(albums.filter(album => album.id !== albumId));
-  setStickerData(stickerData.filter(sticker => sticker.albumId !== albumId));
+  // אבל סמן אותם כמחוקים במקום למחוק לגמרי
+  setAlbumData(albums.map(album => 
+    album.id === albumId 
+      ? { ...album, isDeleted: true, lastModified: Date.now() } 
+      : album
+  ));
+  
+  setStickerData(stickerData.map(sticker => 
+    sticker.albumId === albumId 
+      ? { ...sticker, isDeleted: true, lastModified: Date.now() } 
+      : sticker
+  ));
   
   // הפעל אירוע מותאם אישית כדי להודיע לרכיבים שנתוני האלבום השתנו
   window.dispatchEvent(new CustomEvent('albumDataChanged'));
@@ -62,7 +72,18 @@ export const deleteAlbumPermanently = (albumId: string): void => {
   const updatedRecycleBin = recycleBin.filter(item => item.id !== albumId);
   saveRecycleBin(updatedRecycleBin);
   
+  // וודא שהאלבום באמת נמחק מנתוני האלבומים
+  const albums = getAlbumData();
+  const albumToDelete = albums.find(album => album.id === albumId);
+  
+  if (albumToDelete) {
+    // מחק לגמרי את האלבום מהמערכת
+    setAlbumData(albums.filter(album => album.id !== albumId));
+    setStickerData(stickerData.filter(sticker => sticker.albumId !== albumId));
+  }
+  
   window.dispatchEvent(new CustomEvent('recycleBinChanged'));
+  window.dispatchEvent(new CustomEvent('albumDataChanged'));
 };
 
 // שחזר אלבום מסל המיחזור
@@ -77,10 +98,49 @@ export const restoreAlbumFromRecycleBin = (albumId: string): void => {
   
   // שחזר את האלבום והמדבקות שלו לנתונים הפעילים
   const albums = getAlbumData();
-  setAlbumData([...albums, itemToRestore.item]);
+  const restoredAlbum = { 
+    ...itemToRestore.item, 
+    isDeleted: false, 
+    lastModified: Date.now() 
+  };
   
+  // בדוק אם האלבום קיים במערכת (במצב מחוק)
+  const existingAlbumIndex = albums.findIndex(album => album.id === albumId);
+  
+  if (existingAlbumIndex >= 0) {
+    // אם האלבום קיים, עדכן את הסטטוס שלו
+    const updatedAlbums = [...albums];
+    updatedAlbums[existingAlbumIndex] = restoredAlbum;
+    setAlbumData(updatedAlbums);
+  } else {
+    // אם האלבום לא קיים, הוסף אותו מחדש
+    setAlbumData([...albums, restoredAlbum]);
+  }
+  
+  // שחזר את המדבקות
   const stickers = stickerData;
-  setStickerData([...stickers, ...itemToRestore.relatedStickers]);
+  const restoredStickers = itemToRestore.relatedStickers.map(sticker => ({
+    ...sticker,
+    isDeleted: false,
+    lastModified: Date.now()
+  }));
+  
+  // הוסף את המדבקות המשוחזרות
+  const newStickers = [...stickers];
+  
+  for (const restoredSticker of restoredStickers) {
+    const existingStickerIndex = newStickers.findIndex(s => s.id === restoredSticker.id);
+    
+    if (existingStickerIndex >= 0) {
+      // אם המדבקה קיימת, עדכן את הסטטוס שלה
+      newStickers[existingStickerIndex] = restoredSticker;
+    } else {
+      // אם המדבקה לא קיימת, הוסף אותה
+      newStickers.push(restoredSticker);
+    }
+  }
+  
+  setStickerData(newStickers);
   
   // הסר את הפריט מסל המיחזור
   const updatedRecycleBin = recycleBin.filter(item => item.id !== albumId);

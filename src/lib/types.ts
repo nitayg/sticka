@@ -13,6 +13,8 @@ export interface Sticker {
   isDuplicate: boolean;
   duplicateCount?: number; // Add duplicate count field
   albumId: string;
+  isDeleted?: boolean; // Add soft delete field
+  lastModified?: number; // Add modification timestamp
 }
 
 export interface Album {
@@ -22,6 +24,8 @@ export interface Album {
   year?: string;
   totalStickers: number;
   coverImage?: string;
+  isDeleted?: boolean; // Add soft delete field
+  lastModified?: number; // Add modification timestamp
 }
 
 export interface User {
@@ -36,6 +40,8 @@ export interface User {
   };
   location?: string;
   phone?: string;
+  isDeleted?: boolean; // Add soft delete field
+  lastModified?: number; // Add modification timestamp
 }
 
 export interface ExchangeOffer {
@@ -53,6 +59,8 @@ export interface ExchangeOffer {
   phone?: string;
   color?: string;
   albumId: string;
+  isDeleted?: boolean; // Add soft delete field
+  lastModified?: number; // Add modification timestamp
 }
 
 export interface NavigationItem {

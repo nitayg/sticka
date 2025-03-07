@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Download, Upload, Trash2, Recycle } from "lucide-react";
+import { Download, Upload, Trash2, Recycle, RefreshCw } from "lucide-react";
 import { Button } from "../ui/button";
 import ViewModeToggle from "../ViewModeToggle";
 import AddAlbumForm from "../add-album-form";
@@ -9,6 +9,7 @@ import { Album } from "@/lib/types";
 import { moveAlbumToRecycleBin } from "@/lib/recycle-bin";
 import { useToast } from "../ui/use-toast";
 import RecycleBinDialog from "../recycle-bin/RecycleBinDialog";
+import { forceSync } from "@/lib/sync-manager";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +46,7 @@ const AlbumHeaderActions = ({
   const { toast } = useToast();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRecycleBinOpen, setIsRecycleBinOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   
   const selectedAlbumData = albums.find(album => album.id === selectedAlbum);
   
@@ -63,8 +65,31 @@ const AlbumHeaderActions = ({
     onRefresh();
   };
   
+  const handleSync = async () => {
+    setIsSyncing(true);
+    await forceSync();
+    setTimeout(() => {
+      setIsSyncing(false);
+      onRefresh();
+      toast({
+        title: "סנכרון הושלם",
+        description: "כל הנתונים סונכרנו עם השרת בהצלחה",
+      });
+    }, 1000);
+  };
+  
   return (
-    <div className="flex items-center justify-end space-x-2">
+    <div className="flex items-center justify-end space-x-2 rtl:space-x-reverse">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleSync}
+        disabled={isSyncing}
+      >
+        <RefreshCw className={`h-4 w-4 ml-1 rtl:mr-0 rtl:ml-1 ${isSyncing ? 'animate-spin' : ''}`} />
+        סנכרן עכשיו
+      </Button>
+      
       <AddAlbumForm onAlbumAdded={onRefresh} />
       
       <ImportExcelDialog 

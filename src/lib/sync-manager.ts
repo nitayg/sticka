@@ -1,4 +1,3 @@
-
 import { albums, stickers, users, exchangeOffers } from './initial-data';
 import { Album, Sticker, User, ExchangeOffer } from './types';
 import { 
@@ -151,6 +150,43 @@ const setupRealtimeSubscriptions = () => {
   });
 };
 
+// Merge data from remote and local sources
+const mergeData = <T extends { id: string; lastModified?: number }>(
+  localData: T[], 
+  remoteData: T[]
+): T[] => {
+  const mergedMap = new Map<string, T>();
+  
+  // First add all local items to the map
+  localData.forEach(item => {
+    mergedMap.set(item.id, { ...item });
+  });
+  
+  // Then process remote items - keep the newer version based on lastModified
+  remoteData.forEach(remoteItem => {
+    const localItem = mergedMap.get(remoteItem.id);
+    const remoteLastModified = remoteItem.lastModified || 0;
+    const localLastModified = localItem?.lastModified || 0;
+    
+    // If the remote item is newer, or if it's marked as deleted and local isn't, use remote
+    if (!localItem || remoteLastModified > localLastModified || 
+        ((remoteItem as any).isDeleted && !(localItem as any).isDeleted)) {
+      mergedMap.set(remoteItem.id, { ...remoteItem });
+    }
+  });
+  
+  return Array.from(mergedMap.values());
+};
+
+// Filter out soft-deleted items for display
+const filterDeleted = <T>(items: T[]): T[] => {
+  return items.filter(item => {
+    // Only keep items where isDeleted is not true
+    const typedItem = item as any;
+    return !typedItem.isDeleted;
+  });
+};
+
 // Sync local data with Supabase - only triggered by explicit actions, not automatically
 export const syncWithSupabase = async (isInitialSync = false) => {
   if (syncInProgress) {
@@ -174,46 +210,43 @@ export const syncWithSupabase = async (isInitialSync = false) => {
       fetchExchangeOffers()
     ]);
 
-    // If we have data from Supabase, update localStorage
+    // Get local data
+    const localAlbums = getFromStorage<Album[]>('albums', []);
+    const localStickers = getFromStorage<Sticker[]>('stickers', []);
+    const localUsers = getFromStorage<User[]>('users', []);
+    const localExchangeOffers = getFromStorage<ExchangeOffer[]>('exchangeOffers', []);
+    
+    // Merge and save data, respecting deletions and modifications
     if (albumsData && albumsData.length > 0) {
-      saveToStorage('albums', albumsData, false);
-    } else if (isInitialSync) {
-      // On initial sync, if no remote data and we have local data, upload it
-      const localAlbums = getFromStorage('albums', []);
-      if (localAlbums && localAlbums.length > 0) {
-        console.log('Uploading local albums to Supabase');
-        await saveBatch('albums', localAlbums);
-      }
+      const mergedAlbums = mergeData(localAlbums, albumsData);
+      saveToStorage('albums', mergedAlbums, false);
+    } else if (isInitialSync && localAlbums.length > 0) {
+      console.log('Uploading local albums to Supabase');
+      await saveBatch('albums', localAlbums);
     }
 
     if (stickersData && stickersData.length > 0) {
-      saveToStorage('stickers', stickersData, false);
-    } else if (isInitialSync) {
-      const localStickers = getFromStorage('stickers', []);
-      if (localStickers && localStickers.length > 0) {
-        console.log('Uploading local stickers to Supabase');
-        await saveBatch('stickers', localStickers);
-      }
+      const mergedStickers = mergeData(localStickers, stickersData);
+      saveToStorage('stickers', mergedStickers, false);
+    } else if (isInitialSync && localStickers.length > 0) {
+      console.log('Uploading local stickers to Supabase');
+      await saveBatch('stickers', localStickers);
     }
 
     if (usersData && usersData.length > 0) {
-      saveToStorage('users', usersData, false);
-    } else if (isInitialSync) {
-      const localUsers = getFromStorage('users', []);
-      if (localUsers && localUsers.length > 0) {
-        console.log('Uploading local users to Supabase');
-        await saveBatch('users', localUsers);
-      }
+      const mergedUsers = mergeData(localUsers, usersData);
+      saveToStorage('users', mergedUsers, false);
+    } else if (isInitialSync && localUsers.length > 0) {
+      console.log('Uploading local users to Supabase');
+      await saveBatch('users', localUsers);
     }
 
     if (exchangeOffersData && exchangeOffersData.length > 0) {
-      saveToStorage('exchangeOffers', exchangeOffersData, false);
-    } else if (isInitialSync) {
-      const localExchangeOffers = getFromStorage('exchangeOffers', []);
-      if (localExchangeOffers && localExchangeOffers.length > 0) {
-        console.log('Uploading local exchange offers to Supabase');
-        await saveBatch('exchange_offers', localExchangeOffers);
-      }
+      const mergedExchangeOffers = mergeData(localExchangeOffers, exchangeOffersData);
+      saveToStorage('exchangeOffers', mergedExchangeOffers, false);
+    } else if (isInitialSync && localExchangeOffers.length > 0) {
+      console.log('Uploading local exchange offers to Supabase');
+      await saveBatch('exchange_offers', localExchangeOffers);
     }
 
     // Update sync tracking
@@ -320,7 +353,17 @@ export const getFromStorage = <T>(key: string, defaultValue: T): T => {
     const storedData = localStorage.getItem(key);
     if (!storedData) return defaultValue;
     
-    return JSON.parse(storedData) as T;
+    const parsedData = JSON.parse(storedData) as T;
+    
+    // If we're getting albums or other data that might have soft-deleted items,
+    // filter them out for UI purposes unless explicitly requested with includeDeleted
+    if (Array.isArray(parsedData) && key !== 'recycleBin') {
+      // Cast to any to check if items have isDeleted property
+      const dataArray = parsedData as any[];
+      return filterDeleted(dataArray) as unknown as T;
+    }
+    
+    return parsedData;
   } catch (error) {
     console.error(`Error getting ${key} from storage:`, error);
     return defaultValue;
