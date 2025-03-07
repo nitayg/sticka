@@ -135,7 +135,7 @@ const setupRealtimeSubscriptions = () => {
       console.log('עדכון בזמן אמת עבור מדבקות:', payload);
       // עדכון סנכרון במקרה של שינוי במחיקות
       if (payload.new && payload.old && 
-          payload.new.isdeleted !== payload.old.isdeleted) {
+          (payload.new as any).isdeleted !== (payload.old as any).isdeleted) {
         syncWithSupabase();
       }
     })

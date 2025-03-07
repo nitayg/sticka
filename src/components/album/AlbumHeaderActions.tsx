@@ -1,9 +1,21 @@
 
-import { Settings, RefreshCw } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
 import SettingsButton from '@/components/settings/SettingsButton';
 import SyncButton from '@/components/SyncButton';
+import { Album } from '@/lib/types';
+
+interface AlbumHeaderActionsProps {
+  albums: Album[];
+  selectedAlbum: string;
+  viewMode: "grid" | "list" | "compact";
+  setViewMode: (mode: "grid" | "list" | "compact") => void;
+  showImages: boolean;
+  setShowImages: (show: boolean) => void;
+  onRefresh: () => void;
+  onImportComplete: () => void;
+}
 
 const AlbumHeaderActions = () => {
   return (

@@ -31,16 +31,9 @@ const AlbumHeader = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <AlbumTitle selectedAlbumData={selectedAlbumData} />
         
-        <AlbumHeaderActions
-          albums={albums}
-          selectedAlbum={selectedAlbum}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          showImages={showImages}
-          setShowImages={setShowImages}
-          onRefresh={onRefresh}
-          onImportComplete={onImportComplete}
-        />
+        <div className="flex items-center gap-2">
+          <AlbumHeaderActions />
+        </div>
       </div>
     </div>
   );

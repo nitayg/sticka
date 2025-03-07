@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { forceSync, isSyncInProgress } from '@/lib/sync-manager';
 import { useToast } from '@/hooks/use-toast';
@@ -45,7 +44,10 @@ const SyncButton = () => {
       className="flex items-center gap-2"
     >
       {syncing ? 
-        <Loader2 className="w-4 h-4 animate-spin" /> : 
+        <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg> : 
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M19 8L15 12H18C18 15.31 15.31 18 12 18C10.99 18 10.03 17.75 9.2 17.3L7.74 18.76C8.97 19.54 10.43 20 12 20C16.42 20 20 16.42 20 12H23L19 8Z" fill="currentColor"/>
           <path d="M6 12C6 8.69 8.69 6 12 6C13.01 6 13.97 6.25 14.8 6.7L16.26 5.24C15.03 4.46 13.57 4 12 4C7.58 4 4 7.58 4 12H1L5 16L9 12H6Z" fill="currentColor"/>
