@@ -1,4 +1,3 @@
-
 import { Sticker } from './types';
 import { stickers as initialStickers } from './initial-data';
 import { saveToStorage, syncWithSupabase } from './sync-manager';
@@ -12,7 +11,7 @@ export const setStickerData = (data: Sticker[]) => {
   saveToStorage('stickers', stickerData);
   
   // Force a sync with Supabase to ensure real-time updates
-  syncWithSupabase();
+  window.dispatchEvent(new CustomEvent('stickersDataChanged'));
 };
 
 export const getStickersByAlbumId = (albumId: string) => {
@@ -20,13 +19,22 @@ export const getStickersByAlbumId = (albumId: string) => {
 };
 
 export const addSticker = (sticker: Omit<Sticker, "id">) => {
+  // Generate a truly unique ID with a timestamp component
+  // Format: sticker_<timestamp>_<random string>
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 15);
+  
   const newSticker = {
     ...sticker,
-    id: `sticker_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // More unique IDs
+    id: `sticker_${timestamp}_${random}`,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
+  
   setStickerData([...stickerData, newSticker]);
+  
+  // Force a sync with Supabase
+  syncWithSupabase();
   
   return newSticker;
 };
@@ -57,11 +65,17 @@ export const updateSticker = (id: string, data: Partial<Sticker>) => {
   
   setStickerData(updatedData);
   
+  // Force a sync with Supabase
+  syncWithSupabase();
+  
   return stickerData.find(sticker => sticker.id === id);
 };
 
 export const deleteSticker = (id: string) => {
   setStickerData(stickerData.filter(sticker => sticker.id !== id));
+  
+  // Force a sync with Supabase
+  syncWithSupabase();
 };
 
 export const toggleStickerOwned = (id: string) => {
@@ -84,18 +98,24 @@ export const updateTeamNameAcrossStickers = (oldTeamName: string, newTeamName: s
       return {
         ...sticker,
         team: newTeamName,
-        teamLogo: newLogo || sticker.teamLogo
+        teamLogo: newLogo || sticker.teamLogo,
+        updatedAt: new Date().toISOString()
       };
     }
     return sticker;
   }));
   
+  // Force a sync with Supabase after bulk update
+  syncWithSupabase();
+  
   return stickersToUpdate.length;
 };
 
 export const importStickersFromCSV = (albumId: string, csvData: Array<[number, string, string]>) => {
+  const timestamp = Date.now();
+  
   const newStickers = csvData.map(([number, name, team], index) => ({
-    id: `sticker${Date.now()}_${index}`, // More unique IDs
+    id: `sticker_${timestamp}_${index}_${Math.random().toString(36).substring(2, 9)}`,
     number,
     name,
     team,
@@ -148,6 +168,9 @@ export const addStickersToInventory = (albumId: string, stickerNumbers: number[]
       results.newlyOwned++;
     }
   });
+  
+  // Force a sync after bulk operations
+  syncWithSupabase();
   
   return results;
 };

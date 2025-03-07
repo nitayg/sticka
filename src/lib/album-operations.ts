@@ -26,12 +26,17 @@ export const getAlbumById = (id: string) => {
 };
 
 export const addAlbum = (album: Omit<Album, "id">) => {
+  // Generate a truly unique ID with a timestamp component
+  // Format: album_<timestamp>_<random string>
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 15);
   const newAlbum = {
     ...album,
-    id: `album_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // More unique IDs
+    id: `album_${timestamp}_${random}`,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
+  
   setAlbumData([...albumData, newAlbum]);
   
   // Trigger a custom event to notify components that album data has changed
