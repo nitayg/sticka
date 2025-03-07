@@ -1,469 +1,265 @@
-import { createClient } from '@supabase/supabase-js';
-import { Album, Sticker, ExchangeOffer, User } from './types';
 
+import { createClient } from '@supabase/supabase-js';
+import { Album, Sticker, User, ExchangeOffer } from './types';
+
+// Define the Supabase URL and key
 const supabaseUrl = 'https://xdvhjraiqilmcsydkaos.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkdmhqcmFpcWlsbWNzeWRrYW9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDExODM5OTEsImV4cCI6MjA1Njc1OTk5MX0.m3gYUVysgOw97zTVB8TCqPt9Yf0_3lueAssw3B30miA';
 
-// Create a Supabase client with enhanced realtime configuration
-export const supabase = createClient(supabaseUrl, supabaseKey, {
-  realtime: {
-    params: {
-      eventsPerSecond: 10
-    }
-  },
-  db: {
-    schema: 'public'
-  },
-  global: {
-    headers: {
-      'x-application-name': 'sticker-album-app'
-    }
-  }
-});
+// Create a single supabase client for interacting with the database
+export const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Debug Supabase connection issues
-supabase.channel('system').on('system', { event: '*' }, (payload) => {
-  console.log('Supabase system event:', payload);
-}).subscribe((status) => {
-  console.log('Supabase system channel status:', status);
-});
-
-// Functions for albums
-export async function fetchAlbums() {
-  console.log('Fetching albums from Supabase...');
-  const { data, error } = await supabase.from('albums').select('*');
-  if (error) {
-    console.error('Error fetching albums:', error);
-    return null;
-  }
-  console.log(`Fetched ${data?.length || 0} albums from Supabase`);
-  console.log('Fetched data:', JSON.stringify(data, null, 2));
-
-  // התאמת שמות השדות לממשק Album
-  const adjustedData = data.map((album) => ({
-    id: album.id,
-    name: album.name,
-    totalStickers: album.totalstickers,
-    description: album.description,
-    year: album.year,
-    coverImage: album.coverimage,
-  }));
-
-  console.log('Adjusted data:', JSON.stringify(adjustedData, null, 2));
-  return adjustedData as Album[];
-}
-
-export async function saveAlbum(album: Album) {
-  console.log('Saving album to Supabase:', album.id);
-  const supabaseAlbum = {
-    id: album.id,
-    name: album.name,
-    totalstickers: album.totalStickers,
-    description: album.description,
-    year: album.year,
-    coverimage: album.coverImage,
-  };
-  console.log('JSON שנשלח:', JSON.stringify(supabaseAlbum, null, 2));
-  const { data, error } = await supabase
-    .from('albums')
-    .upsert(supabaseAlbum, { onConflict: 'id' })
-    .select('*');
-  if (error) {
-    console.error('Error saving album:', error);
-    return false;
-  }
-  return true;
-}
-
-export async function deleteAlbumFromSupabase(id: string) {
-  console.log('Deleting album from Supabase:', id);
-  const { error } = await supabase
-    .from('albums')
-    .delete()
-    .eq('id', id);
-  if (error) {
-    console.error('Error deleting album:', error);
-    return false;
-  }
-  console.log('Album deleted, notifying Realtime...');
-
-  // שידור אירוע Realtime כדי לעדכן את הלקוחות
-  supabase
-    .channel('albums')
-    .send({
-      type: 'broadcast',
-      event: 'album_deleted',
-      payload: { id },
-    })
-    .subscribe();
-
-  return true;
-}
-
-// Functions for stickers
-export async function fetchStickers() {
-  console.log('Fetching stickers from Supabase...');
-  const { data, error } = await supabase.from('stickers').select('*');
-  if (error) {
-    console.error('Error fetching stickers:', error);
-    return null;
-  }
-  console.log(`Fetched ${data?.length || 0} stickers from Supabase`);
-  console.log('Fetched data:', JSON.stringify(data, null, 2));
-
-  // התאמת שמות השדות לממשק Sticker
-  const adjustedData = data.map((sticker) => ({
-    id: sticker.id,
-    name: sticker.name,
-    team: sticker.team,
-    teamLogo: sticker.teamlogo,
-    category: sticker.category,
-    imageUrl: sticker.imageurl,
-    number: sticker.number,
-    isOwned: sticker.isowned,
-    isDuplicate: sticker.isduplicate,
-    duplicateCount: sticker.duplicatecount,
-    albumId: sticker.albumid,
-  }));
-
-  console.log('Adjusted data:', JSON.stringify(adjustedData, null, 2));
-  return adjustedData as Sticker[];
-}
-
-export async function saveSticker(sticker: Sticker) {
-  console.log('Saving sticker to Supabase:', sticker.id);
-  const supabaseSticker = {
-    id: sticker.id,
-    name: sticker.name,
-    team: sticker.team,
-    teamlogo: sticker.teamLogo,
-    category: sticker.category,
-    imageurl: sticker.imageUrl,
-    number: sticker.number,
-    isowned: sticker.isOwned,
-    isduplicate: sticker.isDuplicate,
-    duplicatecount: sticker.duplicateCount,
-    albumid: sticker.albumId,
-  };
-  console.log('JSON שנשלח:', JSON.stringify(supabaseSticker, null, 2));
-  const { data, error } = await supabase
-    .from('stickers')
-    .upsert(supabaseSticker, { onConflict: 'id' })
-    .select('*');
-  if (error) {
-    console.error('Error saving sticker:', error);
-    return false;
-  }
-  return true;
-}
-
-export async function deleteStickerFromSupabase(id: string) {
-  console.log('Deleting sticker from Supabase:', id);
-  const { error } = await supabase
-    .from('stickers')
-    .delete()
-    .eq('id', id);
-  if (error) {
-    console.error('Error deleting sticker:', error);
-    return false;
-  }
-  console.log('Sticker deleted, notifying Realtime...');
-
-  // שידור אירוע Realtime
-  supabase
-    .channel('stickers')
-    .send({
-      type: 'broadcast',
-      event: 'sticker_deleted',
-      payload: { id },
-    })
-    .subscribe();
-
-  return true;
-}
-
-// Functions for exchange offers
-export async function fetchExchangeOffers() {
-  console.log('Fetching exchange offers from Supabase...');
-  const { data, error } = await supabase.from('exchange_offers').select('*');
-  if (error) {
-    console.error('Error fetching exchange offers:', error);
-    return null;
-  }
-  console.log(`Fetched ${data?.length || 0} exchange offers from Supabase`);
-  console.log('Fetched data:', JSON.stringify(data, null, 2));
-
-  // התאמת שמות השדות לממשק ExchangeOffer
-  const adjustedData = data.map((offer) => ({
-    id: offer.id,
-    userId: offer.userid,
-    userName: offer.username,
-    userAvatar: offer.useravatar,
-    offeredStickerId: offer.offeredstickerid,
-    offeredStickerName: offer.offeredstickername,
-    wantedStickerId: offer.wantedstickerid,
-    wantedStickerName: offer.wantedstickername,
-    status: offer.status,
-    exchangeMethod: offer.exchangemethod,
-    location: offer.location,
-    phone: offer.phone,
-    color: offer.color,
-    albumId: offer.albumid,
-  }));
-
-  console.log('Adjusted data:', JSON.stringify(adjustedData, null, 2));
-  return adjustedData as ExchangeOffer[];
-}
-
-export async function saveExchangeOffer(offer: ExchangeOffer) {
-  console.log('Saving exchange offer to Supabase:', offer.id);
-  const supabaseOffer = {
-    id: offer.id,
-    userid: offer.userId,
-    username: offer.userName,
-    useravatar: offer.userAvatar,
-    offeredstickerid: offer.offeredStickerId,
-    offeredstickername: offer.offeredStickerName,
-    wantedstickerid: offer.wantedStickerId,
-    wantedstickername: offer.wantedStickerName,
-    status: offer.status,
-    exchangemethod: offer.exchangeMethod,
-    location: offer.location,
-    phone: offer.phone,
-    color: offer.color,
-    albumid: offer.albumId,
-  };
-  console.log('JSON שנשלח:', JSON.stringify(supabaseOffer, null, 2));
-  const { data, error } = await supabase
-    .from('exchange_offers')
-    .upsert(supabaseOffer, { onConflict: 'id' })
-    .select('*');
-  if (error) {
-    console.error('Error saving exchange offer:', error);
-    return false;
-  }
-  return true;
-}
-
-export async function deleteExchangeOfferFromSupabase(id: string) {
-  console.log('Deleting exchange offer from Supabase:', id);
-  const { error } = await supabase
-    .from('exchange_offers')
-    .delete()
-    .eq('id', id);
-  if (error) {
-    console.error('Error deleting exchange offer:', error);
-    return false;
-  }
-  console.log('Exchange offer deleted, notifying Realtime...');
-
-  // שידור אירוע Realtime
-  supabase
-    .channel('exchange_offers')
-    .send({
-      type: 'broadcast',
-      event: 'exchange_offer_deleted',
-      payload: { id },
-    })
-    .subscribe();
-
-  return true;
-}
-
-// Functions for users
-export async function fetchUsers() {
-  console.log('Fetching users from Supabase...');
-  const { data, error } = await supabase.from('users').select('*');
-  if (error) {
-    console.error('Error fetching users:', error);
-    return null;
-  }
-  console.log(`Fetched ${data?.length || 0} users from Supabase`);
-  console.log('Fetched data:', JSON.stringify(data, null, 2));
-
-  // התאמת שמות השדות לממשק User
-  const adjustedData = data.map((user) => ({
-    id: user.id,
-    name: user.name,
-    avatar: user.avatar,
-    stickerCount: {
-      total: user.totalstickers,
-      owned: user.ownedstickers,
-      needed: user.neededstickers,
-      duplicates: user.duplicatestickers,
-    },
-    location: user.location,
-    phone: user.phone,
-  }));
-
-  console.log('Adjusted data:', JSON.stringify(adjustedData, null, 2));
-  return adjustedData as User[];
-}
-
-export async function saveUser(user: User) {
-  console.log('Saving user to Supabase:', user.id);
-  const supabaseUser = {
-    id: user.id,
-    name: user.name,
-    avatar: user.avatar,
-    totalstickers: user.stickerCount?.total,
-    ownedstickers: user.stickerCount?.owned,
-    neededstickers: user.stickerCount?.needed,
-    duplicatestickers: user.stickerCount?.duplicates,
-    location: user.location,
-    phone: user.phone,
-  };
-  console.log('JSON שנשלח:', JSON.stringify(supabaseUser, null, 2));
-  const { data, error } = await supabase
-    .from('users')
-    .upsert(supabaseUser, { onConflict: 'id' })
-    .select('*');
-  if (error) {
-    console.error('Error saving user:', error);
-    return false;
-  }
-  return true;
-}
-
-export async function deleteUserFromSupabase(id: string) {
-  console.log('Deleting user from Supabase:', id);
-  const { error } = await supabase
-    .from('users')
-    .delete()
-    .eq('id', id);
-  if (error) {
-    console.error('Error deleting user:', error);
-    return false;
-  }
-  console.log('User deleted, notifying Realtime...');
-
-  // שידור אירוע Realtime
-  supabase
-    .channel('users')
-    .send({
-      type: 'broadcast',
-      event: 'user_deleted',
-      payload: { id },
-    })
-    .subscribe();
-
-  return true;
-}
-
-// Create or update multiple items in a transaction
-export async function saveBatch<T extends { id: string }>(
-  tableName: string,
-  items: T[]
-) {
-  if (!items.length) return true;
-
-  console.log(`Received items for ${tableName}:`, JSON.stringify(items, null, 2));
-  console.log(`Saving ${items.length} items to ${tableName}`);
-
-  const adjustedItems = items.map((item) => {
-    if (tableName === 'albums') {
-      return {
-        id: item.id,
-        name: item.name,
-        totalstickers: item.totalStickers,
-        description: item.description,
-        year: item.year,
-        coverimage: item.coverImage,
-      };
-    } else if (tableName === 'stickers') {
-      return {
-        id: item.id,
-        name: item.name,
-        team: item.team,
-        teamlogo: item.teamLogo,
-        category: item.category,
-        imageurl: item.imageUrl,
-        number: item.number,
-        isowned: item.isOwned,
-        isduplicate: item.isDuplicate,
-        duplicatecount: item.duplicateCount,
-        albumid: item.albumId,
-      };
-    } else if (tableName === 'exchange_offers') {
-      return {
-        id: item.id,
-        userid: item.userId,
-        username: item.userName,
-        useravatar: item.userAvatar,
-        offeredstickerid: item.offeredStickerId,
-        offeredstickername: item.offeredStickerName,
-        wantedstickerid: item.wantedStickerId,
-        wantedstickername: item.wantedStickerName,
-        status: item.status,
-        exchangemethod: item.exchangeMethod,
-        location: item.location,
-        phone: item.phone,
-        color: item.color,
-        albumid: item.albumId,
-      };
-    } else if (tableName === 'users') {
-      return {
-        id: item.id,
-        name: item.name,
-        avatar: item.avatar,
-        totalstickers: item.stickerCount?.total,
-        ownedstickers: item.stickerCount?.owned,
-        neededstickers: item.stickerCount?.needed,
-        duplicatestickers: item.stickerCount?.duplicates,
-        location: item.location,
-        phone: item.phone,
-      };
-    }
-    return item;
-  });
-
-  console.log('JSON שנשלח:', JSON.stringify(adjustedItems, null, 2));
-
-  // בדוק את המצב בשרת לפני השמירה
-  const existingItems = await supabase.from(tableName).select('id');
-  const existingIds = existingItems.data.map((item) => item.id);
-
-  const filteredItems = adjustedItems.filter((item) => 
-  // אם הפריט לא קיים בשרת, כנראה שהוא נמחק במקום אחר
-  // אז אנחנו לא רוצים להחזיר אותו לשרת
-  existingIds.includes(item.id)
-);
-
-  if (filteredItems.length !== adjustedItems.length) {
-    console.log(`Filtered out ${adjustedItems.length - filteredItems.length} items that no longer exist on the server`);
-  }
-
+// Fetch all albums from Supabase
+export const fetchAlbums = async (): Promise<Album[]> => {
   try {
-    const chunkSize = 100;
-    for (let i = 0; i < filteredItems.length; i += chunkSize) {
-      const chunk = filteredItems.slice(i, i + chunkSize);
+    const { data, error } = await supabase
+      .from('albums')
+      .select('*')
+      .order('createdAt', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching albums:', error);
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Failed to fetch albums:', error);
+    return [];
+  }
+};
 
+// Fetch all stickers from Supabase
+export const fetchStickers = async (): Promise<Sticker[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('stickers')
+      .select('*')
+      .order('number', { ascending: true });
+    
+    if (error) {
+      console.error('Error fetching stickers:', error);
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Failed to fetch stickers:', error);
+    return [];
+  }
+};
+
+// Fetch all users from Supabase
+export const fetchUsers = async (): Promise<User[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*');
+    
+    if (error) {
+      console.error('Error fetching users:', error);
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Failed to fetch users:', error);
+    return [];
+  }
+};
+
+// Fetch all exchange offers from Supabase
+export const fetchExchangeOffers = async (): Promise<ExchangeOffer[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('exchange_offers')
+      .select('*')
+      .order('createdAt', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching exchange offers:', error);
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Failed to fetch exchange offers:', error);
+    return [];
+  }
+};
+
+// Save a batch of items to Supabase
+export const saveBatch = async <T extends { id: string }>(tableName: string, items: T[]): Promise<void> => {
+  if (!items || items.length === 0) return;
+  
+  try {
+    // Process in smaller batches to avoid overloading Supabase
+    const batchSize = 50;
+    const batches = [];
+    
+    for (let i = 0; i < items.length; i += batchSize) {
+      const batch = items.slice(i, i + batchSize);
+      batches.push(batch);
+    }
+    
+    for (const batch of batches) {
       const { error } = await supabase
         .from(tableName)
-        .upsert(chunk, {
-          onConflict: 'id',
-          ignoreDuplicates: false,
-        })
-        .select('*');
-
+        .upsert(batch, { onConflict: 'id' });
+      
       if (error) {
-        console.error(
-          `Error saving batch to ${tableName} (chunk ${i}-${i + chunk.length}):`,
-          error
-        );
-        console.error('Error details:', JSON.stringify(error));
-        return false;
-      }
-
-      if (filteredItems.length > chunkSize && i + chunkSize < filteredItems.length) {
-        await new Promise((resolve) => setTimeout(resolve, 300));
+        console.error(`Error saving batch to ${tableName}:`, error);
+        throw error;
       }
     }
-
-    console.log(`Successfully saved ${filteredItems.length} items to ${tableName}`);
-    return true;
+    
+    console.log(`Successfully saved ${items.length} items to ${tableName}`);
   } catch (error) {
-    console.error(`Error in saveBatch for ${tableName}:`, error);
-    return false;
+    console.error(`Failed to save batch to ${tableName}:`, error);
+    throw error;
   }
-}
+};
+
+// Set up real-time subscriptions
+export const setupRealtimeSubscriptions = (onDataChange: () => void) => {
+  try {
+    // Create a channel for all tables
+    const channel = supabase.channel('public:all-changes');
+    
+    channel
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public',
+        table: 'albums' 
+      }, () => {
+        console.log('Real-time update for albums');
+        onDataChange();
+      })
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public',
+        table: 'stickers' 
+      }, () => {
+        console.log('Real-time update for stickers');
+        onDataChange();
+      })
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public',
+        table: 'users' 
+      }, () => {
+        console.log('Real-time update for users');
+        onDataChange();
+      })
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public',
+        table: 'exchange_offers' 
+      }, () => {
+        console.log('Real-time update for exchange offers');
+        onDataChange();
+      });
+    
+    const subscription = channel.subscribe((status) => {
+      console.log('Supabase channel status:', status);
+      if (status === 'SUBSCRIBED') {
+        console.log('Successfully subscribed to real-time updates');
+      } else if (status === 'CHANNEL_ERROR') {
+        console.error('Failed to subscribe to real-time updates');
+      }
+    });
+    
+    return { channel, subscription };
+  } catch (error) {
+    console.error('Error setting up real-time subscriptions:', error);
+    return null;
+  }
+};
+
+// Save an album batch to Supabase
+export const saveAlbumBatch = async (albums: Album[]): Promise<void> => {
+  if (!albums || albums.length === 0) return;
+  
+  const processedAlbums = albums.map(album => ({
+    id: album.id,
+    name: album.name,
+    totalStickers: album.totalStickers,
+    description: album.description,
+    year: album.year,
+    coverImage: album.coverImage,
+    createdAt: album.createdAt,
+    updatedAt: album.updatedAt
+  }));
+  
+  await saveBatch('albums', processedAlbums);
+};
+
+// Save a sticker batch to Supabase
+export const saveStickerBatch = async (stickers: Sticker[]): Promise<void> => {
+  if (!stickers || stickers.length === 0) return;
+  
+  const processedStickers = stickers.map(sticker => ({
+    id: sticker.id,
+    name: sticker.name,
+    team: sticker.team,
+    teamLogo: sticker.teamLogo,
+    category: sticker.category,
+    imageUrl: sticker.imageUrl,
+    number: sticker.number,
+    isOwned: sticker.isOwned,
+    isDuplicate: sticker.isDuplicate,
+    duplicateCount: sticker.duplicateCount,
+    albumId: sticker.albumId,
+    createdAt: sticker.createdAt,
+    updatedAt: sticker.updatedAt
+  }));
+  
+  await saveBatch('stickers', processedStickers);
+};
+
+// Save an exchange offer batch to Supabase
+export const saveExchangeOfferBatch = async (exchangeOffers: ExchangeOffer[]): Promise<void> => {
+  if (!exchangeOffers || exchangeOffers.length === 0) return;
+  
+  const processedExchangeOffers = exchangeOffers.map(offer => ({
+    id: offer.id,
+    userId: offer.userId,
+    userName: offer.userName,
+    userAvatar: offer.userAvatar,
+    offeredStickerId: offer.offeredStickerId,
+    offeredStickerName: offer.offeredStickerName,
+    wantedStickerId: offer.wantedStickerId,
+    wantedStickerName: offer.wantedStickerName,
+    status: offer.status,
+    exchangeMethod: offer.exchangeMethod,
+    location: offer.location,
+    phone: offer.phone,
+    color: offer.color,
+    albumId: offer.albumId,
+    createdAt: offer.createdAt,
+    updatedAt: offer.updatedAt
+  }));
+  
+  await saveBatch('exchange_offers', processedExchangeOffers);
+};
+
+// Save a user batch to Supabase
+export const saveUserBatch = async (users: User[]): Promise<void> => {
+  if (!users || users.length === 0) return;
+  
+  const processedUsers = users.map(user => ({
+    id: user.id,
+    name: user.name,
+    avatar: user.avatar,
+    stickerCount: user.stickerCount,
+    totalStickers: user.totalStickers,
+    duplicateStickers: user.duplicateStickers,
+    completionPercentage: user.completionPercentage,
+    location: user.location,
+    phone: user.phone,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt
+  }));
+  
+  await saveBatch('users', processedUsers);
+};

@@ -7,7 +7,8 @@ import {
   fetchStickers, 
   fetchUsers, 
   fetchExchangeOffers,
-  saveBatch 
+  saveBatch,
+  setupRealtimeSubscriptions
 } from './supabase';
 
 // Event names for storage events
@@ -25,6 +26,7 @@ let isConnected = false;
 let lastSyncTime = null;
 let syncInProgress = false;
 let pendingSync = false;
+let realtimeSubscription = null;
 
 // Initialize data from localStorage and Supabase
 export const initializeFromStorage = async () => {
@@ -40,13 +42,12 @@ export const initializeFromStorage = async () => {
     // Initial load from Supabase
     await syncWithSupabase(true);
     
-    // Setup periodic sync every 30 seconds
-    setInterval(() => {
+    // Setup real-time subscriptions to listen for remote changes
+    realtimeSubscription = setupRealtimeSubscriptions(() => {
       if (!syncInProgress && navigator.onLine) {
-        pendingSync = true;
         syncWithSupabase();
       }
-    }, 30000);
+    });
 
     // Listen for online status changes
     window.addEventListener('online', () => {
@@ -64,9 +65,6 @@ export const initializeFromStorage = async () => {
     isConnected = navigator.onLine;
     console.log(`Initial connection status: ${isConnected ? 'online' : 'offline'}`);
     
-    // Listen for Supabase real-time updates
-    setupRealtimeSubscriptions();
-
     // Handle storage events from other tabs/windows
     window.addEventListener('storage', (event) => {
       if (!event.key) return;
@@ -103,60 +101,6 @@ export const initializeFromStorage = async () => {
   } catch (error) {
     console.error('Error initializing from storage:', error);
   }
-};
-
-// Set up real-time subscriptions to Supabase
-const setupRealtimeSubscriptions = () => {
-  console.log('Setting up real-time subscriptions...');
-  
-  // Create a channel for all tables
-  const channel = supabase.channel('public:all-changes')
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public',
-      table: 'albums' 
-    }, (payload) => {
-      console.log('Real-time update for albums:', payload);
-      syncWithSupabase();
-    })
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public',
-      table: 'stickers' 
-    }, (payload) => {
-      console.log('Real-time update for stickers:', payload);
-      syncWithSupabase();
-    })
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public',
-      table: 'users' 
-    }, (payload) => {
-      console.log('Real-time update for users:', payload);
-      syncWithSupabase();
-    })
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public',
-      table: 'exchange_offers' 
-    }, (payload) => {
-      console.log('Real-time update for exchange offers:', payload);
-      syncWithSupabase();
-    });
-  
-  channel.subscribe((status) => {
-    console.log('Supabase channel status:', status);
-    if (status === 'SUBSCRIBED') {
-      console.log('Successfully subscribed to real-time updates');
-    } else if (status === 'CHANNEL_ERROR') {
-      console.error('Failed to subscribe to real-time updates');
-      
-      // Try to reconnect after a delay
-      setTimeout(() => {
-        channel.subscribe();
-      }, 5000);
-    }
-  });
 };
 
 // Sync local data with Supabase
@@ -227,7 +171,7 @@ export const syncWithSupabase = async (isInitialSync = false) => {
     // Update sync tracking
     lastSyncTime = new Date();
     
-    // Dispatch sync complete event
+    // Dispatch sync complete event without UI notification
     window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_COMPLETE, {
       detail: { timestamp: lastSyncTime }
     }));
@@ -311,6 +255,9 @@ const sendToSupabase = async <T>(key: string, data: T): Promise<void> => {
     // Save the data to Supabase
     try {
       await saveBatch(tableName, data);
+      
+      // Trigger a sync after saving to ensure we have the latest data
+      syncWithSupabase();
     } catch (error) {
       console.error(`Error sending data to Supabase (${tableName}):`, error);
     }

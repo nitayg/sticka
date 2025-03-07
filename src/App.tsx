@@ -8,7 +8,6 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import SplashScreen from "@/components/SplashScreen";
 import ManifestUpdater from "@/components/settings/ManifestUpdater";
 import { initializeFromStorage } from "@/lib/sync-manager";
-import { toast } from "@/components/ui/use-toast";
 
 // Lazy-load the main Index component
 const Index = lazy(() => import("./pages/Index"));
@@ -47,29 +46,13 @@ const App = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   
-  // Initialize Supabase and synchronize data
+  // Initialize Supabase and synchronize data only on app start
   useEffect(() => {
     const initSupabase = async () => {
       try {
         setIsSyncing(true);
         await initializeFromStorage();
-        
-        // Listen for sync-complete events
-        const handleSyncComplete = () => {
-          queryClient.invalidateQueries();
-          setIsSyncing(false);
-          toast({
-            title: "סנכרון הושלם",
-            description: "הנתונים עודכנו בהצלחה מהשרת",
-            duration: 3000,
-          });
-        };
-        
-        window.addEventListener('sync-complete', handleSyncComplete);
-        
-        return () => {
-          window.removeEventListener('sync-complete', handleSyncComplete);
-        };
+        setIsSyncing(false);
       } catch (error) {
         console.error("Error initializing Supabase:", error);
         setIsSyncing(false);
