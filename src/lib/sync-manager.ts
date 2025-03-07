@@ -24,7 +24,6 @@ export const StorageEvents = {
 let isConnected = false;
 let lastSyncTime = null;
 let syncInProgress = false;
-let pendingSync = false;
 
 // Initialize data from localStorage and Supabase
 export const initializeFromStorage = async () => {
@@ -40,14 +39,6 @@ export const initializeFromStorage = async () => {
     // Initial load from Supabase
     await syncWithSupabase(true);
     
-    // Setup periodic sync every 30 seconds
-    setInterval(() => {
-      if (!syncInProgress && navigator.onLine) {
-        pendingSync = true;
-        syncWithSupabase();
-      }
-    }, 30000);
-
     // Listen for online status changes
     window.addEventListener('online', () => {
       console.log('Device is online, triggering sync');
@@ -144,16 +135,19 @@ const setupRealtimeSubscriptions = () => {
       syncWithSupabase();
     });
   
-  channel.subscribe((status) => {
-    console.log('Supabase channel status:', status);
+  // Make sure we pass all three arguments to subscribe
+  channel.subscribe((status, err) => {
+    console.log('Supabase channel status:', status, err);
     if (status === 'SUBSCRIBED') {
       console.log('Successfully subscribed to real-time updates');
     } else if (status === 'CHANNEL_ERROR') {
-      console.error('Failed to subscribe to real-time updates');
+      console.error('Failed to subscribe to real-time updates', err);
       
       // Try to reconnect after a delay
       setTimeout(() => {
-        channel.subscribe();
+        channel.subscribe((status, err) => {
+          console.log('Reconnection status:', status, err);
+        });
       }, 5000);
     }
   });
@@ -162,8 +156,7 @@ const setupRealtimeSubscriptions = () => {
 // Sync local data with Supabase
 export const syncWithSupabase = async (isInitialSync = false) => {
   if (syncInProgress) {
-    pendingSync = true;
-    console.log('Sync already in progress, scheduling follow-up sync');
+    console.log('Sync already in progress, skipping this request');
     return;
   }
 
@@ -237,12 +230,6 @@ export const syncWithSupabase = async (isInitialSync = false) => {
     console.error('Error syncing with Supabase:', error);
   } finally {
     syncInProgress = false;
-    
-    // If a sync was requested while we were syncing, do another one
-    if (pendingSync) {
-      pendingSync = false;
-      setTimeout(() => syncWithSupabase(), 1000);
-    }
   }
 };
 
@@ -308,9 +295,10 @@ const sendToSupabase = async <T>(key: string, data: T): Promise<void> => {
     
     console.log(`Sending ${data.length} items to Supabase table: ${tableName}`);
     
-    // Save the data to Supabase
+    // Save the data to Supabase and trigger a sync to ensure other clients get the updates
     try {
       await saveBatch(tableName, data);
+      syncWithSupabase(); // Sync after changes to ensure other clients are updated
     } catch (error) {
       console.error(`Error sending data to Supabase (${tableName}):`, error);
     }
@@ -345,9 +333,9 @@ export const isSyncInProgress = () => {
   return syncInProgress;
 };
 
-// Force a manual sync
+// Force a manual sync - only if changes have been made
 export const forceSync = () => {
-  if (!syncInProgress) {
+  if (!syncInProgress && navigator.onLine) {
     return syncWithSupabase();
   }
   return Promise.resolve(false);
