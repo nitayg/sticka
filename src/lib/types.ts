@@ -1,7 +1,15 @@
 
+
 import { LucideIcon } from "lucide-react";
 
-export interface Sticker {
+// הוספת ממשק בסיס עם שדות למעקב אחר מחיקות ושינויים
+export interface BaseModel {
+  id: string;
+  lastModified?: number; // Unix timestamp
+  isDeleted?: boolean;
+}
+
+export interface Sticker extends BaseModel {
   id: string;
   name: string;
   team: string;
@@ -15,7 +23,7 @@ export interface Sticker {
   albumId: string;
 }
 
-export interface Album {
+export interface Album extends BaseModel {
   id: string;
   name: string;
   description?: string;
@@ -24,7 +32,7 @@ export interface Album {
   coverImage?: string;
 }
 
-export interface User {
+export interface User extends BaseModel {
   id: string;
   name: string;
   avatar?: string;
@@ -38,7 +46,7 @@ export interface User {
   phone?: string;
 }
 
-export interface ExchangeOffer {
+export interface ExchangeOffer extends BaseModel {
   id: string;
   userId: string;
   userName: string;

@@ -9,6 +9,15 @@ import {
   fetchExchangeOffers,
   saveBatch 
 } from './supabase';
+import { 
+  canSync,
+  markSyncStarted,
+  markSyncCompleted,
+  scheduleFutureSyncIfNeeded,
+  forceSync as forceSyncManager,
+  getLastSyncTime as getSyncManagerLastTime,
+  isSyncInProgress as isSyncManagerInProgress
+} from './syncManager';
 
 // Event names for storage events
 export const StorageEvents = {
@@ -20,20 +29,17 @@ export const StorageEvents = {
   SYNC_START: 'sync-start'
 };
 
-// Track connection and sync state
+// Track connection state
 let isConnected = false;
-let lastSyncTime = null;
-let syncInProgress = false;
-let pendingSync = false;
 
 // Initialize data from localStorage and Supabase
 export const initializeFromStorage = async () => {
   try {
-    console.log('Initializing data from storage and Supabase...');
+    console.log('מאתחל נתונים מאחסון ו-Supabase...');
     
     // Check if we're in a browser environment
     if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-      console.warn('Storage not available - running in a non-browser environment');
+      console.warn('אחסון לא זמין - רץ בסביבה שאינה דפדפן');
       return;
     }
 
@@ -42,19 +48,19 @@ export const initializeFromStorage = async () => {
 
     // Listen for online status changes
     window.addEventListener('online', () => {
-      console.log('Device is online, triggering sync');
+      console.log('מכשיר מחובר לרשת, מפעיל סנכרון');
       isConnected = true;
       syncWithSupabase();
     });
 
     window.addEventListener('offline', () => {
-      console.log('Device is offline');
+      console.log('מכשיר מנותק מהרשת');
       isConnected = false;
     });
 
     // Initial online check
     isConnected = navigator.onLine;
-    console.log(`Initial connection status: ${isConnected ? 'online' : 'offline'}`);
+    console.log(`סטטוס חיבור ראשוני: ${isConnected ? 'מחובר' : 'מנותק'}`);
     
     // Listen for Supabase real-time updates
     setupRealtimeSubscriptions();
@@ -91,15 +97,20 @@ export const initializeFromStorage = async () => {
       }
     });
     
-    console.log('Storage initialization complete');
+    // Listen for trigger sync events
+    window.addEventListener('triggerSync', () => {
+      syncWithSupabase();
+    });
+    
+    console.log('אתחול אחסון הושלם');
   } catch (error) {
-    console.error('Error initializing from storage:', error);
+    console.error('שגיאה באתחול מאחסון:', error);
   }
 };
 
 // Set up real-time subscriptions to Supabase - trigger sync only on changes
 const setupRealtimeSubscriptions = () => {
-  console.log('Setting up real-time subscriptions...');
+  console.log('הגדרת מינויים בזמן אמת...');
   
   // Create a channel for all tables
   const channel = supabase.channel('public:all-changes')
@@ -108,42 +119,49 @@ const setupRealtimeSubscriptions = () => {
       schema: 'public',
       table: 'albums' 
     }, (payload) => {
-      console.log('Real-time update for albums:', payload);
-      // No automatic sync, will happen on app refresh or explicit event
+      console.log('עדכון בזמן אמת עבור אלבומים:', payload);
+      // זיהוי עדכון במחיקה רכה ואיתחול סנכרון כאשר יש שינוי במחיקות
+      if (payload.new && payload.old && 
+          payload.new.isdeleted !== payload.old.isdeleted) {
+        console.log('זוהה שינוי במצב מחיקה, מפעיל סנכרון...');
+        syncWithSupabase();
+      }
     })
     .on('postgres_changes', { 
       event: '*', 
       schema: 'public',
       table: 'stickers' 
     }, (payload) => {
-      console.log('Real-time update for stickers:', payload);
-      // No automatic sync, will happen on app refresh or explicit event
+      console.log('עדכון בזמן אמת עבור מדבקות:', payload);
+      // עדכון סנכרון במקרה של שינוי במחיקות
+      if (payload.new && payload.old && 
+          payload.new.isdeleted !== payload.old.isdeleted) {
+        syncWithSupabase();
+      }
     })
     .on('postgres_changes', { 
       event: '*', 
       schema: 'public',
       table: 'users' 
     }, (payload) => {
-      console.log('Real-time update for users:', payload);
-      // No automatic sync, will happen on app refresh or explicit event
+      console.log('עדכון בזמן אמת עבור משתמשים:', payload);
     })
     .on('postgres_changes', { 
       event: '*', 
       schema: 'public',
       table: 'exchange_offers' 
     }, (payload) => {
-      console.log('Real-time update for exchange offers:', payload);
-      // No automatic sync, will happen on app refresh or explicit event
+      console.log('עדכון בזמן אמת עבור הצעות החלפה:', payload);
     });
   
   channel.subscribe((status) => {
-    console.log('Supabase channel status:', status);
+    console.log('סטטוס ערוץ Supabase:', status);
     if (status === 'SUBSCRIBED') {
-      console.log('Successfully subscribed to real-time updates');
+      console.log('נרשם בהצלחה לעדכונים בזמן אמת');
     } else if (status === 'CHANNEL_ERROR') {
-      console.error('Failed to subscribe to real-time updates');
+      console.error('נכשל ברישום לעדכונים בזמן אמת');
       
-      // Try to reconnect after a delay
+      // ניסיון מחדש אחרי עיכוב
       setTimeout(() => {
         channel.subscribe();
       }, 5000);
@@ -151,19 +169,20 @@ const setupRealtimeSubscriptions = () => {
   });
 };
 
-// Sync local data with Supabase - only triggered by explicit actions, not automatically
+// Sync local data with Supabase - with enhanced control using syncManager
 export const syncWithSupabase = async (isInitialSync = false) => {
-  if (syncInProgress) {
-    pendingSync = true;
-    console.log('Sync already in progress, scheduling follow-up sync');
+  // בדיקה אם מותר לבצע סנכרון לפי מגבלות הזמן
+  if (!isInitialSync && !canSync()) {
+    console.log('סנכרון אחרון בוצע לאחרונה, מתזמן סנכרון עתידי');
+    scheduleFutureSyncIfNeeded();
     return;
   }
 
   try {
-    console.log('Syncing with Supabase...');
-    syncInProgress = true;
+    console.log('מסנכרן עם Supabase...');
+    markSyncStarted(); // סימון שהסנכרון התחיל
     
-    // Let the UI know we're starting a sync
+    // יידוע ממשק המשתמש שמתחיל סנכרון
     window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_START));
     
     // Fetch data from Supabase
@@ -181,7 +200,7 @@ export const syncWithSupabase = async (isInitialSync = false) => {
       // On initial sync, if no remote data and we have local data, upload it
       const localAlbums = getFromStorage('albums', []);
       if (localAlbums && localAlbums.length > 0) {
-        console.log('Uploading local albums to Supabase');
+        console.log('מעלה אלבומים מקומיים ל-Supabase');
         await saveBatch('albums', localAlbums);
       }
     }
@@ -191,7 +210,7 @@ export const syncWithSupabase = async (isInitialSync = false) => {
     } else if (isInitialSync) {
       const localStickers = getFromStorage('stickers', []);
       if (localStickers && localStickers.length > 0) {
-        console.log('Uploading local stickers to Supabase');
+        console.log('מעלה מדבקות מקומיות ל-Supabase');
         await saveBatch('stickers', localStickers);
       }
     }
@@ -201,7 +220,7 @@ export const syncWithSupabase = async (isInitialSync = false) => {
     } else if (isInitialSync) {
       const localUsers = getFromStorage('users', []);
       if (localUsers && localUsers.length > 0) {
-        console.log('Uploading local users to Supabase');
+        console.log('מעלה משתמשים מקומיים ל-Supabase');
         await saveBatch('users', localUsers);
       }
     }
@@ -211,30 +230,21 @@ export const syncWithSupabase = async (isInitialSync = false) => {
     } else if (isInitialSync) {
       const localExchangeOffers = getFromStorage('exchangeOffers', []);
       if (localExchangeOffers && localExchangeOffers.length > 0) {
-        console.log('Uploading local exchange offers to Supabase');
+        console.log('מעלה הצעות החלפה מקומיות ל-Supabase');
         await saveBatch('exchange_offers', localExchangeOffers);
       }
     }
-
-    // Update sync tracking
-    lastSyncTime = new Date();
     
-    // Dispatch sync complete event (without toast notification)
+    // יידוע ממשק המשתמש שהסנכרון הושלם
     window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_COMPLETE, {
-      detail: { timestamp: lastSyncTime }
+      detail: { timestamp: new Date() }
     }));
     
-    console.log('Sync complete at', lastSyncTime);
+    console.log('סנכרון הושלם ב-', new Date().toString());
   } catch (error) {
-    console.error('Error syncing with Supabase:', error);
+    console.error('שגיאה בסנכרון עם Supabase:', error);
   } finally {
-    syncInProgress = false;
-    
-    // If a sync was requested while we were syncing, do another one
-    if (pendingSync) {
-      pendingSync = false;
-      setTimeout(() => syncWithSupabase(), 1000);
-    }
+    markSyncCompleted(); // סימון שהסנכרון הסתיים
   }
 };
 
@@ -242,18 +252,18 @@ export const syncWithSupabase = async (isInitialSync = false) => {
 export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void => {
   try {
     if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-      console.warn('Storage not available - running in a non-browser environment');
+      console.warn('אחסון לא זמין - רץ בסביבה שאינה דפדפן');
       return;
     }
     
-    console.log(`Saving ${Array.isArray(data) ? data.length : 1} item(s) to ${key}`);
+    console.log(`שומר ${Array.isArray(data) ? data.length : 1} פריט(ים) ל-${key}`);
     
     const jsonData = JSON.stringify(data);
     localStorage.setItem(key, jsonData);
     
     // Sync to Supabase if required
     if (syncToCloud && isConnected) {
-      console.log(`Syncing ${key} to Supabase`);
+      console.log(`מסנכרן ${key} ל-Supabase`);
       sendToSupabase(key, data);
       
       // Trigger a sync-start event to show indicator
@@ -271,7 +281,7 @@ export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void
     
     window.dispatchEvent(new CustomEvent(eventName, { detail: data }));
   } catch (error) {
-    console.error(`Error saving ${key} to storage:`, error);
+    console.error(`שגיאה בשמירת ${key} לאחסון:`, error);
   }
 };
 
@@ -294,17 +304,17 @@ const sendToSupabase = async <T>(key: string, data: T): Promise<void> => {
         tableName = 'exchange_offers';
         break;
       default:
-        console.error(`Unknown key: ${key}`);
+        console.error(`מפתח לא מוכר: ${key}`);
         return;
     }
     
-    console.log(`Sending ${data.length} items to Supabase table: ${tableName}`);
+    console.log(`שולח ${data.length} פריטים לטבלת Supabase: ${tableName}`);
     
     // Save the data to Supabase
     try {
       await saveBatch(tableName, data);
     } catch (error) {
-      console.error(`Error sending data to Supabase (${tableName}):`, error);
+      console.error(`שגיאה בשליחת נתונים ל-Supabase (${tableName}):`, error);
     }
   }
 };
@@ -313,7 +323,7 @@ const sendToSupabase = async <T>(key: string, data: T): Promise<void> => {
 export const getFromStorage = <T>(key: string, defaultValue: T): T => {
   try {
     if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-      console.warn('Storage not available - running in a non-browser environment');
+      console.warn('אחסון לא זמין - רץ בסביבה שאינה דפדפן');
       return defaultValue;
     }
     
@@ -322,25 +332,24 @@ export const getFromStorage = <T>(key: string, defaultValue: T): T => {
     
     return JSON.parse(storedData) as T;
   } catch (error) {
-    console.error(`Error getting ${key} from storage:`, error);
+    console.error(`שגיאה בקבלת ${key} מאחסון:`, error);
     return defaultValue;
   }
 };
 
 // Get last sync time
 export const getLastSyncTime = () => {
-  return lastSyncTime;
+  return getSyncManagerLastTime();
 };
 
 // Check if sync is in progress
 export const isSyncInProgress = () => {
-  return syncInProgress;
+  return isSyncManagerInProgress();
 };
 
 // Force a manual sync
 export const forceSync = () => {
-  if (!syncInProgress) {
-    return syncWithSupabase();
-  }
-  return Promise.resolve(false);
+  // איפוס הטיימר במנהל הסנכרון
+  forceSyncManager();
+  return syncWithSupabase();
 };

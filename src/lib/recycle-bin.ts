@@ -1,9 +1,10 @@
 
 import { Album, Sticker } from './types';
 import { albums as initialAlbums } from './initial-data';
-import { saveToStorage, getFromStorage } from './sync-manager';
+import { saveToStorage, getFromStorage, syncWithSupabase } from './sync-manager';
 import { setAlbumData, getAlbumData } from './album-operations';
 import { stickerData, setStickerData } from './sticker-operations';
+import { saveAlbum, saveSticker, saveBatch } from './supabase';
 
 // נשמור אלבומים שנמחקו בסל המיחזור
 export type RecycledItem = {
@@ -48,12 +49,39 @@ export const moveAlbumToRecycleBin = (albumId: string): void => {
   saveRecycleBin(recycleBin);
   
   // הסר את האלבום והמדבקות שלו מהנתונים הפעילים
-  setAlbumData(albums.filter(album => album.id !== albumId));
-  setStickerData(stickerData.filter(sticker => sticker.albumId !== albumId));
+  // וסמן אותם כנמחקים ברמת הנתונים
+  const updatedAlbums = albums.map(album => 
+    album.id === albumId ? { ...album, isDeleted: true, lastModified: Date.now() } : album
+  );
+  setAlbumData(updatedAlbums);
+  
+  const updatedStickers = stickerData.map(sticker => 
+    sticker.albumId === albumId ? { ...sticker, isDeleted: true, lastModified: Date.now() } : sticker
+  );
+  setStickerData(updatedStickers);
+  
+  // שליחת עדכון מחיקה רכה גם לשרת
+  const albumWithSoftDelete = { ...albumToDelete, isDeleted: true, lastModified: Date.now() };
+  saveAlbum(albumWithSoftDelete);
+  
+  // עדכון מחיקה רכה של כל המדבקות הקשורות
+  const updatedRelatedStickers = relatedStickers.map(sticker => ({
+    ...sticker,
+    isDeleted: true,
+    lastModified: Date.now()
+  }));
+  
+  // שמירת המדבקות שנמחקו בצורה רכה לשרת
+  if (updatedRelatedStickers.length > 0) {
+    saveBatch('stickers', updatedRelatedStickers);
+  }
   
   // הפעל אירוע מותאם אישית כדי להודיע לרכיבים שנתוני האלבום השתנו
   window.dispatchEvent(new CustomEvent('albumDataChanged'));
   window.dispatchEvent(new CustomEvent('recycleBinChanged'));
+  
+  // כפיית סנכרון מיידי עם השרת
+  syncWithSupabase();
 };
 
 // מחק אלבום לצמיתות מסל המיחזור
@@ -76,11 +104,31 @@ export const restoreAlbumFromRecycleBin = (albumId: string): void => {
   }
   
   // שחזר את האלבום והמדבקות שלו לנתונים הפעילים
+  // והסר את סימון המחיקה
+  const restoredAlbum = {
+    ...itemToRestore.item,
+    isDeleted: false,
+    lastModified: Date.now()
+  };
+  
   const albums = getAlbumData();
-  setAlbumData([...albums, itemToRestore.item]);
+  setAlbumData([...albums, restoredAlbum]);
+  
+  // שחזר את כל המדבקות הקשורות
+  const restoredStickers = itemToRestore.relatedStickers.map(sticker => ({
+    ...sticker,
+    isDeleted: false,
+    lastModified: Date.now()
+  }));
   
   const stickers = stickerData;
-  setStickerData([...stickers, ...itemToRestore.relatedStickers]);
+  setStickerData([...stickers, ...restoredStickers]);
+  
+  // שליחת עדכוני שחזור לשרת
+  saveAlbum(restoredAlbum);
+  if (restoredStickers.length > 0) {
+    saveBatch('stickers', restoredStickers);
+  }
   
   // הסר את הפריט מסל המיחזור
   const updatedRecycleBin = recycleBin.filter(item => item.id !== albumId);
@@ -89,6 +137,9 @@ export const restoreAlbumFromRecycleBin = (albumId: string): void => {
   // הפעל אירועים מותאמים אישית כדי להודיע לרכיבים שהנתונים השתנו
   window.dispatchEvent(new CustomEvent('albumDataChanged'));
   window.dispatchEvent(new CustomEvent('recycleBinChanged'));
+  
+  // כפיית סנכרון מיידי עם השרת
+  syncWithSupabase();
 };
 
 // נקה את סל המיחזור

@@ -15,6 +15,8 @@ export type Database = {
           createdat: string | null
           description: string | null
           id: string
+          isdeleted: boolean | null
+          lastmodified: number | null
           name: string
           totalstickers: number
           updatedat: string | null
@@ -25,6 +27,8 @@ export type Database = {
           createdat?: string | null
           description?: string | null
           id: string
+          isdeleted?: boolean | null
+          lastmodified?: number | null
           name: string
           totalstickers: number
           updatedat?: string | null
@@ -35,6 +39,8 @@ export type Database = {
           createdat?: string | null
           description?: string | null
           id?: string
+          isdeleted?: boolean | null
+          lastmodified?: number | null
           name?: string
           totalstickers?: number
           updatedat?: string | null
@@ -49,6 +55,8 @@ export type Database = {
           createdat: string | null
           exchangemethod: string | null
           id: string
+          isdeleted: boolean | null
+          lastmodified: number | null
           location: string | null
           offeredstickerid: string[]
           offeredstickername: string
@@ -67,6 +75,8 @@ export type Database = {
           createdat?: string | null
           exchangemethod?: string | null
           id: string
+          isdeleted?: boolean | null
+          lastmodified?: number | null
           location?: string | null
           offeredstickerid: string[]
           offeredstickername: string
@@ -85,6 +95,8 @@ export type Database = {
           createdat?: string | null
           exchangemethod?: string | null
           id?: string
+          isdeleted?: boolean | null
+          lastmodified?: number | null
           location?: string | null
           offeredstickerid?: string[]
           offeredstickername?: string
@@ -122,8 +134,10 @@ export type Database = {
           duplicatecount: number | null
           id: string
           imageurl: string | null
+          isdeleted: boolean | null
           isduplicate: boolean
           isowned: boolean
+          lastmodified: number | null
           name: string
           number: number
           team: string
@@ -137,8 +151,10 @@ export type Database = {
           duplicatecount?: number | null
           id: string
           imageurl?: string | null
+          isdeleted?: boolean | null
           isduplicate?: boolean
           isowned?: boolean
+          lastmodified?: number | null
           name: string
           number: number
           team: string
@@ -152,8 +168,10 @@ export type Database = {
           duplicatecount?: number | null
           id?: string
           imageurl?: string | null
+          isdeleted?: boolean | null
           isduplicate?: boolean
           isowned?: boolean
+          lastmodified?: number | null
           name?: string
           number?: number
           team?: string
@@ -176,6 +194,8 @@ export type Database = {
           createdat: string | null
           duplicatestickers: number
           id: string
+          isdeleted: boolean | null
+          lastmodified: number | null
           location: string | null
           name: string
           neededstickers: number
@@ -189,6 +209,8 @@ export type Database = {
           createdat?: string | null
           duplicatestickers?: number
           id: string
+          isdeleted?: boolean | null
+          lastmodified?: number | null
           location?: string | null
           name: string
           neededstickers?: number
@@ -202,6 +224,8 @@ export type Database = {
           createdat?: string | null
           duplicatestickers?: number
           id?: string
+          isdeleted?: boolean | null
+          lastmodified?: number | null
           location?: string | null
           name?: string
           neededstickers?: number
