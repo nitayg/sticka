@@ -13,8 +13,6 @@ export interface Sticker {
   isDuplicate: boolean;
   duplicateCount?: number; // Add duplicate count field
   albumId: string;
-  createdAt?: string; // Add createdAt field
-  updatedAt?: string; // Add updatedAt field
 }
 
 export interface Album {
@@ -24,8 +22,6 @@ export interface Album {
   year?: string;
   totalStickers: number;
   coverImage?: string;
-  createdAt?: string; // Add createdAt field
-  updatedAt?: string; // Add updatedAt field
 }
 
 export interface User {
@@ -38,13 +34,8 @@ export interface User {
     needed: number;
     duplicates: number;
   };
-  totalStickers?: number; // Add totalStickers field
-  duplicateStickers?: number; // Add duplicateStickers field
-  completionPercentage?: number; // Add completionPercentage field
   location?: string;
   phone?: string;
-  createdAt?: string; // Add createdAt field
-  updatedAt?: string; // Add updatedAt field
 }
 
 export interface ExchangeOffer {
@@ -62,8 +53,6 @@ export interface ExchangeOffer {
   phone?: string;
   color?: string;
   albumId: string;
-  createdAt?: string; // Add createdAt field
-  updatedAt?: string; // Add updatedAt field
 }
 
 export interface NavigationItem {
