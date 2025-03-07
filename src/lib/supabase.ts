@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Album, Sticker, ExchangeOffer, User } from './types';
+import { Album, Sticker, ExchangeOffer, User, isAlbum, isSticker, isExchangeOffer, isUser } from './types';
 
 const supabaseUrl = 'https://xdvhjraiqilmcsydkaos.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkdmhqcmFpcWlsbWNzeWRrYW9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDExODM5OTEsImV4cCI6MjA1Njc1OTk5MX0.m3gYUVysgOw97zTVB8TCqPt9Yf0_3lueAssw3B30miA';
@@ -67,7 +67,7 @@ export async function saveAlbum(album: Album) {
   const { data, error } = await supabase
     .from('albums')
     .upsert(supabaseAlbum, { onConflict: 'id' })
-    .select('*'); // ודא שהבקשה כוללת את כל העמודות
+    .select('*');
   if (error) {
     console.error('Error saving album:', error);
     return false;
@@ -299,8 +299,9 @@ export async function saveBatch<T extends { id: string }>(
   console.log(`Received items for ${tableName}:`, JSON.stringify(items, null, 2));
   console.log(`Saving ${items.length} items to ${tableName}`);
 
+  // Adjust items based on the table name, using type guards to ensure TypeScript type safety
   const adjustedItems = items.map((item) => {
-    if (tableName === 'albums') {
+    if (tableName === 'albums' && isAlbum(item)) {
       return {
         id: item.id,
         name: item.name,
@@ -309,7 +310,7 @@ export async function saveBatch<T extends { id: string }>(
         year: item.year,
         coverimage: item.coverImage,
       };
-    } else if (tableName === 'stickers') {
+    } else if (tableName === 'stickers' && isSticker(item)) {
       return {
         id: item.id,
         name: item.name,
@@ -323,7 +324,7 @@ export async function saveBatch<T extends { id: string }>(
         duplicatecount: item.duplicateCount,
         albumid: item.albumId,
       };
-    } else if (tableName === 'exchange_offers') {
+    } else if (tableName === 'exchange_offers' && isExchangeOffer(item)) {
       return {
         id: item.id,
         userid: item.userId,
@@ -340,7 +341,7 @@ export async function saveBatch<T extends { id: string }>(
         color: item.color,
         albumid: item.albumId,
       };
-    } else if (tableName === 'users') {
+    } else if (tableName === 'users' && isUser(item)) {
       return {
         id: item.id,
         name: item.name,
@@ -353,7 +354,8 @@ export async function saveBatch<T extends { id: string }>(
         phone: item.phone,
       };
     }
-    return item;
+    // If item doesn't match any known types, return it as is (might cause errors)
+    return item as any;
   });
 
   console.log('JSON שנשלח:', JSON.stringify(adjustedItems, null, 2));
