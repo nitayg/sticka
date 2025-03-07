@@ -9,7 +9,8 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   realtime: {
     params: {
-      eventsPerSecond: 10
+      eventsPerSecond: 10,
+      log_level: 'debug'  // Enable debug logging for realtime events
     }
   },
   db: {
@@ -22,22 +23,27 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   }
 });
 
-// Debug Supabase connection issues
-supabase.channel('system').on('system', { event: '*' }, (payload) => {
-  console.log('Supabase system event:', payload);
-}).subscribe((status) => {
-  console.log('Supabase system channel status:', status);
-});
+// Debug Supabase connection issues with improved logging
+supabase.channel('system')
+  .on('system', { event: '*' }, (payload) => {
+    console.log('[Supabase] System event:', payload);
+  })
+  .on('presence', { event: '*' }, (payload) => {
+    console.log('[Supabase] Presence event:', payload);
+  })
+  .subscribe((status) => {
+    console.log('[Supabase] System channel status:', status);
+  });
 
 // Functions for albums
 export async function fetchAlbums() {
-  console.log('Fetching albums from Supabase...');
+  console.log('[Supabase] Fetching albums from Supabase...');
   const { data, error } = await supabase.from('albums').select('*');
   if (error) {
-    console.error('Error fetching albums:', error);
+    console.error('[Supabase] Error fetching albums:', error);
     return null;
   }
-  console.log(`Fetched ${data?.length || 0} albums from Supabase`);
+  console.log(`[Supabase] Fetched ${data?.length || 0} albums from Supabase`);
   return data as Album[];
 }
 

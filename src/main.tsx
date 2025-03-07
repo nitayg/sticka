@@ -16,18 +16,37 @@ import { toast } from './hooks/use-toast'
 // Log the app version and initialization
 console.log('App starting - initializing...');
 
-// Initialize Supabase synchronization
-initializeFromStorage()
-  .then(() => {
-    console.log('Supabase connection initialized');
-    // Force a sync after initialization to make sure we have the latest data
-    return syncWithSupabase(true);
-  })
-  .then(() => {
-    console.log('Initial sync complete');
-  })
-  .catch(err => {
+// Initialize Supabase synchronization with better error handling
+const initApp = async () => {
+  try {
+    // Attempt to initialize storage
+    const initialized = await initializeFromStorage();
+    
+    if (initialized) {
+      console.log('Supabase connection initialized');
+      
+      // Force an immediate sync after initialization
+      const syncResult = await syncWithSupabase(true);
+      
+      if (syncResult) {
+        console.log('Initial sync complete');
+      } else {
+        console.warn('Initial sync failed or was incomplete');
+      }
+    } else {
+      console.warn('Initialization completed with warnings');
+    }
+    
+    // Regardless of result, force another sync attempt after a delay
+    setTimeout(() => {
+      if (navigator.onLine) {
+        console.log('Running follow-up sync...');
+        syncWithSupabase(true);
+      }
+    }, 5000);
+  } catch (err) {
     console.error('Failed to initialize Supabase:', err);
+    
     // Notify user about initialization error
     toast({
       title: "שגיאת אתחול",
@@ -35,7 +54,11 @@ initializeFromStorage()
       variant: "destructive",
       duration: 5000,
     });
-  });
+  }
+};
+
+// Start initialization process
+initApp();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

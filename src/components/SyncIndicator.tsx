@@ -1,25 +1,27 @@
 
 import { useState, useEffect } from "react";
-import { Loader2, CheckCircle, WifiOff } from "lucide-react";
-import { toast } from "./ui/use-toast";
-import { StorageEvents, isSyncInProgress, getLastSyncTime, forceSync } from "@/lib/sync-manager";
+import { Loader2, CheckCircle, WifiOff, RefreshCcw } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { StorageEvents, isSyncInProgress, getLastSyncTime, forceSync, isOnline } from "@/lib/sync-manager";
 
 const SyncIndicator = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [onlineStatus, setOnlineStatus] = useState(navigator.onLine);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     // Listen for sync events
     const handleSyncStart = () => {
-      console.log("Sync started");
+      console.log("[SyncIndicator] Sync started");
       setIsSyncing(true);
       setShowSuccess(false);
+      setHasError(false);
     };
 
     const handleSyncComplete = (e: Event) => {
-      console.log("Sync completed");
+      console.log("[SyncIndicator] Sync completed");
       setIsSyncing(false);
       
       // Get timestamp from event if available
@@ -41,9 +43,9 @@ const SyncIndicator = () => {
       });
     };
     
-    // Listen for online/offline events
+    // Listen for connection status changes
     const handleOnline = () => {
-      setIsOnline(true);
+      setOnlineStatus(true);
       toast({
         title: "התחברת לרשת",
         description: "הסנכרון יתחדש באופן אוטומטי",
@@ -54,7 +56,7 @@ const SyncIndicator = () => {
     };
     
     const handleOffline = () => {
-      setIsOnline(false);
+      setOnlineStatus(false);
       toast({
         title: "אין חיבור לרשת",
         description: "שינויים יסתנכרנו כשהחיבור יחזור",
@@ -63,14 +65,24 @@ const SyncIndicator = () => {
       });
     };
 
+    // Handle connection status change event
+    const handleConnectionStatus = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setOnlineStatus(customEvent.detail.isOnline);
+      }
+    };
+
     // Register event listeners
     window.addEventListener(StorageEvents.SYNC_START, handleSyncStart);
     window.addEventListener(StorageEvents.SYNC_COMPLETE, handleSyncComplete);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    window.addEventListener('connection-status-changed', handleConnectionStatus);
 
     // Initialize state from sync manager
     setIsSyncing(isSyncInProgress());
+    setOnlineStatus(isOnline());
     const initialLastSyncTime = getLastSyncTime();
     if (initialLastSyncTime) {
       setLastSyncTime(initialLastSyncTime);
@@ -79,7 +91,16 @@ const SyncIndicator = () => {
     // Trigger an initial sync when component mounts
     const initialSyncTimeout = setTimeout(() => {
       if (!isSyncInProgress() && navigator.onLine) {
-        forceSync();
+        forceSync().catch(err => {
+          console.error("[SyncIndicator] Error during initial sync:", err);
+          setHasError(true);
+          toast({
+            title: "שגיאת סנכרון",
+            description: "אירעה שגיאה בעת ניסיון לסנכרן את הנתונים",
+            variant: "destructive",
+            duration: 5000,
+          });
+        });
       }
     }, 1000);
 
@@ -89,18 +110,35 @@ const SyncIndicator = () => {
       window.removeEventListener(StorageEvents.SYNC_COMPLETE, handleSyncComplete);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('connection-status-changed', handleConnectionStatus);
       clearTimeout(initialSyncTimeout);
     };
   }, []);
 
+  // Manual sync handler
+  const handleManualSync = () => {
+    if (!isSyncing && onlineStatus) {
+      forceSync().catch(err => {
+        console.error("[SyncIndicator] Error during manual sync:", err);
+        setHasError(true);
+        toast({
+          title: "שגיאת סנכרון",
+          description: "אירעה שגיאה בעת ניסיון לסנכרן את הנתונים",
+          variant: "destructive",
+          duration: 5000,
+        });
+      });
+    }
+  };
+
   // Determine what to show
   let indicatorToShow;
   
-  if (!isOnline) {
+  if (!onlineStatus) {
     // Offline indicator
     indicatorToShow = (
       <div className="fixed bottom-4 left-4 bg-destructive text-destructive-foreground px-3 py-2 rounded-full flex items-center space-x-2 z-50 shadow-md">
-        <WifiOff className="h-4 w-4" />
+        <WifiOff className="h-4 w-4 ml-1" />
         <span className="text-sm">אין חיבור</span>
       </div>
     );
@@ -108,7 +146,7 @@ const SyncIndicator = () => {
     // Syncing indicator
     indicatorToShow = (
       <div className="fixed bottom-4 left-4 bg-interactive text-interactive-foreground px-3 py-2 rounded-full flex items-center space-x-2 z-50 shadow-md animate-in fade-in">
-        <Loader2 className="animate-spin h-4 w-4" />
+        <Loader2 className="animate-spin h-4 w-4 ml-1" />
         <span className="text-sm">מסנכרן...</span>
       </div>
     );
@@ -116,13 +154,32 @@ const SyncIndicator = () => {
     // Success indicator (briefly shown)
     indicatorToShow = (
       <div className="fixed bottom-4 left-4 bg-green-500 text-white px-3 py-2 rounded-full flex items-center space-x-2 z-50 shadow-md animate-in fade-in">
-        <CheckCircle className="h-4 w-4" />
+        <CheckCircle className="h-4 w-4 ml-1" />
         <span className="text-sm">סנכרון הושלם</span>
       </div>
     );
+  } else if (hasError) {
+    // Error indicator
+    indicatorToShow = (
+      <div 
+        className="fixed bottom-4 left-4 bg-destructive text-destructive-foreground px-3 py-2 rounded-full flex items-center space-x-2 z-50 shadow-md cursor-pointer"
+        onClick={handleManualSync}
+      >
+        <RefreshCcw className="h-4 w-4 ml-1" />
+        <span className="text-sm">נסה שוב</span>
+      </div>
+    );
   } else {
-    // Nothing to show when idle
-    indicatorToShow = null;
+    // Manual sync button when idle
+    indicatorToShow = (
+      <div 
+        className="fixed bottom-4 left-4 bg-muted text-muted-foreground px-3 py-2 rounded-full flex items-center space-x-2 z-50 shadow-md cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+        onClick={handleManualSync}
+      >
+        <RefreshCcw className="h-4 w-4 ml-1" />
+        <span className="text-sm">סנכרון</span>
+      </div>
+    );
   }
 
   return indicatorToShow;
