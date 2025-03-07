@@ -188,12 +188,12 @@ const setupRealtimeSubscriptions = () => {
         console.error('[Sync] Realtime subscription error:', error);
       });
     
-    channel.subscribe((status) => {
+    channel.subscribe((status, error) => { // Fixed: Added the missing 'error' parameter
       console.log('[Sync] Supabase channel status:', status);
       if (status === 'SUBSCRIBED') {
         console.log('[Sync] Successfully subscribed to real-time updates');
       } else if (status === 'CHANNEL_ERROR') {
-        console.error('[Sync] Failed to subscribe to real-time updates');
+        console.error('[Sync] Failed to subscribe to real-time updates', error);
         
         // Try to reconnect with exponential backoff
         if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
