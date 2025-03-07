@@ -28,7 +28,7 @@ supabase.channel('system')
   .on('system', { event: '*' }, (payload) => {
     console.log('[Supabase] System event:', payload);
   })
-  .on('presence', { event: '*' }, (payload) => {
+  .on('system', { event: 'presence' }, (payload) => {
     console.log('[Supabase] Presence event:', payload);
   })
   .subscribe((status) => {
