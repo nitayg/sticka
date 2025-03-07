@@ -67,7 +67,7 @@ export async function saveAlbum(album: Album) {
   const { data, error } = await supabase
     .from('albums')
     .upsert(supabaseAlbum, { onConflict: 'id' })
-    .select('*'); // ודא שהבקשה כוללת את כל העמודות
+    .select('*');
   if (error) {
     console.error('Error saving album:', error);
     return false;
@@ -85,6 +85,18 @@ export async function deleteAlbumFromSupabase(id: string) {
     console.error('Error deleting album:', error);
     return false;
   }
+  console.log('Album deleted, notifying Realtime...');
+
+  // שידור אירוע Realtime כדי לעדכן את הלקוחות
+  supabase
+    .channel('albums')
+    .send({
+      type: 'broadcast',
+      event: 'album_deleted',
+      payload: { id },
+    })
+    .subscribe();
+
   return true;
 }
 
@@ -155,6 +167,18 @@ export async function deleteStickerFromSupabase(id: string) {
     console.error('Error deleting sticker:', error);
     return false;
   }
+  console.log('Sticker deleted, notifying Realtime...');
+
+  // שידור אירוע Realtime
+  supabase
+    .channel('stickers')
+    .send({
+      type: 'broadcast',
+      event: 'sticker_deleted',
+      payload: { id },
+    })
+    .subscribe();
+
   return true;
 }
 
@@ -231,6 +255,18 @@ export async function deleteExchangeOfferFromSupabase(id: string) {
     console.error('Error deleting exchange offer:', error);
     return false;
   }
+  console.log('Exchange offer deleted, notifying Realtime...');
+
+  // שידור אירוע Realtime
+  supabase
+    .channel('exchange_offers')
+    .send({
+      type: 'broadcast',
+      event: 'exchange_offer_deleted',
+      payload: { id },
+    })
+    .subscribe();
+
   return true;
 }
 
@@ -286,6 +322,31 @@ export async function saveUser(user: User) {
     console.error('Error saving user:', error);
     return false;
   }
+  return true;
+}
+
+export async function deleteUserFromSupabase(id: string) {
+  console.log('Deleting user from Supabase:', id);
+  const { error } = await supabase
+    .from('users')
+    .delete()
+    .eq('id', id);
+  if (error) {
+    console.error('Error deleting user:', error);
+    return false;
+  }
+  console.log('User deleted, notifying Realtime...');
+
+  // שידור אירוע Realtime
+  supabase
+    .channel('users')
+    .send({
+      type: 'broadcast',
+      event: 'user_deleted',
+      payload: { id },
+    })
+    .subscribe();
+
   return true;
 }
 
@@ -358,10 +419,20 @@ export async function saveBatch<T extends { id: string }>(
 
   console.log('JSON שנשלח:', JSON.stringify(adjustedItems, null, 2));
 
+  // בדוק את המצב בשרת לפני השמירה
+  const existingItems = await supabase.from(tableName).select('id');
+  const existingIds = existingItems.data.map((item) => item.id);
+
+  const filteredItems = adjustedItems.filter((item) => existingIds.includes(item.id));
+
+  if (filteredItems.length !== adjustedItems.length) {
+    console.log(`Filtered out ${adjustedItems.length - filteredItems.length} items that no longer exist on the server`);
+  }
+
   try {
     const chunkSize = 100;
-    for (let i = 0; i < adjustedItems.length; i += chunkSize) {
-      const chunk = adjustedItems.slice(i, i + chunkSize);
+    for (let i = 0; i < filteredItems.length; i += chunkSize) {
+      const chunk = filteredItems.slice(i, i + chunkSize);
 
       const { error } = await supabase
         .from(tableName)
@@ -380,12 +451,12 @@ export async function saveBatch<T extends { id: string }>(
         return false;
       }
 
-      if (adjustedItems.length > chunkSize && i + chunkSize < adjustedItems.length) {
+      if (filteredItems.length > chunkSize && i + chunkSize < filteredItems.length) {
         await new Promise((resolve) => setTimeout(resolve, 300));
       }
     }
 
-    console.log(`Successfully saved ${adjustedItems.length} items to ${tableName}`);
+    console.log(`Successfully saved ${filteredItems.length} items to ${tableName}`);
     return true;
   } catch (error) {
     console.error(`Error in saveBatch for ${tableName}:`, error);
