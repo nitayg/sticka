@@ -11,7 +11,6 @@ import './styles/pwa.css'
 import './styles/smooth-animations.css'
 import SyncIndicator from './components/SyncIndicator.tsx'
 import { initializeFromStorage, syncWithSupabase } from './lib/sync-manager.ts'
-import { toast } from './hooks/use-toast'
 
 // Log the app version and initialization
 console.log('App starting - initializing...');
@@ -28,13 +27,6 @@ initializeFromStorage()
   })
   .catch(err => {
     console.error('Failed to initialize Supabase:', err);
-    // Notify user about initialization error
-    toast({
-      title: "שגיאת אתחול",
-      description: "אירעה שגיאה בהתחברות למסד הנתונים. ייתכן שחלק מהנתונים לא יוצגו כראוי.",
-      variant: "destructive",
-      duration: 5000,
-    });
   });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

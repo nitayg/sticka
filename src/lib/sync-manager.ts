@@ -39,14 +39,6 @@ export const initializeFromStorage = async () => {
 
     // Initial load from Supabase
     await syncWithSupabase(true);
-    
-    // Setup periodic sync every 30 seconds
-    setInterval(() => {
-      if (!syncInProgress && navigator.onLine) {
-        pendingSync = true;
-        syncWithSupabase();
-      }
-    }, 30000);
 
     // Listen for online status changes
     window.addEventListener('online', () => {

@@ -1,5 +1,6 @@
 
 import { useEffect } from "react";
+import { forceSync } from "@/lib/sync-manager";
 
 interface AlbumEventHandlerProps {
   albums: any[];
@@ -25,6 +26,8 @@ const AlbumEventHandler = ({
   useEffect(() => {
     const handleAlbumDataChanged = () => {
       onRefresh();
+      // Force a sync when album data changes
+      forceSync();
     };
     
     window.addEventListener('albumDataChanged', handleAlbumDataChanged);

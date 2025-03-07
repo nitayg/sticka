@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { Loader2, CheckCircle, WifiOff } from "lucide-react";
-import { toast } from "./ui/use-toast";
 import { StorageEvents, isSyncInProgress, getLastSyncTime, forceSync } from "@/lib/sync-manager";
 
 const SyncIndicator = () => {
@@ -33,34 +32,17 @@ const SyncIndicator = () => {
       // Show success indicator briefly
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-      
-      toast({
-        title: "סנכרון הושלם",
-        description: "הנתונים עודכנו בהצלחה",
-        duration: 3000,
-      });
     };
     
     // Listen for online/offline events
     const handleOnline = () => {
       setIsOnline(true);
-      toast({
-        title: "התחברת לרשת",
-        description: "הסנכרון יתחדש באופן אוטומטי",
-        duration: 3000,
-      });
       // Trigger a sync now that we're online
       forceSync();
     };
     
     const handleOffline = () => {
       setIsOnline(false);
-      toast({
-        title: "אין חיבור לרשת",
-        description: "שינויים יסתנכרנו כשהחיבור יחזור",
-        variant: "destructive",
-        duration: 5000,
-      });
     };
 
     // Register event listeners
@@ -76,20 +58,12 @@ const SyncIndicator = () => {
       setLastSyncTime(initialLastSyncTime);
     }
 
-    // Trigger an initial sync when component mounts
-    const initialSyncTimeout = setTimeout(() => {
-      if (!isSyncInProgress() && navigator.onLine) {
-        forceSync();
-      }
-    }, 1000);
-
     return () => {
       // Clean up event listeners
       window.removeEventListener(StorageEvents.SYNC_START, handleSyncStart);
       window.removeEventListener(StorageEvents.SYNC_COMPLETE, handleSyncComplete);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      clearTimeout(initialSyncTimeout);
     };
   }, []);
 

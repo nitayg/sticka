@@ -8,7 +8,6 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import SplashScreen from "@/components/SplashScreen";
 import ManifestUpdater from "@/components/settings/ManifestUpdater";
 import { initializeFromStorage } from "@/lib/sync-manager";
-import { toast } from "@/components/ui/use-toast";
 
 // Lazy-load the main Index component
 const Index = lazy(() => import("./pages/Index"));
@@ -53,16 +52,11 @@ const App = () => {
       try {
         setIsSyncing(true);
         await initializeFromStorage();
+        setIsSyncing(false);
         
         // Listen for sync-complete events
         const handleSyncComplete = () => {
           queryClient.invalidateQueries();
-          setIsSyncing(false);
-          toast({
-            title: "סנכרון הושלם",
-            description: "הנתונים עודכנו בהצלחה מהשרת",
-            duration: 3000,
-          });
         };
         
         window.addEventListener('sync-complete', handleSyncComplete);
