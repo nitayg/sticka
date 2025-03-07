@@ -7,10 +7,13 @@ export {
   syncWithSupabase,
   getLastSyncTime,
   isSyncInProgress,
-  forceSync,
+  forceSync
+} from './sync-manager';
+
+export {
   saveToStorage,
   getFromStorage, 
   isOnline
-} from './sync-manager';
+} from './storage-utils';
 
 export { StorageEvents } from './constants';

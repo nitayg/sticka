@@ -242,6 +242,3 @@ export const forceSync = () => {
   pendingSync = true;
   return Promise.resolve(false);
 };
-
-// Re-export other functions for backward compatibility
-export { saveToStorage, getFromStorage, isOnline, StorageEvents } from './index';

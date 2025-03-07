@@ -16,6 +16,10 @@ import { toast } from './hooks/use-toast'  // Updated import path
 // Log the app version and initialization
 console.log('App starting - initializing...');
 
+// Add throttling to prevent excessive syncs
+let lastSyncAttempt = 0;
+const MIN_SYNC_INTERVAL = 3000; // Minimum 3 seconds between sync attempts
+
 // Initialize Supabase synchronization with better error handling
 const initApp = async () => {
   try {
@@ -25,23 +29,31 @@ const initApp = async () => {
     if (initialized) {
       console.log('Supabase connection initialized');
       
-      // Force an immediate sync after initialization
-      const syncResult = await syncWithSupabase(true);
-      
-      if (syncResult) {
-        console.log('Initial sync complete');
-      } else {
-        console.warn('Initial sync failed or was incomplete');
+      // Force an immediate sync after initialization, but respect throttling
+      const now = Date.now();
+      if (now - lastSyncAttempt > MIN_SYNC_INTERVAL) {
+        lastSyncAttempt = now;
+        const syncResult = await syncWithSupabase(true);
+        
+        if (syncResult) {
+          console.log('Initial sync complete');
+        } else {
+          console.warn('Initial sync failed or was incomplete');
+        }
       }
     } else {
       console.warn('Initialization completed with warnings');
     }
     
-    // Regardless of result, force another sync attempt after a delay
+    // Regardless of result, force another sync attempt after a delay, but only once
     setTimeout(() => {
       if (navigator.onLine) {
         console.log('Running follow-up sync...');
-        syncWithSupabase(true);
+        const now = Date.now();
+        if (now - lastSyncAttempt > MIN_SYNC_INTERVAL) {
+          lastSyncAttempt = now;
+          syncWithSupabase(true);
+        }
       }
     }, 5000);
   } catch (err) {

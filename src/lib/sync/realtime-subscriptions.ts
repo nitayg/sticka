@@ -52,6 +52,7 @@ export const setupRealtimeSubscriptions = () => {
         console.error('[Sync] Realtime subscription error:', error);
       });
     
+    // Fix: Add the missing error parameter to the subscribe callback
     channel.subscribe((status, error) => {
       console.log('[Sync] Supabase channel status:', status);
       if (status === 'SUBSCRIBED') {
@@ -83,5 +84,5 @@ export const setupRealtimeSubscriptions = () => {
   }
 };
 
-// Import the syncWithSupabase function to avoid circular dependency issues
+// Import the syncWithSupabase function
 import { syncWithSupabase } from './sync-manager';

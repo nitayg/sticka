@@ -1,5 +1,9 @@
 
 import { StorageEvents } from './constants';
+import { sendToSupabase } from './supabase-sync';
+
+// Track connection status
+let isConnected = navigator.onLine;
 
 // Save data to localStorage and optionally Supabase with improved error handling
 export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void => {
@@ -9,13 +13,16 @@ export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void
       return;
     }
     
+    // Check if sync is disabled
+    const isSyncDisabled = localStorage.getItem("sync_disabled") === "true";
+    
     console.log(`[Sync] Saving ${Array.isArray(data) ? data.length : 1} item(s) to ${key}`);
     
     const jsonData = JSON.stringify(data);
     localStorage.setItem(key, jsonData);
     
-    // Sync to Supabase if required
-    if (syncToCloud && isOnline()) {
+    // Sync to Supabase if required and not disabled
+    if (syncToCloud && isOnline() && !isSyncDisabled) {
       console.log(`[Sync] Syncing ${key} to Supabase`);
       sendToSupabase(key, data);
       
@@ -61,9 +68,6 @@ export const getFromStorage = <T>(key: string, defaultValue: T): T => {
   }
 };
 
-// Track connection status
-let isConnected = navigator.onLine;
-
 // Get connection status
 export const isOnline = () => {
   return isConnected;
@@ -73,6 +77,3 @@ export const isOnline = () => {
 export const updateConnectionStatus = (status: boolean) => {
   isConnected = status;
 };
-
-// Import the sendToSupabase function
-import { sendToSupabase } from './supabase-sync';
