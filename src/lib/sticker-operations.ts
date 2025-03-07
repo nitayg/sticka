@@ -10,7 +10,7 @@ export const setStickerData = (data: Sticker[]) => {
   // Save to localStorage and Supabase whenever data changes
   saveToStorage('stickers', stickerData);
   
-  // Send event to notify of changes
+  // Force a sync with Supabase to ensure real-time updates
   window.dispatchEvent(new CustomEvent('stickersDataChanged'));
 };
 

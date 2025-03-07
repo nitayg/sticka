@@ -37,6 +37,7 @@ export async function fetchAlbums() {
     return null;
   }
   console.log(`Fetched ${data?.length || 0} albums from Supabase`);
+  console.log('Fetched data:', JSON.stringify(data, null, 2));
 
   // התאמת שמות השדות לממשק Album
   const adjustedData = data.map((album) => ({
@@ -48,6 +49,7 @@ export async function fetchAlbums() {
     coverImage: album.coverimage,
   }));
 
+  console.log('Adjusted data:', JSON.stringify(adjustedData, null, 2));
   return adjustedData as Album[];
 }
 
@@ -107,6 +109,7 @@ export async function fetchStickers() {
     return null;
   }
   console.log(`Fetched ${data?.length || 0} stickers from Supabase`);
+  console.log('Fetched data:', JSON.stringify(data, null, 2));
 
   // התאמת שמות השדות לממשק Sticker
   const adjustedData = data.map((sticker) => ({
@@ -123,6 +126,7 @@ export async function fetchStickers() {
     albumId: sticker.albumid,
   }));
 
+  console.log('Adjusted data:', JSON.stringify(adjustedData, null, 2));
   return adjustedData as Sticker[];
 }
 
@@ -187,6 +191,7 @@ export async function fetchExchangeOffers() {
     return null;
   }
   console.log(`Fetched ${data?.length || 0} exchange offers from Supabase`);
+  console.log('Fetched data:', JSON.stringify(data, null, 2));
 
   // התאמת שמות השדות לממשק ExchangeOffer
   const adjustedData = data.map((offer) => ({
@@ -206,6 +211,7 @@ export async function fetchExchangeOffers() {
     albumId: offer.albumid,
   }));
 
+  console.log('Adjusted data:', JSON.stringify(adjustedData, null, 2));
   return adjustedData as ExchangeOffer[];
 }
 
@@ -273,6 +279,7 @@ export async function fetchUsers() {
     return null;
   }
   console.log(`Fetched ${data?.length || 0} users from Supabase`);
+  console.log('Fetched data:', JSON.stringify(data, null, 2));
 
   // התאמת שמות השדות לממשק User
   const adjustedData = data.map((user) => ({
@@ -289,6 +296,7 @@ export async function fetchUsers() {
     phone: user.phone,
   }));
 
+  console.log('Adjusted data:', JSON.stringify(adjustedData, null, 2));
   return adjustedData as User[];
 }
 
