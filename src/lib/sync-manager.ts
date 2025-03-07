@@ -97,7 +97,7 @@ export const initializeFromStorage = async () => {
   }
 };
 
-// Set up real-time subscriptions to Supabase
+// Set up real-time subscriptions to Supabase - trigger sync only on changes
 const setupRealtimeSubscriptions = () => {
   console.log('Setting up real-time subscriptions...');
   
@@ -109,7 +109,7 @@ const setupRealtimeSubscriptions = () => {
       table: 'albums' 
     }, (payload) => {
       console.log('Real-time update for albums:', payload);
-      syncWithSupabase();
+      // No automatic sync, will happen on app refresh or explicit event
     })
     .on('postgres_changes', { 
       event: '*', 
@@ -117,7 +117,7 @@ const setupRealtimeSubscriptions = () => {
       table: 'stickers' 
     }, (payload) => {
       console.log('Real-time update for stickers:', payload);
-      syncWithSupabase();
+      // No automatic sync, will happen on app refresh or explicit event
     })
     .on('postgres_changes', { 
       event: '*', 
@@ -125,7 +125,7 @@ const setupRealtimeSubscriptions = () => {
       table: 'users' 
     }, (payload) => {
       console.log('Real-time update for users:', payload);
-      syncWithSupabase();
+      // No automatic sync, will happen on app refresh or explicit event
     })
     .on('postgres_changes', { 
       event: '*', 
@@ -133,7 +133,7 @@ const setupRealtimeSubscriptions = () => {
       table: 'exchange_offers' 
     }, (payload) => {
       console.log('Real-time update for exchange offers:', payload);
-      syncWithSupabase();
+      // No automatic sync, will happen on app refresh or explicit event
     });
   
   channel.subscribe((status) => {
@@ -163,7 +163,7 @@ export const syncWithSupabase = async (isInitialSync = false) => {
     console.log('Syncing with Supabase...');
     syncInProgress = true;
     
-    // Let the UI know we're starting a sync
+    // Let the UI know we're starting a sync (no toast, just updating state)
     window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_START));
     
     // Fetch data from Supabase
@@ -219,7 +219,7 @@ export const syncWithSupabase = async (isInitialSync = false) => {
     // Update sync tracking
     lastSyncTime = new Date();
     
-    // Dispatch sync complete event
+    // Dispatch sync complete event (without toast notification)
     window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_COMPLETE, {
       detail: { timestamp: lastSyncTime }
     }));
@@ -256,7 +256,7 @@ export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void
       console.log(`Syncing ${key} to Supabase`);
       sendToSupabase(key, data);
       
-      // Trigger a sync-start event to show indicator
+      // Trigger a sync-start event to show indicator (without toast)
       window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_START));
     }
     

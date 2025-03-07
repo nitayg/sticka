@@ -60,3 +60,18 @@ export interface NavigationItem {
   href: string;
   icon: LucideIcon;
 }
+
+// Add these type definitions to help with TypeScript type checking
+export type AlbumTableItem = Album;
+export type StickerTableItem = Sticker;
+export type ExchangeOfferTableItem = ExchangeOffer;
+export type UserTableItem = User;
+
+export type TableName = 'albums' | 'stickers' | 'exchange_offers' | 'users';
+
+export type TableItems = {
+  'albums': AlbumTableItem;
+  'stickers': StickerTableItem;
+  'exchange_offers': ExchangeOfferTableItem;
+  'users': UserTableItem;
+};

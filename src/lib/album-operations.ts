@@ -33,8 +33,6 @@ export const addAlbum = (album: Omit<Album, "id">) => {
   const newAlbum = {
     ...album,
     id: `album_${timestamp}_${random}`,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
   };
   
   setAlbumData([...albumData, newAlbum]);
@@ -52,8 +50,7 @@ export const updateAlbum = (id: string, data: Partial<Album>) => {
   setAlbumData(albumData.map(album => 
     album.id === id ? { 
       ...album, 
-      ...data, 
-      updatedAt: new Date().toISOString() 
+      ...data
     } : album
   ));
   
