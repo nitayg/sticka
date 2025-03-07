@@ -10,11 +10,15 @@ import './styles/animations.css'
 import './styles/pwa.css'
 import './styles/smooth-animations.css'
 import SyncIndicator from './components/SyncIndicator.tsx'
-import { initializeFromStorage } from './lib/sync-manager.ts'
+import { initializeFromStorage, syncWithSupabase } from './lib/sync-manager.ts'
 
 // Initialize Supabase synchronization
 initializeFromStorage()
-  .then(() => console.log('Supabase connection initialized'))
+  .then(() => {
+    console.log('Supabase connection initialized');
+    // Force a sync after initialization to make sure we have the latest data
+    return syncWithSupabase();
+  })
   .catch(err => console.error('Failed to initialize Supabase:', err));
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

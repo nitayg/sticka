@@ -10,6 +10,9 @@ export const setStickerData = (data: Sticker[]) => {
   stickerData = data;
   // Save to localStorage and Supabase whenever data changes
   saveToStorage('stickers', stickerData);
+  
+  // Force a sync with Supabase to ensure real-time updates
+  syncWithSupabase();
 };
 
 export const getStickersByAlbumId = (albumId: string) => {
@@ -19,14 +22,11 @@ export const getStickersByAlbumId = (albumId: string) => {
 export const addSticker = (sticker: Omit<Sticker, "id">) => {
   const newSticker = {
     ...sticker,
-    id: `sticker${Date.now()}_${Math.floor(Math.random() * 1000)}`, // More unique IDs
+    id: `sticker_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // More unique IDs
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
   setStickerData([...stickerData, newSticker]);
-  
-  // Force a sync with Supabase to ensure real-time updates
-  syncWithSupabase();
   
   return newSticker;
 };
@@ -47,9 +47,15 @@ export const updateSticker = (id: string, data: Partial<Sticker>) => {
   }
   
   // Regular update for the current sticker
-  setStickerData(stickerData.map(sticker => 
-    sticker.id === id ? { ...sticker, ...data } : sticker
-  ));
+  const updatedData = stickerData.map(sticker => 
+    sticker.id === id ? { 
+      ...sticker, 
+      ...data,
+      updatedAt: new Date().toISOString()  
+    } : sticker
+  );
+  
+  setStickerData(updatedData);
   
   return stickerData.find(sticker => sticker.id === id);
 };

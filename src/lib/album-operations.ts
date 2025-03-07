@@ -12,6 +12,9 @@ export const setAlbumData = (data: Album[]) => {
   albumData = data;
   // Save to localStorage and Supabase whenever data changes
   saveToStorage('albums', albumData);
+  
+  // Notify components that album data has changed
+  window.dispatchEvent(new CustomEvent('albumDataChanged'));
 };
 
 export const getAllAlbums = () => {
@@ -25,7 +28,7 @@ export const getAlbumById = (id: string) => {
 export const addAlbum = (album: Omit<Album, "id">) => {
   const newAlbum = {
     ...album,
-    id: `album${Date.now()}`, // Use timestamp for more unique IDs
+    id: `album_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // More unique IDs
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };

@@ -11,7 +11,7 @@ import {
 } from './supabase';
 
 // Event names for storage events
-const STORAGE_EVENTS = {
+export const StorageEvents = {
   ALBUMS: 'albums-updated',
   STICKERS: 'stickers-updated',
   USERS: 'users-updated',
@@ -42,25 +42,25 @@ export const initializeFromStorage = async () => {
         case 'albums':
           if (event.newValue) {
             const newAlbums = JSON.parse(event.newValue);
-            window.dispatchEvent(new CustomEvent(STORAGE_EVENTS.ALBUMS, { detail: newAlbums }));
+            window.dispatchEvent(new CustomEvent(StorageEvents.ALBUMS, { detail: newAlbums }));
           }
           break;
         case 'stickers':
           if (event.newValue) {
             const newStickers = JSON.parse(event.newValue);
-            window.dispatchEvent(new CustomEvent(STORAGE_EVENTS.STICKERS, { detail: newStickers }));
+            window.dispatchEvent(new CustomEvent(StorageEvents.STICKERS, { detail: newStickers }));
           }
           break;
         case 'users':
           if (event.newValue) {
             const newUsers = JSON.parse(event.newValue);
-            window.dispatchEvent(new CustomEvent(STORAGE_EVENTS.USERS, { detail: newUsers }));
+            window.dispatchEvent(new CustomEvent(StorageEvents.USERS, { detail: newUsers }));
           }
           break;
         case 'exchangeOffers':
           if (event.newValue) {
             const newOffers = JSON.parse(event.newValue);
-            window.dispatchEvent(new CustomEvent(STORAGE_EVENTS.EXCHANGE_OFFERS, { detail: newOffers }));
+            window.dispatchEvent(new CustomEvent(StorageEvents.EXCHANGE_OFFERS, { detail: newOffers }));
           }
           break;
       }
@@ -74,8 +74,8 @@ export const initializeFromStorage = async () => {
 const setupRealtimeSubscriptions = () => {
   console.log('Setting up real-time subscriptions...');
   
-  // Enable Supabase realtime for all tables
-  supabase.channel('schema-db-changes')
+  // Use a consistent channel name and make sure it's subscribed
+  const channel = supabase.channel('public:*')
     .on('postgres_changes', {
       event: '*',
       schema: 'public',
@@ -107,10 +107,20 @@ const setupRealtimeSubscriptions = () => {
     }, (payload) => {
       console.log('Real-time update for exchange offers:', payload);
       syncWithSupabase();
-    })
-    .subscribe((status) => {
-      console.log('Supabase channel status:', status);
     });
+  
+  channel.subscribe((status) => {
+    console.log('Supabase channel status:', status);
+    if (status === 'SUBSCRIBED') {
+      console.log('Successfully subscribed to real-time updates');
+    } else if (status === 'CHANNEL_ERROR') {
+      console.error('Failed to subscribe to real-time updates');
+      // Try to reconnect after a delay
+      setTimeout(() => {
+        channel.subscribe();
+      }, 5000);
+    }
+  });
 };
 
 // Sync local data with Supabase
@@ -147,7 +157,7 @@ export const syncWithSupabase = async () => {
     }
 
     // Dispatch sync complete event
-    window.dispatchEvent(new CustomEvent(STORAGE_EVENTS.SYNC_COMPLETE));
+    window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_COMPLETE));
     
     console.log('Sync complete!');
   } catch (error) {
@@ -176,12 +186,12 @@ export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void
     
     // Dispatch a custom event to notify other components
     const eventName = key === 'albums' 
-      ? STORAGE_EVENTS.ALBUMS 
+      ? StorageEvents.ALBUMS 
       : key === 'stickers'
-        ? STORAGE_EVENTS.STICKERS
+        ? StorageEvents.STICKERS
         : key === 'users'
-          ? STORAGE_EVENTS.USERS
-          : STORAGE_EVENTS.EXCHANGE_OFFERS;
+          ? StorageEvents.USERS
+          : StorageEvents.EXCHANGE_OFFERS;
     
     window.dispatchEvent(new CustomEvent(eventName, { detail: data }));
   } catch (error) {
@@ -240,6 +250,3 @@ export const getFromStorage = <T>(key: string, defaultValue: T): T => {
     return defaultValue;
   }
 };
-
-// Export storage event names for use in components
-export const StorageEvents = STORAGE_EVENTS;

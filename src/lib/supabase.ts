@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { Album, Sticker, ExchangeOffer, User } from './types';
 
@@ -12,9 +13,6 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     }
   }
 });
-
-// Enable realtime on all tables
-supabase.channel('schema-db-changes');
 
 // Functions for albums
 export async function fetchAlbums() {
@@ -152,18 +150,29 @@ export async function saveBatch<T extends {id: string}>(
   
   console.log(`Saving ${items.length} items to ${tableName}`);
   
-  const { error } = await supabase
-    .from(tableName)
-    .upsert(items, { 
-      onConflict: 'id',
-      ignoreDuplicates: false
-    });
-  
-  if (error) {
-    console.error(`Error saving batch to ${tableName}:`, error);
+  try {
+    // Split into chunks to avoid Supabase's row limit
+    const chunkSize = 500;
+    for (let i = 0; i < items.length; i += chunkSize) {
+      const chunk = items.slice(i, i + chunkSize);
+      
+      const { error } = await supabase
+        .from(tableName)
+        .upsert(chunk, { 
+          onConflict: 'id',
+          ignoreDuplicates: false
+        });
+        
+      if (error) {
+        console.error(`Error saving batch to ${tableName} (chunk ${i}-${i+chunk.length}):`, error);
+        return false;
+      }
+    }
+    
+    console.log(`Successfully saved ${items.length} items to ${tableName}`);
+    return true;
+  } catch (error) {
+    console.error(`Error in saveBatch for ${tableName}:`, error);
     return false;
   }
-  
-  console.log(`Successfully saved ${items.length} items to ${tableName}`);
-  return true;
 }
