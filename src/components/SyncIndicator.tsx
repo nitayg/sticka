@@ -22,6 +22,8 @@ const SyncIndicator = () => {
     // Listen for online/offline events
     const handleOnline = () => {
       setIsOnline(true);
+      // Trigger a sync when we come back online
+      forceSync();
     };
     
     const handleOffline = () => {
@@ -37,12 +39,20 @@ const SyncIndicator = () => {
     // Initialize state from sync manager
     setIsSyncing(isSyncInProgress());
 
+    // Trigger an initial sync when component mounts (only if we're online)
+    const initialSyncTimeout = setTimeout(() => {
+      if (!isSyncInProgress() && navigator.onLine) {
+        forceSync();
+      }
+    }, 1000);
+
     return () => {
       // Clean up event listeners
       window.removeEventListener(StorageEvents.SYNC_START, handleSyncStart);
       window.removeEventListener(StorageEvents.SYNC_COMPLETE, handleSyncComplete);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      clearTimeout(initialSyncTimeout);
     };
   }, []);
 

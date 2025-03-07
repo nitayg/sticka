@@ -7,7 +7,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/hooks/use-theme";
 import SplashScreen from "@/components/SplashScreen";
 import ManifestUpdater from "@/components/settings/ManifestUpdater";
-import { initializeFromStorage } from "@/lib/sync-manager";
 
 // Lazy-load the main Index component
 const Index = lazy(() => import("./pages/Index"));
@@ -44,27 +43,23 @@ const queryClient = new QueryClient({
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
-  
-  // Initialize Supabase and synchronize data only on app start
-  useEffect(() => {
-    const initSupabase = async () => {
-      try {
-        setIsSyncing(true);
-        await initializeFromStorage();
-        setIsSyncing(false);
-      } catch (error) {
-        console.error("Error initializing Supabase:", error);
-        setIsSyncing(false);
-      }
-    };
-    
-    initSupabase();
-  }, []);
   
   // החלת הגדרות ה-manifest המותאמות בטעינת האפליקציה
   useEffect(() => {
     ManifestUpdater.applyManifestOverrides();
+  }, []);
+
+  // Listen for sync events to invalidate queries when data changes
+  useEffect(() => {
+    const handleSyncComplete = () => {
+      queryClient.invalidateQueries();
+    };
+    
+    window.addEventListener('sync-complete', handleSyncComplete);
+    
+    return () => {
+      window.removeEventListener('sync-complete', handleSyncComplete);
+    };
   }, []);
 
   const handleSplashComplete = () => {

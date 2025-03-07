@@ -15,7 +15,7 @@ import { initializeFromStorage } from './lib/sync-manager.ts'
 // Log the app version and initialization
 console.log('App starting - initializing...');
 
-// Initialize Supabase synchronization
+// Initialize Supabase synchronization once at startup
 initializeFromStorage()
   .then(() => {
     console.log('Supabase connection initialized');
