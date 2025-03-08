@@ -1,5 +1,5 @@
 // Merge data from remote and local sources
-export const mergeData = <T extends { id: string; lastModified?: number }>(
+export const mergeData = <T extends { id: string; lastModified?: number; isDeleted?: boolean }>(
   localData: T[], 
   remoteData: T[]
 ): T[] => {
@@ -17,9 +17,14 @@ export const mergeData = <T extends { id: string; lastModified?: number }>(
     const localLastModified = localItem?.lastModified || 0;
     
     // If the remote item is newer, or if it's marked as deleted and local isn't, use remote
-    if (!localItem || remoteLastModified > localLastModified || 
-        ((remoteItem as any).isDeleted && !(localItem as any).isDeleted)) {
+    if (!localItem || remoteLastModified > localLastModified) {
       mergedMap.set(remoteItem.id, { ...remoteItem });
+    } else if (remoteItem.isDeleted && !localItem.isDeleted && remoteLastModified >= localLastModified) {
+      // If remote is deleted and local is not, and remote is at least as recent, use remote (keep it deleted)
+      mergedMap.set(remoteItem.id, { ...remoteItem });
+    } else if (localItem.isDeleted && !remoteItem.isDeleted && localLastModified > remoteLastModified) {
+      // If local is deleted and remote is not, and local is more recent, keep it deleted
+      mergedMap.set(remoteItem.id, { ...localItem });
     }
   });
   

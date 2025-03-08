@@ -1,3 +1,4 @@
+
 import { StorageEvents } from './constants';
 import { getFromStorage, saveToStorage, setIsConnected, getIsConnected } from './storage-utils';
 import { mergeData } from './merge-utils';
@@ -119,16 +120,19 @@ export const syncWithSupabase = async (isInitialSync = false) => {
       fetchExchangeOffers()
     ]);
 
-    // Get local data
-    const localAlbums = getFromStorage<Album[]>('albums', []);
-    const localStickers = getFromStorage<Sticker[]>('stickers', []);
-    const localUsers = getFromStorage<User[]>('users', []);
-    const localExchangeOffers = getFromStorage<ExchangeOffer[]>('exchangeOffers', []);
+    // Get local data (including deleted items)
+    const localAlbums = getFromStorage<Album[]>('albums', [], true);
+    const localStickers = getFromStorage<Sticker[]>('stickers', [], true);
+    const localUsers = getFromStorage<User[]>('users', [], true);
+    const localExchangeOffers = getFromStorage<ExchangeOffer[]>('exchangeOffers', [], true);
     
     // Merge and save data, respecting deletions and modifications
     if (albumsData && albumsData.length > 0) {
       const mergedAlbums = mergeData(localAlbums, albumsData);
       saveToStorage('albums', mergedAlbums, false);
+      
+      // Make sure to upload any locally deleted items back to Supabase
+      await saveAlbumBatch(mergedAlbums.filter(album => album.isDeleted));
     } else if (isInitialSync && localAlbums.length > 0) {
       console.log('Uploading local albums to Supabase');
       await saveAlbumBatch(localAlbums);
@@ -137,6 +141,9 @@ export const syncWithSupabase = async (isInitialSync = false) => {
     if (stickersData && stickersData.length > 0) {
       const mergedStickers = mergeData(localStickers, stickersData);
       saveToStorage('stickers', mergedStickers, false);
+      
+      // Make sure to upload any locally deleted items back to Supabase
+      await saveStickerBatch(mergedStickers.filter(sticker => sticker.isDeleted));
     } else if (isInitialSync && localStickers.length > 0) {
       console.log('Uploading local stickers to Supabase');
       await saveStickerBatch(localStickers);
@@ -145,6 +152,9 @@ export const syncWithSupabase = async (isInitialSync = false) => {
     if (usersData && usersData.length > 0) {
       const mergedUsers = mergeData(localUsers, usersData);
       saveToStorage('users', mergedUsers, false);
+      
+      // Make sure to upload any locally deleted items back to Supabase
+      await saveUserBatch(mergedUsers.filter(user => user.isDeleted));
     } else if (isInitialSync && localUsers.length > 0) {
       console.log('Uploading local users to Supabase');
       await saveUserBatch(localUsers);
@@ -153,6 +163,9 @@ export const syncWithSupabase = async (isInitialSync = false) => {
     if (exchangeOffersData && exchangeOffersData.length > 0) {
       const mergedExchangeOffers = mergeData(localExchangeOffers, exchangeOffersData);
       saveToStorage('exchangeOffers', mergedExchangeOffers, false);
+      
+      // Make sure to upload any locally deleted items back to Supabase
+      await saveExchangeOfferBatch(mergedExchangeOffers.filter(offer => offer.isDeleted));
     } else if (isInitialSync && localExchangeOffers.length > 0) {
       console.log('Uploading local exchange offers to Supabase');
       await saveExchangeOfferBatch(localExchangeOffers);

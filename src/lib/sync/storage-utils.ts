@@ -1,3 +1,4 @@
+
 import { StorageEvents } from './constants';
 
 // Filter out soft-deleted items for display
@@ -47,7 +48,7 @@ export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void
 };
 
 // Get data from localStorage with error handling
-export const getFromStorage = <T>(key: string, defaultValue: T): T => {
+export const getFromStorage = <T>(key: string, defaultValue: T, includeDeleted = false): T => {
   try {
     if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
       console.warn('Storage not available - running in a non-browser environment');
@@ -61,7 +62,7 @@ export const getFromStorage = <T>(key: string, defaultValue: T): T => {
     
     // If we're getting albums or other data that might have soft-deleted items,
     // filter them out for UI purposes unless explicitly requested with includeDeleted
-    if (Array.isArray(parsedData) && key !== 'recycleBin') {
+    if (!includeDeleted && Array.isArray(parsedData) && key !== 'recycleBin') {
       // Cast to any to check if items have isDeleted property
       const dataArray = parsedData as any[];
       return filterDeleted(dataArray) as unknown as T;
