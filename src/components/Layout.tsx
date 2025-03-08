@@ -1,18 +1,10 @@
 
 import { ReactNode, useState, useEffect } from "react";
-import { Album, Image, List, ArrowLeftRight, Moon, Sun, X, ChartBar } from "lucide-react";
-import DesktopSidebar from "./DesktopSidebar";
+import { Album, List, ArrowLeftRight, Image, Home, Users, ShoppingBag, Bell, Menu } from "lucide-react";
 import MobileHeader from "./MobileHeader";
 import MobileMenu from "./MobileMenu";
-import MobileNavigation from "./MobileNavigation";
 import { NavigationItem } from "@/lib/types";
 import { useTheme } from "@/hooks/use-theme";
-import { Button } from "./ui/button";
-import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from "@/components/ui/popover";
 import StatsPanel from "./StatsPanel";
 
 interface LayoutProps {
@@ -22,8 +14,7 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentAlbumId, setCurrentAlbumId] = useState<string | undefined>(undefined);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { theme } = useTheme();
 
   // Listen for album changes from children components
   useEffect(() => {
@@ -42,23 +33,16 @@ const Layout = ({ children }: LayoutProps) => {
   }, []);
 
   const navigation: NavigationItem[] = [
-    { name: "אלבום", href: "/", icon: Album },
+    { name: "בית", href: "/", icon: Home },
     { name: "מלאי", href: "/inventory", icon: List },
-    { name: "החלפות", href: "/exchange", icon: ArrowLeftRight },
-    { name: "סריקה", href: "/scan", icon: Image }
+    { name: "חברים", href: "/exchange", icon: Users },
+    { name: "חנות", href: "/scan", icon: ShoppingBag },
+    { name: "התראות", href: "#", icon: Bell },
   ];
-
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
-
-  const toggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
-  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col w-full" dir="rtl">
-      {/* Mobile Header */}
+      {/* Mobile Header - Facebook style */}
       <MobileHeader isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
 
       {/* Mobile Menu */}
@@ -69,62 +53,31 @@ const Layout = ({ children }: LayoutProps) => {
       />
 
       <div className="flex flex-1">
-        {/* Desktop Sidebar - with collapsible functionality */}
-        <DesktopSidebar 
-          navigation={navigation} 
-          albumId={currentAlbumId} 
-          collapsed={sidebarCollapsed}
-          onToggle={toggleSidebar}
-        />
-
         {/* Main Content - with improved padding and scrolling */}
-        <main className={`flex-1 md:pt-0 pt-12 p-3 sm:p-5 lg:py-6 lg:px-8 overflow-y-auto overflow-x-hidden pb-20 md:pb-6 transition-all duration-300 ${sidebarCollapsed ? 'lg:pr-20' : 'lg:pr-8'}`}>
-          <div className="max-w-6xl mx-auto w-full">
-            <div className="hidden lg:flex justify-between items-center mb-4">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={toggleSidebar} 
-                className="mr-2"
-              >
-                {sidebarCollapsed ? <List className="h-4 w-4" /> : <X className="h-4 w-4" />}
-                <span className="sr-only">Toggle Sidebar</span>
-              </Button>
-              
-              <div className="flex items-center gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <ChartBar className="h-4 w-4" />
-                      <span className="sr-only">סטטיסטיקות</span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80 p-0" align="end">
-                    <StatsPanel albumId={currentAlbumId} />
-                  </PopoverContent>
-                </Popover>
-                
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={toggleTheme}
-                >
-                  {theme === 'dark' ? 
-                    <Sun className="h-4 w-4" /> : 
-                    <Moon className="h-4 w-4" />
-                  }
-                  <span className="sr-only">Toggle Theme</span>
-                </Button>
-              </div>
-            </div>
-            
+        <main className="flex-1 pt-14 pb-16 overflow-y-auto overflow-x-hidden w-full">
+          <div className="max-w-4xl mx-auto px-1">
             {children}
           </div>
         </main>
       </div>
 
-      {/* Mobile Navigation - improved styling */}
-      <MobileNavigation navigation={navigation} />
+      {/* Facebook-style footer navigation */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-black text-white border-t border-gray-800">
+        <div className="w-full flex justify-between items-center px-2 py-2 safe-area-inset-bottom">
+          {navigation.map((item, index) => (
+            <a
+              key={index}
+              href={item.href}
+              className={`flex flex-col items-center justify-center p-1 ${
+                window.location.pathname === item.href ? "text-blue-500" : "text-gray-400"
+              }`}
+            >
+              <item.icon className="h-6 w-6" />
+              <span className="text-xs mt-1">{item.name}</span>
+            </a>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

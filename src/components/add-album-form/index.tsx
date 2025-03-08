@@ -1,236 +1,163 @@
 
-import React, { useState } from "react";
-import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+// Modify the Add Album Form to support iconOnly mode
+
+import { useState, ReactNode } from "react";
 import { Plus } from "lucide-react";
-import { addAlbum } from "@/lib/album-operations";
-import { useToast } from "../ui/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { importStickersFromCSV } from "@/lib/sticker-operations";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import AlbumBasicInfo from "./AlbumBasicInfo";
-import AlbumImageUploader from "./AlbumImageUploader";
 import CsvImportField from "./CsvImportField";
+import AlbumImageUploader from "./AlbumImageUploader";
+import { generateId } from "@/lib/utils";
+import { useAlbumStore } from "@/store/useAlbumStore";
+import { useToast } from "@/components/ui/use-toast";
+import { addAlbum } from "@/lib/album-operations";
 
 interface AddAlbumFormProps {
   onAlbumAdded?: () => void;
+  iconOnly?: boolean;
+  children?: ReactNode;
 }
 
-const AddAlbumForm = ({ onAlbumAdded }: AddAlbumFormProps) => {
-  const { toast } = useToast();
+const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumFormProps) => {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [year, setYear] = useState("");
-  const [totalStickers, setTotalStickers] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [albumImage, setAlbumImage] = useState<File | null>(null);
-  const [albumImagePreview, setAlbumImagePreview] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const { handleAlbumChange } = useAlbumStore();
+  const { toast } = useToast();
   
-  const resetForm = () => {
-    setName("");
-    setDescription("");
-    setYear("");
-    setTotalStickers("");
-    setFile(null);
-    setAlbumImage(null);
-    setAlbumImagePreview(null);
-  };
+  const [formData, setFormData] = useState({
+    name: "",
+    releaseYear: new Date().getFullYear(),
+    publisher: "",
+    totalStickers: 0,
+    imageUrl: "",
+    csvContent: "",
+  });
   
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!name || !totalStickers) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const handleSubmit = async () => {
+    if (!formData.name) {
       toast({
-        title: "שדות חסרים",
-        description: "אנא מלא את כל שדות החובה",
+        title: "שם אלבום חסר",
+        description: "יש להזין שם אלבום",
         variant: "destructive",
       });
       return;
     }
-
-    setIsLoading(true);
+    
+    setIsSubmitting(true);
     
     try {
-      // Process the album image if it exists
-      let coverImageUrl = "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=300&auto=format&fit=crop";
+      // Create album
+      const newAlbumId = generateId();
+      const newAlbum = {
+        id: newAlbumId,
+        name: formData.name,
+        releaseYear: formData.releaseYear,
+        publisher: formData.publisher,
+        totalStickers: formData.totalStickers,
+        imageUrl: formData.imageUrl,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
       
-      if (albumImage) {
-        // In a real app, we would upload the image to a server and get back a URL
-        // For now, we'll use the local data URL as a demonstration
-        coverImageUrl = albumImagePreview || coverImageUrl;
-      }
+      // Add album to storage
+      await addAlbum(newAlbum, formData.csvContent);
       
-      // Add the album first
-      const newAlbum = addAlbum({
-        name,
-        description,
-        year,
-        totalStickers: parseInt(totalStickers),
-        coverImage: coverImageUrl
+      // Set the newly created album as the selected album
+      handleAlbumChange(newAlbumId);
+      
+      // Close the dialog and reset form
+      setOpen(false);
+      setFormData({
+        name: "",
+        releaseYear: new Date().getFullYear(),
+        publisher: "",
+        totalStickers: 0,
+        imageUrl: "",
+        csvContent: "",
       });
       
-      // If a file was uploaded, import its contents
-      if (file) {
-        try {
-          const fileContent = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            
-            reader.onload = (event) => {
-              if (event.target?.result) {
-                resolve(event.target.result as string);
-              } else {
-                reject(new Error("קריאת הקובץ נכשלה"));
-              }
-            };
-            
-            reader.onerror = () => {
-              reject(new Error("לא ניתן לקרוא את הקובץ"));
-            };
-            
-            reader.readAsText(file);
-          });
-          
-          const lines = fileContent.split('\n').filter(line => line.trim());
-          
-          // Check if the first line looks like a header
-          const firstLine = lines[0];
-          const isHeader = firstLine && 
-            (firstLine.toLowerCase().includes('מספר') || 
-             firstLine.toLowerCase().includes('number') ||
-             firstLine.toLowerCase().includes('שם') ||
-             firstLine.toLowerCase().includes('name') ||
-             firstLine.toLowerCase().includes('קבוצה') ||
-             firstLine.toLowerCase().includes('team'));
-          
-          // Skip the header line if detected
-          const dataLines = isHeader ? lines.slice(1) : lines;
-          
-          if (dataLines.length === 0) {
-            throw new Error("הקובץ ריק או מכיל רק כותרות");
-          }
-          
-          const parsedData = dataLines.map(line => {
-            const parts = line.split(',').map(item => item.trim());
-            
-            // Check if we have at least 3 columns
-            if (parts.length < 3) {
-              throw new Error(`שורה לא תקינה: ${line} - נדרשים לפחות 3 שדות`);
-            }
-            
-            const [numberStr, name, team] = parts;
-            const number = parseInt(numberStr);
-            
-            if (isNaN(number) || !name || !team) {
-              throw new Error(`שורה לא תקינה: ${line}`);
-            }
-            
-            return [number, name, team] as [number, string, string];
-          });
-          
-          const newStickers = importStickersFromCSV(newAlbum.id, parsedData);
-          
-          toast({
-            title: "ייבוא הצליח",
-            description: `נוצר אלבום חדש עם ${newStickers.length} מדבקות.`,
-            duration: 3000,
-          });
-        } catch (error) {
-          console.error("Import error:", error);
-          toast({
-            title: "האלבום נוצר, אך ייבוא המדבקות נכשל",
-            description: error instanceof Error ? error.message : "אירעה שגיאה בעיבוד הקובץ",
-            variant: "destructive",
-            duration: 5000,
-          });
-        }
-      } else {
-        toast({
-          title: "אלבום נוסף בהצלחה",
-          description: `האלבום ${newAlbum.name} נוסף בהצלחה`,
-        });
-      }
+      // Show success toast
+      toast({
+        title: "אלבום נוסף בהצלחה",
+        description: `האלבום "${formData.name}" נוסף בהצלחה`,
+      });
       
-      // Reset form
-      resetForm();
-      setOpen(false);
-      
-      // Call the callback if provided
+      // Call callback if provided
       if (onAlbumAdded) {
         onAlbumAdded();
       }
     } catch (error) {
-      console.error("Error creating album:", error);
+      console.error("Error adding album:", error);
       toast({
-        title: "שגיאה ביצירת האלבום",
-        description: "אירעה שגיאה בעת יצירת האלבום",
+        title: "שגיאה בהוספת אלבום",
+        description: "אירעה שגיאה בעת הוספת האלבום",
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
-
+  
+  const trigger = iconOnly ? (
+    <Button 
+      variant="ghost" 
+      size="icon"
+      className="h-10 w-10 rounded-full bg-gray-800"
+    >
+      <Plus className="h-5 w-5" />
+    </Button>
+  ) : children || (
+    <Button>
+      <Plus className="h-4 w-4 ml-2" />
+      הוסף אלבום
+    </Button>
+  );
+  
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          הוסף אלבום
-        </Button>
+        {trigger}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]" dir="rtl">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>הוספת אלבום חדש</DialogTitle>
-          <DialogDescription>
-            הוסף אלבום חדש לאוסף שלך. שדות עם * הם שדות חובה.
-          </DialogDescription>
         </DialogHeader>
-        
-        <Tabs defaultValue="basic">
-          <TabsList className="grid grid-cols-3 mb-4">
-            <TabsTrigger value="basic">מידע בסיסי</TabsTrigger>
-            <TabsTrigger value="image">תמונת אלבום</TabsTrigger>
-            <TabsTrigger value="import">ייבוא מדבקות</TabsTrigger>
-          </TabsList>
+        <div className="grid gap-4 py-4">
+          <AlbumBasicInfo
+            formData={formData}
+            setFormData={setFormData}
+          />
           
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <TabsContent value="basic" className="space-y-4">
-              <AlbumBasicInfo 
-                name={name}
-                setName={setName}
-                description={description}
-                setDescription={setDescription}
-                year={year}
-                setYear={setYear}
-                totalStickers={totalStickers}
-                setTotalStickers={setTotalStickers}
-              />
-            </TabsContent>
-            
-            <TabsContent value="image" className="space-y-4">
-              <AlbumImageUploader 
-                albumImage={albumImage}
-                setAlbumImage={setAlbumImage}
-                albumImagePreview={albumImagePreview}
-                setAlbumImagePreview={setAlbumImagePreview}
-              />
-            </TabsContent>
-            
-            <TabsContent value="import" className="space-y-4">
-              <CsvImportField 
-                file={file}
-                setFile={setFile}
-              />
-            </TabsContent>
-            
-            <DialogFooter>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "מוסיף אלבום..." : "הוסף אלבום"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Tabs>
+          <AlbumImageUploader
+            imageUrl={formData.imageUrl}
+            onImageChange={(url) => 
+              setFormData({...formData, imageUrl: url})
+            }
+          />
+          
+          <CsvImportField
+            csvContent={formData.csvContent}
+            setCsvContent={(content) => 
+              setFormData({...formData, csvContent: content})
+            }
+          />
+          
+          <Button 
+            onClick={handleSubmit} 
+            disabled={isSubmitting}
+            className="bg-interactive hover:bg-interactive-hover text-interactive-foreground"
+          >
+            {isSubmitting ? "מוסיף אלבום..." : "הוסף אלבום"}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

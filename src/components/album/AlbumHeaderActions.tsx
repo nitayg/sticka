@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Download, Upload, Trash2, Recycle, RefreshCw } from "lucide-react";
+import { Download, Upload, Trash2, Recycle, RefreshCw, Plus, FileSpreadsheet } from "lucide-react";
 import { Button } from "../ui/button";
 import ViewModeToggle from "../ViewModeToggle";
 import AddAlbumForm from "../add-album-form";
@@ -10,7 +10,6 @@ import { moveAlbumToRecycleBin } from "@/lib/recycle-bin";
 import { useToast } from "../ui/use-toast";
 import RecycleBinDialog from "../recycle-bin/RecycleBinDialog";
 import { forceSync } from "@/lib/sync";
-import { StorageEvents } from '@/lib/sync';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -79,60 +78,79 @@ const AlbumHeaderActions = ({
     }, 1000);
   };
   
+  // Facebook-style action buttons - icons only
   return (
-    <div className="flex items-center justify-end space-x-2 rtl:space-x-reverse">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleSync}
-        disabled={isSyncing}
-      >
-        <RefreshCw className={`h-4 w-4 ml-1 rtl:mr-0 rtl:ml-1 ${isSyncing ? 'animate-spin' : ''}`} />
-        סנכרן עכשיו
-      </Button>
-      
-      <AddAlbumForm onAlbumAdded={onRefresh} />
-      
-      <ImportExcelDialog 
-        albums={albums} 
-        selectedAlbum={selectedAlbum} 
-        setSelectedAlbum={() => {}} 
-        onImportComplete={onImportComplete} 
-      />
-      
-      <ViewModeToggle
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        showImages={showImages}
-        setShowImages={setShowImages}
-      />
-      
-      <div className="rtl:space-x-reverse space-x-2">
-        <TooltipProvider>
+    <div className="flex items-center justify-center py-2 gap-2 w-full">
+      <TooltipProvider>
+        <div className="flex gap-2 justify-center w-full">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
+                className="h-10 w-10 rounded-full bg-gray-800"
+                onClick={handleSync}
+                disabled={isSyncing}
+              >
+                <RefreshCw className={`h-5 w-5 ${isSyncing ? 'animate-spin' : ''}`} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              סנכרן עכשיו
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <AddAlbumForm onAlbumAdded={onRefresh} iconOnly />
+            </TooltipTrigger>
+            <TooltipContent>
+              הוסף אלבום
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <ImportExcelDialog 
+                albums={albums} 
+                selectedAlbum={selectedAlbum} 
+                setSelectedAlbum={() => {}} 
+                onImportComplete={onImportComplete}
+                iconOnly
+              />
+            </TooltipTrigger>
+            <TooltipContent>
+              יבא מאקסל
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full bg-gray-800"
                 onClick={() => setIsRecycleBinOpen(true)}
               >
-                <Recycle className="h-4 w-4" />
+                <Recycle className="h-5 w-5" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
               סל מיחזור
             </TooltipContent>
           </Tooltip>
-        </TooltipProvider>
-        
-        {selectedAlbum && (
-          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-            <TooltipProvider>
+          
+          {selectedAlbum && (
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="icon">
-                      <Trash2 className="h-4 w-4" />
+                    <Button 
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 rounded-full bg-gray-800"
+                    >
+                      <Trash2 className="h-5 w-5" />
                     </Button>
                   </AlertDialogTrigger>
                 </TooltipTrigger>
@@ -140,28 +158,28 @@ const AlbumHeaderActions = ({
                   מחק אלבום
                 </TooltipContent>
               </Tooltip>
-            </TooltipProvider>
-            <AlertDialogContent dir="rtl">
-              <AlertDialogHeader>
-                <AlertDialogTitle>מחיקת אלבום</AlertDialogTitle>
-                <AlertDialogDescription>
-                  האם אתה בטוח שברצונך למחוק את האלבום "{selectedAlbumData?.name}"?
-                  האלבום וכל המדבקות שלו יועברו לסל המיחזור.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter className="flex-row-reverse justify-start">
-                <AlertDialogAction 
-                  onClick={handleDeleteAlbum}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  העבר לסל המיחזור
-                </AlertDialogAction>
-                <AlertDialogCancel>ביטול</AlertDialogCancel>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
-      </div>
+              <AlertDialogContent dir="rtl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>מחיקת אלבום</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    האם אתה בטוח שברצונך למחוק את האלבום "{selectedAlbumData?.name}"?
+                    האלבום וכל המדבקות שלו יועברו לסל המיחזור.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="flex-row-reverse justify-start">
+                  <AlertDialogAction 
+                    onClick={handleDeleteAlbum}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    העבר לסל המיחזור
+                  </AlertDialogAction>
+                  <AlertDialogCancel>ביטול</AlertDialogCancel>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
+      </TooltipProvider>
       
       <RecycleBinDialog
         open={isRecycleBinOpen}

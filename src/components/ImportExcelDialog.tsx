@@ -1,178 +1,127 @@
 
-import { useState, useRef } from "react";
-import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { FileInput } from "lucide-react";
-import { useToast } from "./ui/use-toast";
-import { Album, importStickersFromCSV } from "@/lib/data";
-import { getStickersByAlbumId } from "@/lib/sticker-operations";
-import NewTeamsLogoDialog from "./NewTeamsLogoDialog";
-import FileUploadField from "./excel-import/FileUploadField";
+// Update ImportExcelDialog to support iconOnly mode
+
+import { useState } from "react";
+import { FileSpreadsheet } from "lucide-react";
+import { Album } from "@/lib/types";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import AlbumSelectField from "./excel-import/AlbumSelectField";
-import { CSVData, parseCSVContent, readFileAsText } from "@/utils/csv-parser";
+import FileUploadField from "./excel-import/FileUploadField";
+import { useToast } from "@/components/ui/use-toast";
+import { importStickersFromExcel } from "@/lib/sticker-operations";
 
 interface ImportExcelDialogProps {
   albums: Album[];
   selectedAlbum: string;
-  setSelectedAlbum: (albumId: string) => void;
-  onImportComplete?: () => void;
+  setSelectedAlbum: (id: string) => void;
+  onImportComplete: () => void;
+  iconOnly?: boolean;
 }
 
-const ImportExcelDialog = ({ albums, selectedAlbum, setSelectedAlbum, onImportComplete }: ImportExcelDialogProps) => {
-  const { toast } = useToast();
+const ImportExcelDialog = ({ 
+  albums, 
+  selectedAlbum, 
+  setSelectedAlbum,
+  onImportComplete,
+  iconOnly = false
+}: ImportExcelDialogProps) => {
+  const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const { toast } = useToast();
   
-  // For new teams logo dialog
-  const [newTeams, setNewTeams] = useState<string[]>([]);
-  const [showNewTeamsDialog, setShowNewTeamsDialog] = useState(false);
-  const [parsedData, setParsedData] = useState<CSVData>([]);
-  
-  const resetForm = () => {
-    setFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-    setParsedData([]);
-    setNewTeams([]);
-  };
-
   const handleImport = async () => {
-    if (!file || !selectedAlbum) {
+    if (!selectedAlbum) {
       toast({
-        title: "שגיאה",
-        description: !file ? "נא לבחור קובץ" : "נא לבחור אלבום",
+        title: "לא נבחר אלבום",
+        description: "יש לבחור אלבום לפני ייבוא מדבקות",
         variant: "destructive",
-        duration: 3000,
       });
       return;
     }
-
-    setIsLoading(true);
-
-    try {
-      // Read file content
-      const fileContent = await readFileAsText(file);
-      
-      // Parse CSV data
-      const { parsedData: csvData } = parseCSVContent(fileContent);
-      
-      // Store parsed data for later use
-      setParsedData(csvData);
-      
-      // Find teams that don't exist yet
-      const existingStickers = getStickersByAlbumId(selectedAlbum);
-      const existingTeams = new Set(existingStickers.map(sticker => sticker.team));
-      const teamsInImport = new Set(csvData.map(([_, __, team]) => team));
-      
-      // Filter out teams that already exist
-      const newTeamsFound = Array.from(teamsInImport).filter(team => !existingTeams.has(team));
-      
-      if (newTeamsFound.length > 0) {
-        // Show the dialog to add logos for new teams
-        setNewTeams(newTeamsFound);
-        setShowNewTeamsDialog(true);
-      } else {
-        // If no new teams, proceed with import immediately
-        completeImport(csvData);
-      }
-    } catch (error) {
-      console.error("Import error:", error);
+    
+    if (!file) {
       toast({
-        title: "שגיאה בייבוא",
-        description: error instanceof Error ? error.message : "אירעה שגיאה בעיבוד הקובץ",
+        title: "לא נבחר קובץ",
+        description: "יש לבחור קובץ אקסל לייבוא",
         variant: "destructive",
-        duration: 5000,
       });
-      setIsLoading(false);
+      return;
     }
-  };
-
-  const completeImport = (data: CSVData) => {
+    
+    setIsImporting(true);
+    
     try {
-      const newStickers = importStickersFromCSV(selectedAlbum, data);
+      const result = await importStickersFromExcel(file, selectedAlbum);
+      
+      setOpen(false);
+      setFile(null);
       
       toast({
-        title: "ייבוא הצליח",
-        description: `${newStickers.length} מדבקות יובאו בהצלחה.`,
-        duration: 3000,
+        title: "ייבוא הושלם בהצלחה",
+        description: `יובאו ${result.importedCount} מדבקות בהצלחה${result.errorCount > 0 ? `, ${result.errorCount} שגיאות` : ''}`,
       });
       
-      setIsOpen(false);
-      resetForm();
-      
-      // Call the onImportComplete callback to refresh the view
-      if (onImportComplete) {
-        onImportComplete();
-      }
+      onImportComplete();
     } catch (error) {
-      console.error("Import completion error:", error);
+      console.error("Error importing Excel:", error);
       toast({
         title: "שגיאה בייבוא",
-        description: error instanceof Error ? error.message : "אירעה שגיאה בעיבוד הקובץ",
+        description: error instanceof Error ? error.message : "אירעה שגיאה בעת ייבוא המדבקות",
         variant: "destructive",
-        duration: 5000,
       });
     } finally {
-      setIsLoading(false);
+      setIsImporting(false);
     }
   };
-
-  const handleTeamLogosSubmit = (teamLogos: Record<string, string>) => {
-    // Complete the import with the parsed data
-    completeImport(parsedData);
-  };
-
+  
+  const trigger = iconOnly ? (
+    <Button 
+      variant="ghost" 
+      size="icon"
+      className="h-10 w-10 rounded-full bg-gray-800"
+    >
+      <FileSpreadsheet className="h-5 w-5" />
+    </Button>
+  ) : (
+    <Button variant="outline" size="sm">
+      <FileSpreadsheet className="h-4 w-4 ml-2" />
+      יבא מאקסל
+    </Button>
+  );
+  
   return (
-    <>
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="sm" onClick={() => setIsOpen(true)}>
-            <FileInput className="h-4 w-4 mr-2" />
-            ייבוא אקסל
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {trigger}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>יבוא מדבקות מאקסל</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <AlbumSelectField
+            albums={albums}
+            selectedAlbum={selectedAlbum}
+            setSelectedAlbum={setSelectedAlbum}
+          />
+          
+          <FileUploadField
+            file={file}
+            setFile={setFile}
+          />
+          
+          <Button 
+            onClick={handleImport} 
+            disabled={isImporting || !file || !selectedAlbum}
+            className="bg-interactive hover:bg-interactive-hover text-interactive-foreground"
+          >
+            {isImporting ? "מייבא..." : "ייבא מדבקות"}
           </Button>
-        </DialogTrigger>
-        <DialogContent dir="rtl" className="sm:max-w-[500px] md:max-w-[600px] w-[90vw]">
-          <DialogHeader>
-            <DialogTitle>ייבוא מדבקות מקובץ CSV</DialogTitle>
-            <DialogDescription>
-              העלה קובץ CSV עם המדבקות. וודא כי העמודה הראשונה היא מספר הקלף, השנייה שם השחקן, והשלישית שם הקבוצה/הסדרה.
-              אם הקובץ מכיל שורת כותרת, המערכת תזהה אותה באופן אוטומטי ותדלג עליה.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <AlbumSelectField 
-              albums={albums} 
-              selectedAlbum={selectedAlbum} 
-              setSelectedAlbum={setSelectedAlbum} 
-            />
-            <FileUploadField 
-              onFileChange={setFile} 
-              fileInputRef={fileInputRef} 
-            />
-          </div>
-          <DialogFooter>
-            <Button 
-              type="button" 
-              onClick={handleImport} 
-              disabled={!file || !selectedAlbum || isLoading}
-            >
-              {isLoading ? "מייבא..." : "ייבא מדבקות"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* New teams logo dialog */}
-      <NewTeamsLogoDialog
-        open={showNewTeamsDialog}
-        onOpenChange={setShowNewTeamsDialog}
-        teams={newTeams}
-        onSave={handleTeamLogosSubmit}
-      />
-    </>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

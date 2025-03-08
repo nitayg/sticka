@@ -22,7 +22,7 @@ const SplashScreen = ({ onComplete, minDisplayTime = 2500 }: SplashScreenProps) 
   }, [onComplete, minDisplayTime]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center transition-opacity duration-500 ease-in-out"
+    <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center transition-opacity duration-500 ease-in-out"
          style={{ opacity: isAnimationComplete ? 0 : 1 }}>
       <div className="w-full max-w-md px-8 flex flex-col items-center space-y-8 text-center">
         <div className="flex flex-col items-center space-y-6 animate-scale-in">
@@ -30,17 +30,17 @@ const SplashScreen = ({ onComplete, minDisplayTime = 2500 }: SplashScreenProps) 
             <img
               src="/lovable-uploads/46e6bbf0-717d-461d-95e4-1584072c6ff0.png"
               alt="Logo"
-              className="w-32 h-32 animate-pulse-brief"
+              className="w-32 h-32 logo-animation"
             />
-            <div className="absolute inset-0 bg-interactive/10 rounded-full animate-ping opacity-75 scale-110"></div>
+            <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping opacity-75 scale-110"></div>
           </div>
           
-          <h1 className="text-3xl font-bold smooth-fade-in delay-300">
-            אוסף המדבקות שלי
+          <h1 className="text-3xl font-bold text-white smooth-fade-in delay-300">
+            STICKA
           </h1>
           
-          <p className="text-muted-foreground smooth-fade-in delay-600">
-            STICKA
+          <p className="text-gray-400 smooth-fade-in delay-600">
+            אוסף המדבקות שלי
           </p>
         </div>
       </div>

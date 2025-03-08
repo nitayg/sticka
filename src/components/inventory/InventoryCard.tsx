@@ -1,60 +1,35 @@
 
 import { cn } from "@/lib/utils";
-import { Grid, Check, AlertCircle, Copy } from "lucide-react";
 
 interface InventoryCardProps {
   title: string;
   value: number;
-  active: boolean;
-  onClick: () => void;
-  className?: string; // Add className as an optional prop
+  active?: boolean;
+  onClick?: () => void;
+  className?: string;
 }
 
-const InventoryCard = ({ title, value, active, onClick, className }: InventoryCardProps) => {
-  // Select icon based on card title
-  const getIcon = () => {
-    switch (title) {
-      case "סך הכל":
-        return <Grid className="h-5 w-5" />;
-      case "ברשותי":
-        return <Check className="h-5 w-5" />;
-      case "חסרים":
-        return <AlertCircle className="h-5 w-5" />;
-      case "כפולים":
-        return <Copy className="h-5 w-5" />;
-      default:
-        return null;
-    }
-  };
-
+const InventoryCard = ({
+  title,
+  value,
+  active = false,
+  onClick,
+  className
+}: InventoryCardProps) => {
   return (
-    <button
-      onClick={onClick}
+    <div
       className={cn(
-        "w-full rounded-xl p-4 transition-all duration-300",
-        "border flex items-center justify-between",
-        "text-right",
-        active 
-          ? "border-interactive bg-interactive/5 shadow-sm" 
-          : "border-border bg-card hover:bg-secondary",
+        "bg-card rounded-lg p-2 text-center cursor-pointer transition-all border",
+        active
+          ? "border-interactive bg-interactive/10 shadow-sm"
+          : "border-border hover:border-interactive/40",
         className
       )}
+      onClick={onClick}
     >
-      <div className="text-lg font-bold">
-        {value}
-      </div>
-      <div className="flex items-center gap-2">
-        <div className="text-base font-medium">
-          {title}
-        </div>
-        <div className={cn(
-          "flex items-center justify-center",
-          active ? "text-interactive" : "text-muted-foreground"
-        )}>
-          {getIcon()}
-        </div>
-      </div>
-    </button>
+      <p className="text-lg font-bold">{value}</p>
+      <h3 className="text-xs text-muted-foreground mt-1">{title}</h3>
+    </div>
   );
 };
 

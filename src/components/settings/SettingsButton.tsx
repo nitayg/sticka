@@ -28,11 +28,11 @@ const SettingsButton = ({ variant = "ghost", iconOnly = false }: SettingsButtonP
           <TooltipTrigger asChild>
             <Button 
               variant={variant} 
-              size={iconOnly ? "icon" : "default"}
+              size="icon"
               onClick={openSettings}
-              className={iconOnly ? "h-8 w-8" : ""}
+              className={iconOnly ? "h-9 w-9 rounded-full" : ""}
             >
-              <Settings className={iconOnly ? "h-4 w-4" : "h-4 w-4 ml-2"} />
+              <Settings className={iconOnly ? "h-5 w-5" : "h-4 w-4 ml-2"} />
               {!iconOnly && <span>הגדרות</span>}
             </Button>
           </TooltipTrigger>

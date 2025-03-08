@@ -86,14 +86,13 @@ const App = () => {
   };
 
   return (
-    <ThemeProvider defaultTheme="light" storageKey="sticker-album-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="sticker-album-theme">
       <QueryClientProvider client={queryClient}>
         <TooltipProvider delayDuration={300}>
           {showSplash && <SplashScreen onComplete={handleSplashComplete} minDisplayTime={2500} />}
           <Toaster />
           <Sonner position="top-center" closeButton />
           <Suspense fallback={<LoadingFallback />}>
-            {/* Render the main app content even if we're showing the splash screen */}
             <Index />
           </Suspense>
         </TooltipProvider>

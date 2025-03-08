@@ -20,40 +20,88 @@
 
 /* Glass morphism effects */
 .glass {
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.dark .glass {
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Sticker effects */
-.sticker-shadow {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05),
-              0 4px 6px -2px rgba(0, 0, 0, 0.03);
+/* Facebook-style design elements */
+.fb-header {
+  @apply bg-black fixed top-0 left-0 right-0 h-14 shadow-sm flex items-center px-4 z-50;
 }
 
-.dark .sticker-shadow {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2),
-              0 4px 6px -2px rgba(0, 0, 0, 0.1);
+.fb-nav-item {
+  @apply flex flex-col items-center justify-center p-2;
 }
 
-/* Card hover effect */
+.fb-nav-item.active {
+  @apply text-blue-500;
+}
+
+.fb-nav-item:not(.active) {
+  @apply text-gray-400;
+}
+
+.fb-stories-container {
+  @apply grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 pb-4;
+}
+
+.fb-story-item {
+  @apply aspect-square rounded-lg overflow-hidden relative cursor-pointer border border-gray-800 transition-transform;
+}
+
+.fb-story-item:hover {
+  @apply transform scale-[1.02];
+}
+
+.fb-story-avatar {
+  @apply absolute top-2 left-2 h-8 w-8 rounded-full border-2 border-blue-500 bg-black;
+}
+
+.fb-story-gradient {
+  @apply absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2;
+}
+
+.fb-story-title {
+  @apply text-xs text-white text-center;
+}
+
+/* Card hover effect with Facebook-style */
 .card-hover {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.3);
 }
 
-.dark .card-hover:hover {
-  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.3);
+/* Facebook-style bottom navigation */
+.fb-bottom-nav {
+  @apply fixed bottom-0 left-0 right-0 z-50 bg-black text-white border-t border-gray-800 py-1 px-2;
+}
+
+/* Create story button */
+.create-story-btn {
+  @apply h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center absolute bottom-4 right-4 shadow-lg;
+}
+
+/* Facebook-style action buttons */
+.fb-action-btn {
+  @apply h-10 w-10 rounded-full bg-gray-800 flex items-center justify-center transition-colors;
+}
+
+.fb-action-btn:hover {
+  @apply bg-gray-700;
+}
+
+/* No scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
