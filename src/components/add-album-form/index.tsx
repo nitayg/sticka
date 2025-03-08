@@ -1,4 +1,3 @@
-
 import { useState, ReactNode, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { 
@@ -70,10 +69,16 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
       await addAlbum(newAlbum);
       console.log("Album created successfully:", newAlbum);
       
+      // Keep track if we imported any stickers
+      let stickersImported = false;
+      let importedCount = 0;
+      
       // Process CSV data if provided
       if (csvContent) {
         try {
           console.log("Processing CSV content, length:", csvContent.length);
+          
+          // Parse CSV data
           const parsedData = parseCSV(csvContent);
           console.log("Parsed CSV data:", parsedData);
           
@@ -116,11 +121,24 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
             if (importData.length > 0) {
               console.log("Importing stickers:", importData);
               const importedStickers = importStickersFromCSV(newAlbumId, importData);
+              importedCount = importedStickers.length;
               
-              toast({
-                title: "מדבקות יובאו בהצלחה",
-                description: `יובאו ${importedStickers.length} מדבקות לאלבום`,
-              });
+              if (importedStickers.length > 0) {
+                stickersImported = true;
+                console.log(`Successfully imported ${importedStickers.length} stickers`);
+                
+                toast({
+                  title: "מדבקות יובאו בהצלחה",
+                  description: `יובאו ${importedStickers.length} מדבקות לאלבום`,
+                });
+              } else {
+                console.warn("No stickers were imported");
+                toast({
+                  title: "אזהרה",
+                  description: "לא יובאו מדבקות לאלבום",
+                  variant: "destructive",
+                });
+              }
             } else {
               console.warn("No valid sticker data found in CSV");
               toast({
@@ -149,7 +167,7 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
       
       toast({
         title: "אלבום נוסף בהצלחה",
-        description: `האלבום "${name}" נוסף בהצלחה`,
+        description: `האלבום "${name}" נוסף בהצלחה${stickersImported ? ` ו-${importedCount} מדבקות יובאו` : ''}`,
       });
       
       // Run the callback if provided
@@ -157,15 +175,20 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
         onAlbumAdded();
       }
       
-      // Force refresh to ensure components get updated - use multiple events and timeout to ensure proper update
+      // Force refresh to ensure components get updated - use multiple events
       window.dispatchEvent(new CustomEvent('albumDataChanged'));
+      
+      // Trigger sticker data changed event specifically for this album
+      window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+        detail: { albumId: newAlbumId, count: importedCount } 
+      }));
       
       // Add a small delay and refresh again to ensure stickers are loaded
       setTimeout(() => {
         console.log("Triggering delayed refresh events");
         window.dispatchEvent(new CustomEvent('forceRefresh'));
         window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-          detail: { albumId: newAlbumId } 
+          detail: { albumId: newAlbumId, count: importedCount } 
         }));
       }, 500);
       
@@ -174,6 +197,12 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
         console.log("Triggering final refresh events");
         window.dispatchEvent(new CustomEvent('forceRefresh'));
         window.dispatchEvent(new CustomEvent('albumDataChanged'));
+        
+        if (stickersImported) {
+          window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+            detail: { albumId: newAlbumId, count: importedCount } 
+          }));
+        }
       }, 1500);
       
     } catch (error) {

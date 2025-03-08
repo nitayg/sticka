@@ -49,3 +49,8 @@ export {
   syncWithSupabase,
   StorageEvents
 } from './sync';
+
+// Re-export additional dependencies you might need
+export * from './utils';
+export * from './supabase';
+export * from './sticker-utils';

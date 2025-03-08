@@ -1,3 +1,4 @@
+
 import { StorageEvents } from './constants';
 
 // Filter out soft-deleted items for display
@@ -43,8 +44,19 @@ export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void
       // Also dispatch the specific itemChanged event
       if (key === 'stickers') {
         window.dispatchEvent(new CustomEvent('stickerDataChanged'));
+        
+        // Also dispatch forceRefresh for components that might not listen to stickerDataChanged
+        window.dispatchEvent(new CustomEvent('forceRefresh'));
+        
+        // Add a small delay for components that might load later
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('forceRefresh'));
+        }, 200);
       } else if (key === 'albums') {
         window.dispatchEvent(new CustomEvent('albumDataChanged'));
+        
+        // Also dispatch forceRefresh for components that might not listen to albumDataChanged
+        window.dispatchEvent(new CustomEvent('forceRefresh'));
       }
     }
   } catch (error) {
@@ -140,27 +152,45 @@ export const sendToSupabase = async <T>(key: string, data: T): Promise<void> => 
       switch (key) {
         case 'albums':
           await saveAlbumBatch(data as Album[]);
+          
+          // Dispatch album-specific events after successful save
+          window.dispatchEvent(new CustomEvent('albumDataChanged'));
+          window.dispatchEvent(new CustomEvent('forceRefresh'));
           break;
+          
         case 'stickers':
           await saveStickerBatch(data as Sticker[]);
+          
+          // Dispatch sticker-specific events after successful save
+          window.dispatchEvent(new CustomEvent('stickerDataChanged'));
+          window.dispatchEvent(new CustomEvent('forceRefresh'));
           break;
+          
         case 'users':
           await saveUserBatch(data as User[]);
           break;
+          
         case 'exchangeOffers':
           await saveExchangeOfferBatch(data as ExchangeOffer[]);
           break;
+          
         default:
           console.error(`Unknown key: ${key}`);
           return;
       }
       
-      // Dispatch specific events after successful save
-      if (key === 'stickers') {
-        window.dispatchEvent(new CustomEvent('stickerDataChanged'));
-      } else if (key === 'albums') {
-        window.dispatchEvent(new CustomEvent('albumDataChanged'));
-      }
+      // Dispatch specific events after successful save with a short delay
+      setTimeout(() => {
+        if (key === 'stickers') {
+          window.dispatchEvent(new CustomEvent('stickerDataChanged'));
+        } else if (key === 'albums') {
+          window.dispatchEvent(new CustomEvent('albumDataChanged'));
+        }
+        
+        // Always trigger a general refresh event
+        window.dispatchEvent(new CustomEvent('forceRefresh'));
+      }, 200);
+      
     } catch (error) {
       console.error(`Error sending data to Supabase (${key}):`, error);
     }
