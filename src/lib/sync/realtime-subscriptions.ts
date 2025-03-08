@@ -12,9 +12,6 @@ export const setupRealtimeSubscriptions = () => {
     config: {
       broadcast: { self: true },
       presence: { key: 'client-' + Math.floor(Math.random() * 1000000) },
-      retryInterval: 2000,
-      retryBackoff: true,
-      maxRetries: 10
     }
   })
   .on('postgres_changes', { 
@@ -100,7 +97,8 @@ export const setupRealtimeSubscriptions = () => {
   // Set up online/offline event listeners
   window.addEventListener('online', () => {
     console.log('Browser is online again, checking subscription...');
-    if (channel.subscription.state !== 'SUBSCRIBED') {
+    // Check status and resubscribe if needed
+    if (channel.state !== 'joined') {
       subscribeToChannel();
     }
   });
@@ -116,7 +114,7 @@ export const setupRealtimeSubscriptions = () => {
 
 // Helper function to manually reconnect channel (can be exported for manual reconnection)
 export const reconnectRealtimeChannel = (channel: ReturnType<typeof supabase.channel>) => {
-  if (channel.subscription.state !== 'SUBSCRIBED') {
+  if (channel.state !== 'joined') {
     console.log('Manually reconnecting realtime channel...');
     channel.subscribe();
   } else {

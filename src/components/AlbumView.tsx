@@ -42,15 +42,13 @@ const AlbumView = () => {
     showAllAlbumStickers 
   });
   
+  // Get the selected album data for the AlbumEventHandler
+  const selectedAlbumData = albums.find(album => album.id === selectedAlbumId);
+  
   return (
     <div className="space-y-4 animate-fade-in">
-      {/* Event handling component */}
-      <AlbumEventHandler 
-        albums={albums}
-        selectedAlbumId={selectedAlbumId}
-        handleAlbumChange={handleAlbumChange}
-        onRefresh={handleRefresh}
-      />
+      {/* Event handling component - only render if an album is selected */}
+      {selectedAlbumData && <AlbumEventHandler album={selectedAlbumData} />}
       
       {/* Album header with title and actions */}
       <AlbumHeader 

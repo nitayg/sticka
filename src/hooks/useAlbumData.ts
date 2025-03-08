@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { fetchAllAlbums } from "@/lib/queries";
-import { getStickersByAlbumId, stickerData } from "@/lib/sticker-operations";
+import { getStickersByAlbumId, getStickerData } from "@/lib/sticker-operations";
 import { exchangeOffers } from "@/lib/data";
 import { Sticker } from "@/lib/types";
 
@@ -65,7 +65,7 @@ export const useAlbumData = ({
   // Generate team list from stickers
   const teams = useMemo(() => {
     const teamSet = new Set<string>();
-    const stickersToCheck = activeTab === "manage" || showAllAlbumStickers ? stickerData : stickers;
+    const stickersToCheck = activeTab === "manage" || showAllAlbumStickers ? getStickerData() : stickers;
     
     stickersToCheck.forEach(sticker => {
       if (sticker.team) {
@@ -73,7 +73,7 @@ export const useAlbumData = ({
       }
     });
     return Array.from(teamSet).sort();
-  }, [stickers, activeTab, stickerData, showAllAlbumStickers]);
+  }, [stickers, activeTab, showAllAlbumStickers]);
 
   // Generate number ranges from stickers
   const numberRanges = useMemo(() => {
@@ -96,7 +96,7 @@ export const useAlbumData = ({
   // Map team logos to teams
   const teamLogos = useMemo(() => {
     const logoMap: Record<string, string> = {};
-    const stickersToCheck = activeTab === "manage" || showAllAlbumStickers ? stickerData : stickers;
+    const stickersToCheck = activeTab === "manage" || showAllAlbumStickers ? getStickerData() : stickers;
     
     stickersToCheck.forEach(sticker => {
       if (sticker.team && sticker.teamLogo) {
@@ -104,7 +104,7 @@ export const useAlbumData = ({
       }
     });
     return logoMap;
-  }, [stickers, activeTab, stickerData, showAllAlbumStickers]);
+  }, [stickers, activeTab, showAllAlbumStickers]);
 
   return {
     albums,

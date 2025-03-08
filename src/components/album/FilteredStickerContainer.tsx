@@ -2,7 +2,7 @@
 import { useMemo } from "react";
 import { Sticker } from "@/lib/types";
 import StickerCollection from "../StickerCollection";
-import { stickerData } from "@/lib/sticker-operations";
+import { getStickersByAlbumId } from "@/lib/sticker-operations";
 
 interface FilteredStickerContainerProps {
   stickers: Sticker[];
@@ -30,23 +30,20 @@ const FilteredStickerContainer = ({
   transactionMap
 }: FilteredStickerContainerProps) => {
   const filteredStickers = useMemo(() => {
-    let allStickers = (activeTab === "manage" && selectedTeam) || (showAllAlbumStickers && selectedTeam) 
-      ? stickerData 
-      : stickers;
-    
-    let filtered = allStickers;
+    // We'll use the stickers prop that's passed in, not stickerData
+    let filtered = stickers;
     
     if (activeTab === "number" && selectedRange) {
       const [rangeStart, rangeEnd] = selectedRange.split('-').map(Number);
       filtered = filtered.filter(sticker => 
         sticker.number >= rangeStart && sticker.number <= rangeEnd
       );
-    } else if (((activeTab === "team" || activeTab === "manage") && selectedTeam) || (showAllAlbumStickers && selectedTeam)) {
+    } else if ((activeTab === "team" || activeTab === "manage") && selectedTeam) {
       filtered = filtered.filter(sticker => sticker.team === selectedTeam);
     }
     
     return filtered;
-  }, [stickers, activeTab, selectedRange, selectedTeam, showAllAlbumStickers]);
+  }, [stickers, activeTab, selectedRange, selectedTeam]);
 
   return (
     <StickerCollection 

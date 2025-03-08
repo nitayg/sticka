@@ -1,6 +1,7 @@
+
 import { useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { deleteAlbum, updateAlbum } from '@/lib/album-operations';
+import { updateAlbum, deleteAlbum } from '@/lib/album-operations';
 import { Album } from '@/lib/types';
 import { toast } from '@/components/ui/use-toast';
 import { StorageEvents } from '@/lib/sync';
@@ -13,7 +14,8 @@ const AlbumEventHandler: React.FC<AlbumEventHandlerProps> = ({ album }) => {
   const queryClient = useQueryClient();
 
   // Mutation for updating an album
-  const updateAlbumMutation = useMutation(updateAlbum, {
+  const updateAlbumMutation = useMutation({
+    mutationFn: (data: Partial<Album>) => updateAlbum(album.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['albums'] });
       toast({
@@ -30,7 +32,8 @@ const AlbumEventHandler: React.FC<AlbumEventHandlerProps> = ({ album }) => {
   });
 
   // Mutation for deleting an album
-  const deleteAlbumMutation = useMutation(deleteAlbum, {
+  const deleteAlbumMutation = useMutation({
+    mutationFn: () => deleteAlbum(album.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['albums'] });
       toast({

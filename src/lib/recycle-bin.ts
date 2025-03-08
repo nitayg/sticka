@@ -1,8 +1,9 @@
+
 import { Album, Sticker } from './types';
 import { albums as initialAlbums } from './initial-data';
 import { saveToStorage, getFromStorage } from './sync';
 import { setAlbumData, getAlbumData } from './album-operations';
-import { stickerData, setStickerData } from './sticker-operations';
+import { getStickerData, setStickerData } from './sticker-operations';
 
 // נשמור אלבומים שנמחקו בסל המיחזור
 export type RecycledItem = {
@@ -34,7 +35,8 @@ export const moveAlbumToRecycleBin = (albumId: string): void => {
   }
   
   // מצא את כל המדבקות הקשורות לאלבום זה
-  const relatedStickers = stickerData.filter(sticker => sticker.albumId === albumId);
+  const stickers = getStickerData();
+  const relatedStickers = stickers.filter(sticker => sticker.albumId === albumId);
   
   // הוסף את האלבום והמדבקות שלו לסל המיחזור
   const recycleBin = getRecycleBin();
@@ -54,7 +56,7 @@ export const moveAlbumToRecycleBin = (albumId: string): void => {
       : album
   ));
   
-  setStickerData(stickerData.map(sticker => 
+  setStickerData(stickers.map(sticker => 
     sticker.albumId === albumId 
       ? { ...sticker, isDeleted: true, lastModified: Date.now() } 
       : sticker
@@ -78,7 +80,7 @@ export const deleteAlbumPermanently = (albumId: string): void => {
   if (albumToDelete) {
     // מחק לגמרי את האלבום מהמערכת
     setAlbumData(albums.filter(album => album.id !== albumId));
-    setStickerData(stickerData.filter(sticker => sticker.albumId !== albumId));
+    setStickerData(getStickerData().filter(sticker => sticker.albumId !== albumId));
   }
   
   window.dispatchEvent(new CustomEvent('recycleBinChanged'));
@@ -103,7 +105,7 @@ export const restoreAlbumFromRecycleBin = (albumId: string): void => {
     lastModified: Date.now() 
   };
   
-  // בדוק אם האלבום קיים ב��ערכת (במצב מחוק)
+  // בדוק אם האלבום קיים במערכת (במצב מחוק)
   const existingAlbumIndex = albums.findIndex(album => album.id === albumId);
   
   if (existingAlbumIndex >= 0) {
@@ -117,7 +119,7 @@ export const restoreAlbumFromRecycleBin = (albumId: string): void => {
   }
   
   // שחזר את המדבקות
-  const stickers = stickerData;
+  const stickers = getStickerData();
   const restoredStickers = itemToRestore.relatedStickers.map(sticker => ({
     ...sticker,
     isDeleted: false,

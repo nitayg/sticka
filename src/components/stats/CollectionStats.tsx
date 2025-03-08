@@ -14,8 +14,10 @@ const CollectionStats = ({ albumId, className }: CollectionStatsProps) => {
   
   // Update stats when album changes
   useEffect(() => {
-    const newStats = getStats(albumId);
-    setStats(newStats);
+    const newStats = getStats();
+    // Calculate needed stickers from total and owned
+    const needed = newStats.total - newStats.owned;
+    setStats({ ...newStats, needed });
   }, [albumId]);
   
   // Calculate percentages

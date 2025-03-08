@@ -7,8 +7,8 @@ export const fetchAllAlbums = () => {
   return getAllAlbums();
 };
 
-export const fetchAlbumStats = (albumId?: string) => {
-  return getStats(albumId);
+export const fetchAlbumStats = () => {
+  return getStats();
 };
 
 // Sticker queries

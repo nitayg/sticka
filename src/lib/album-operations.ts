@@ -1,6 +1,7 @@
+
 import { Album } from './types';
 import { albums as initialAlbums } from './initial-data';
-import { stickerData, setStickerData } from './sticker-operations';
+import { setStickerData, getStickerData } from './sticker-operations';
 import { saveToStorage, syncWithSupabase } from './sync';
 
 // Maintain data state
@@ -81,7 +82,8 @@ export const deleteAlbum = (id: string) => {
   ));
   
   // Mark all related stickers as deleted too
-  setStickerData(stickerData.map(sticker => 
+  const stickers = getStickerData();
+  setStickerData(stickers.map(sticker => 
     sticker.albumId === id ? {
       ...sticker,
       isDeleted: true,

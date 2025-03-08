@@ -8,7 +8,7 @@ import { Album } from "@/lib/types";
 import { moveAlbumToRecycleBin } from "@/lib/recycle-bin";
 import { useToast } from "../ui/use-toast";
 import RecycleBinDialog from "../recycle-bin/RecycleBinDialog";
-import { forceSync } from "@/lib/sync-manager";
+import { forceSync } from "@/lib/sync";
 import { StorageEvents } from '@/lib/sync';
 import {
   AlertDialog,
