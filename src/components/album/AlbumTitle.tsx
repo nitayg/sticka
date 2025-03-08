@@ -20,17 +20,17 @@ const AlbumTitle = ({ selectedAlbumData }: AlbumTitleProps) => {
         {selectedAlbumData.name}
       </h1>
       
-      {(selectedAlbumData.releaseYear || selectedAlbumData.publisher) && (
+      {(selectedAlbumData.year || selectedAlbumData.description) && (
         <span className="text-sm text-muted-foreground mx-2 hidden md:inline">
           •
         </span>
       )}
       
-      {(selectedAlbumData.releaseYear || selectedAlbumData.publisher) && (
+      {(selectedAlbumData.year || selectedAlbumData.description) && (
         <p className="text-sm text-muted-foreground text-center md:text-right">
-          {selectedAlbumData.publisher}
-          {selectedAlbumData.publisher && selectedAlbumData.releaseYear ? " | " : ""}
-          {selectedAlbumData.releaseYear}
+          {selectedAlbumData.description}
+          {selectedAlbumData.description && selectedAlbumData.year ? " | " : ""}
+          {selectedAlbumData.year}
         </p>
       )}
     </div>

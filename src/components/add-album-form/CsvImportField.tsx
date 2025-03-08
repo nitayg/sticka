@@ -5,18 +5,24 @@ import { Input } from "../ui/input";
 import { useToast } from "../ui/use-toast";
 
 interface CsvImportFieldProps {
-  file: File | null;
-  setFile: (file: File | null) => void;
+  csvContent: string;
+  setCsvContent: (content: string) => void;
 }
 
-const CsvImportField = ({ file, setFile }: CsvImportFieldProps) => {
+const CsvImportField = ({ csvContent, setCsvContent }: CsvImportFieldProps) => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      setFile(selectedFile);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        setCsvContent(content);
+      };
+      reader.readAsText(selectedFile);
+      
       toast({
         title: "הקובץ נקלט בהצלחה",
         description: `${selectedFile.name} מוכן לייבוא.`,

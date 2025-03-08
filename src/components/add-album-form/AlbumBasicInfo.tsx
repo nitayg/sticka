@@ -8,9 +8,9 @@ interface AlbumBasicInfoProps {
   setName: (value: string) => void;
   description: string;
   setDescription: (value: string) => void;
-  year: string;
+  year: number | string;
   setYear: (value: string) => void;
-  totalStickers: string;
+  totalStickers: number | string;
   setTotalStickers: (value: string) => void;
 }
 

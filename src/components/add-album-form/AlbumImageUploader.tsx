@@ -5,37 +5,33 @@ import { Input } from "../ui/input";
 import { useToast } from "../ui/use-toast";
 
 interface AlbumImageUploaderProps {
-  albumImage: File | null;
-  setAlbumImage: (file: File | null) => void;
-  albumImagePreview: string | null;
-  setAlbumImagePreview: (preview: string | null) => void;
+  imageUrl: string;
+  onImageChange: (url: string) => void;
 }
 
 const AlbumImageUploader = ({
-  albumImage,
-  setAlbumImage,
-  albumImagePreview,
-  setAlbumImagePreview
+  imageUrl,
+  onImageChange
 }: AlbumImageUploaderProps) => {
   const { toast } = useToast();
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(imageUrl || null);
 
   useEffect(() => {
-    if (albumImage) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setAlbumImagePreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(albumImage);
-    } else {
-      setAlbumImagePreview(null);
-    }
-  }, [albumImage, setAlbumImagePreview]);
+    setPreviewUrl(imageUrl || null);
+  }, [imageUrl]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      setAlbumImage(selectedFile);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setPreviewUrl(result);
+        onImageChange(result);
+      };
+      reader.readAsDataURL(selectedFile);
+      
       toast({
         title: "התמונה נקלטה בהצלחה",
         description: `${selectedFile.name} נבחרה כתמונת האלבום.`,
@@ -59,10 +55,10 @@ const AlbumImageUploader = ({
           בחר תמונה עבור האלבום. תמונה זו תשמש גם כתמונת ברירת מחדל למדבקות שאין להן תמונה.
         </p>
         
-        {albumImagePreview && (
+        {previewUrl && (
           <div className="mt-4 relative w-full max-w-[300px] mx-auto aspect-square rounded-lg overflow-hidden border">
             <img 
-              src={albumImagePreview} 
+              src={previewUrl} 
               alt="Album preview" 
               className="w-full h-full object-cover"
             />

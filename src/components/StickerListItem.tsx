@@ -9,6 +9,9 @@ interface StickerListItemProps {
   onClick?: () => void;
   transaction?: { person: string, color: string };
   isRecentlyAdded?: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
+  transactions?: string[];
 }
 
 // Helper function to get first name only
@@ -21,16 +24,27 @@ const StickerListItem = ({
   showImages = true, 
   onClick,
   transaction,
-  isRecentlyAdded = false
+  isRecentlyAdded = false,
+  isSelected,
+  onSelect
 }: StickerListItemProps) => {
+  const handleClick = () => {
+    if (onSelect) {
+      onSelect();
+    } else if (onClick) {
+      onClick();
+    }
+  };
+
   return (
     <div 
-      onClick={onClick}
+      onClick={handleClick}
       className={cn(
         "flex items-center space-x-4 p-3 rounded-xl bg-white border border-border",
         "transition-all duration-300 ease-out hover:shadow-md dark:bg-card",
-        onClick && "cursor-pointer",
+        (onClick || onSelect) && "cursor-pointer",
         isRecentlyAdded && "border-yellow-400 animate-pulse-brief",
+        isSelected && "ring-2 ring-blue-500",
         transaction && transaction.color
       )}
     >

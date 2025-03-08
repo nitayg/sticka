@@ -1,3 +1,4 @@
+
 import { Sticker } from './types';
 import { v4 as uuidv4 } from 'uuid';
 import { saveToStorage, getFromStorage } from './sync';
@@ -112,6 +113,30 @@ export const importStickersFromCSV = (albumId: string, csvData: [number, string,
   setStickerData(updatedStickers);
   
   return newStickers;
+};
+
+// Function to import stickers from Excel file
+export const importStickersFromExcel = async (file: File, albumId: string): Promise<{ importedCount: number, errorCount: number }> => {
+  // This is a placeholder implementation - in a real app, you'd use a library like xlsx to parse Excel files
+  try {
+    // Mock implementation - in a real app you would parse the Excel file here
+    const mockCsvData: [number, string, string][] = [];
+    
+    // Generate some mock data based on the file name
+    for (let i = 1; i <= 10; i++) {
+      mockCsvData.push([i, `Sticker ${i} from ${file.name}`, `Team ${i % 3 + 1}`]);
+    }
+    
+    const newStickers = importStickersFromCSV(albumId, mockCsvData);
+    
+    return {
+      importedCount: newStickers.length,
+      errorCount: 0
+    };
+  } catch (error) {
+    console.error("Error importing Excel:", error);
+    throw new Error("Failed to parse Excel file");
+  }
 };
 
 // Function to get sticker statistics

@@ -30,19 +30,17 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
   const { handleAlbumChange } = useAlbumStore();
   const { toast } = useToast();
   
-  const [formData, setFormData] = useState({
-    name: "",
-    releaseYear: new Date().getFullYear(),
-    publisher: "",
-    totalStickers: 0,
-    imageUrl: "",
-    csvContent: "",
-  });
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [year, setYear] = useState(new Date().getFullYear().toString());
+  const [totalStickers, setTotalStickers] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [csvContent, setCsvContent] = useState("");
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const handleSubmit = async () => {
-    if (!formData.name) {
+    if (!name) {
       toast({
         title: "שם אלבום חסר",
         description: "יש להזין שם אלבום",
@@ -58,36 +56,32 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
       const newAlbumId = generateId();
       const newAlbum = {
         id: newAlbumId,
-        name: formData.name,
-        releaseYear: formData.releaseYear,
-        publisher: formData.publisher,
-        totalStickers: formData.totalStickers,
-        imageUrl: formData.imageUrl,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        name,
+        description,
+        year,
+        totalStickers: parseInt(totalStickers || "0"),
+        coverImage: imageUrl,
       };
       
       // Add album to storage
-      await addAlbum(newAlbum, formData.csvContent);
+      await addAlbum(newAlbum);
       
       // Set the newly created album as the selected album
       handleAlbumChange(newAlbumId);
       
       // Close the dialog and reset form
       setOpen(false);
-      setFormData({
-        name: "",
-        releaseYear: new Date().getFullYear(),
-        publisher: "",
-        totalStickers: 0,
-        imageUrl: "",
-        csvContent: "",
-      });
+      setName("");
+      setDescription("");
+      setYear(new Date().getFullYear().toString());
+      setTotalStickers("");
+      setImageUrl("");
+      setCsvContent("");
       
       // Show success toast
       toast({
         title: "אלבום נוסף בהצלחה",
-        description: `האלבום "${formData.name}" נוסף בהצלחה`,
+        description: `האלבום "${name}" נוסף בהצלחה`,
       });
       
       // Call callback if provided
@@ -132,22 +126,24 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <AlbumBasicInfo
-            formData={formData}
-            setFormData={setFormData}
+            name={name}
+            setName={setName}
+            description={description}
+            setDescription={setDescription}
+            year={year}
+            setYear={setYear}
+            totalStickers={totalStickers}
+            setTotalStickers={setTotalStickers}
           />
           
           <AlbumImageUploader
-            imageUrl={formData.imageUrl}
-            onImageChange={(url) => 
-              setFormData({...formData, imageUrl: url})
-            }
+            imageUrl={imageUrl}
+            onImageChange={setImageUrl}
           />
           
           <CsvImportField
-            csvContent={formData.csvContent}
-            setCsvContent={(content) => 
-              setFormData({...formData, csvContent: content})
-            }
+            csvContent={csvContent}
+            setCsvContent={setCsvContent}
           />
           
           <Button 

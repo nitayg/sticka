@@ -5,17 +5,17 @@ import { Input } from "../ui/input";
 import { useToast } from "../ui/use-toast";
 
 interface FileUploadFieldProps {
-  onFileChange: (file: File) => void;
-  fileInputRef: Ref<HTMLInputElement>;
+  file: File | null;
+  setFile: (file: File | null) => void;
 }
 
-const FileUploadField = ({ onFileChange, fileInputRef }: FileUploadFieldProps) => {
+const FileUploadField = ({ file, setFile }: FileUploadFieldProps) => {
   const { toast } = useToast();
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      onFileChange(selectedFile);
+      setFile(selectedFile);
       toast({
         title: "הקובץ נקלט בהצלחה",
         description: `${selectedFile.name} מוכן לייבוא.`,
@@ -31,9 +31,8 @@ const FileUploadField = ({ onFileChange, fileInputRef }: FileUploadFieldProps) =
         <Input 
           id="file" 
           type="file" 
-          accept=".csv,.txt" 
-          onChange={handleFileUpload} 
-          ref={fileInputRef}
+          accept=".xlsx,.xls" 
+          onChange={handleFileUpload}
         />
       </div>
     </div>
