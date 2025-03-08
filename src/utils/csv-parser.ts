@@ -89,12 +89,19 @@ export const parseCSV = (csvContent: string): Array<any> => {
       return rowObject;
     });
   } 
-  // Process as array of arrays if no header
+  // Process as array of arrays if no header - ensure each row has at least 3 elements
   else {
     return lines.map(line => {
-      return parseLine(line).map(value => 
+      const values = parseLine(line).map(value => 
         value.replace(/['"]/g, '').trim()
       );
+      
+      // Ensure at least 3 elements in each row (for number, name, team)
+      while (values.length < 3) {
+        values.push("");
+      }
+      
+      return values;
     });
   }
 };

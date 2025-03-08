@@ -75,16 +75,16 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
           const parsedData = parseCSV(csvContent);
           
           if (parsedData && parsedData.length > 0) {
-            // Map to format expected by importStickersFromCSV
+            // Transform data to ensure it meets the expected format
             const importData: [number, string, string][] = parsedData.map(row => {
               // Handle different CSV formats by looking at the row structure
               if (Array.isArray(row) && row.length >= 3) {
                 // If already in array format with 3+ items
-                const number = parseInt(row[0].toString());
-                return [number, row[1].toString(), row[2].toString()];
-              } else if (typeof row === 'object') {
+                const number = parseInt(row[0].toString()) || 0;
+                return [number, row[1].toString() || "", row[2].toString() || ""];
+              } else if (typeof row === 'object' && row !== null) {
                 // If in object format with named properties
-                const number = parseInt((row.number || row.Number || row.num || "0").toString());
+                const number = parseInt((row.number || row.Number || row.num || "0").toString()) || 0;
                 const name = (row.name || row.Name || row.title || "").toString();
                 const team = (row.team || row.Team || row.group || "").toString();
                 return [number, name, team];

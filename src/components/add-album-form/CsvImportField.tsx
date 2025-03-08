@@ -16,18 +16,55 @@ const CsvImportField = ({ csvContent, setCsvContent }: CsvImportFieldProps) => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
+      // Check file extension
+      const fileExtension = selectedFile.name.split('.').pop()?.toLowerCase();
+      if (fileExtension !== 'csv' && fileExtension !== 'txt') {
+        toast({
+          title: "סוג קובץ לא נתמך",
+          description: "אנא העלה קובץ CSV או TXT",
+          variant: "destructive",
+          duration: 3000,
+        });
+        // Reset the file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onload = (e) => {
         const content = e.target?.result as string;
         setCsvContent(content);
+        
+        // Quick validation of content
+        const lines = content.split('\n').filter(line => line.trim().length > 0);
+        if (lines.length === 0) {
+          toast({
+            title: "קובץ ריק",
+            description: "הקובץ שהעלית נראה ריק. אנא בדוק את תוכן הקובץ.",
+            variant: "destructive",
+            duration: 3000,
+          });
+        } else {
+          toast({
+            title: "הקובץ נקלט בהצלחה",
+            description: `${selectedFile.name} מוכן לייבוא עם ${lines.length} שורות.`,
+            duration: 3000,
+          });
+        }
       };
-      reader.readAsText(selectedFile);
       
-      toast({
-        title: "הקובץ נקלט בהצלחה",
-        description: `${selectedFile.name} מוכן לייבוא.`,
-        duration: 3000,
-      });
+      reader.onerror = () => {
+        toast({
+          title: "שגיאה בקריאת הקובץ",
+          description: "אירעה שגיאה בעת קריאת הקובץ. אנא נסה שוב.",
+          variant: "destructive",
+          duration: 3000,
+        });
+      };
+      
+      reader.readAsText(selectedFile);
     }
   };
 
@@ -47,6 +84,11 @@ const CsvImportField = ({ csvContent, setCsvContent }: CsvImportFieldProps) => {
           פורמט הקובץ: מספר, שם, קבוצה/סדרה בכל שורה. 
           המערכת תזהה באופן אוטומטי שורת כותרת אם קיימת.
         </p>
+        {csvContent && (
+          <p className="text-xs text-green-500 text-right">
+            הקובץ נטען בהצלחה ומוכן לייבוא.
+          </p>
+        )}
       </div>
     </div>
   );
