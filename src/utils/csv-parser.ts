@@ -1,5 +1,11 @@
 
-export const parseCSV = (csvContent: string) => {
+export interface ParsedCsvRow {
+  number: number;
+  name: string;
+  team: string;
+}
+
+export const parseCSV = (csvContent: string): ParsedCsvRow[] => {
   if (!csvContent) return [];
   
   // Clean up the input - handle different line breaks
@@ -40,7 +46,7 @@ export const parseCSV = (csvContent: string) => {
     const [number, name, team] = fields;
     
     // If we're returning an object format
-    const result = {
+    const result: ParsedCsvRow = {
       number: parseNumberField(number),
       name: name || `Sticker ${number}`,
       team: team || 'Unknown',
@@ -50,7 +56,7 @@ export const parseCSV = (csvContent: string) => {
     console.log(`Parsed line ${index + 1}:`, result);
     
     return result;
-  }).filter(Boolean); // Filter out null entries
+  }).filter(Boolean) as ParsedCsvRow[]; // Filter out null entries
 };
 
 // Helper to detect the most likely delimiter in a CSV line

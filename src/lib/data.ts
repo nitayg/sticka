@@ -31,7 +31,9 @@ export {
   toggleStickerDuplicate,
   importStickersFromCSV,
   addStickersToInventory,
-  getStats
+  getStats,
+  deleteStickersByAlbumId,
+  updateTeamNameAcrossStickers
 } from './sticker-operations';
 
 // Export recycle bin operations

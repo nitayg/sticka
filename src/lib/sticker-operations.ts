@@ -36,7 +36,7 @@ export const addSticker = (sticker: Omit<Sticker, 'id'>): Sticker => {
     isOwned: sticker.isOwned || false,
     isDuplicate: sticker.isDuplicate || false,
     duplicateCount: sticker.duplicateCount || 0,
-    createdAt: new Date().getTime(),
+    lastModified: new Date().getTime(),
   };
   
   const stickers = getStickerData();
@@ -149,7 +149,7 @@ export const toggleStickerDuplicate = (id: string): Sticker | null => {
   });
 };
 
-// IMPORTANT: This function is key to fixing the issue
+// Import stickers from CSV
 export const importStickersFromCSV = (albumId: string, data: [number, string, string][]): Sticker[] => {
   if (!albumId || !data || !data.length) {
     console.error(`Cannot import stickers. Missing albumId or data`, { albumId, dataLength: data?.length });
@@ -187,7 +187,8 @@ export const importStickersFromCSV = (albumId: string, data: [number, string, st
       isOwned: false,
       isDuplicate: false,
       duplicateCount: 0,
-      albumId
+      albumId,
+      lastModified: new Date().getTime(),
     };
     
     newStickers.push(newSticker);
@@ -233,6 +234,65 @@ export const importStickersFromCSV = (albumId: string, data: [number, string, st
   return newStickers;
 };
 
+// Delete stickers by album ID (needed by album-operations.ts)
+export const deleteStickersByAlbumId = async (albumId: string): Promise<boolean> => {
+  try {
+    const allStickers = getStickerData();
+    const nonAlbumStickers = allStickers.filter(sticker => sticker.albumId !== albumId);
+    
+    // If no stickers were removed, return early
+    if (nonAlbumStickers.length === allStickers.length) {
+      return true;
+    }
+    
+    // Save the filtered stickers
+    setStickerData(nonAlbumStickers);
+    
+    console.log(`Deleted all stickers for album ${albumId}`);
+    
+    // Trigger event
+    window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+      detail: { albumId, action: 'deleteAll' } 
+    }));
+    
+    return true;
+  } catch (error) {
+    console.error(`Error deleting stickers for album ${albumId}:`, error);
+    return false;
+  }
+};
+
+// Update team name across all stickers (needed by team management components)
+export const updateTeamNameAcrossStickers = (oldTeamName: string, newTeamName: string, newTeamLogo: string): number => {
+  const allStickers = getStickerData();
+  let updatedCount = 0;
+  
+  const updatedStickers = allStickers.map(sticker => {
+    if (sticker.team === oldTeamName) {
+      updatedCount++;
+      return {
+        ...sticker,
+        team: newTeamName,
+        teamLogo: newTeamLogo || sticker.teamLogo,
+        lastModified: new Date().getTime()
+      };
+    }
+    return sticker;
+  });
+  
+  if (updatedCount > 0) {
+    setStickerData(updatedStickers);
+    
+    // Trigger events
+    window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+      detail: { action: 'updateTeam', count: updatedCount } 
+    }));
+    window.dispatchEvent(new CustomEvent('forceRefresh'));
+  }
+  
+  return updatedCount;
+};
+
 // Get album statistics
 export const getStats = () => {
   const stickers = getStickerData();
@@ -245,12 +305,19 @@ export const getStats = () => {
     ? Math.round((ownedStickers / totalStickers) * 100) 
     : 0;
   
+  // Return in both formats for compatibility
   return {
+    // New format
     totalStickers,
     ownedStickers,
     duplicateStickers,
     neededStickers,
-    completionPercentage
+    completionPercentage,
+    // Old format for backward compatibility
+    total: totalStickers,
+    owned: ownedStickers,
+    needed: neededStickers,
+    duplicates: duplicateStickers
   };
 };
 

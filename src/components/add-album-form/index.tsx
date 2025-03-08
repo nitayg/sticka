@@ -86,7 +86,7 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
             // Format data as [number, name, team] triplets
             const importData: [number, string, string][] = [];
             
-            // Process data from parser - supports both array and object formats
+            // Process data from parser - handle parsed data in the expected format
             parsedData.forEach(row => {
               if (Array.isArray(row) && row.length >= 1) {
                 // For array format, values are already in the right order
@@ -99,15 +99,11 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
                   importData.push([number, name, team]);
                 }
               } else if (typeof row === 'object' && row !== null) {
-                // For object format, map the keys
-                const numVal = row.number || row.Number || row.num || row.NUM || "0";
-                const number = parseInt(typeof numVal === 'string' ? numVal : String(numVal)) || 0;
-                
-                const nameVal = row.name || row.Name || row.title || row.Title || "";
-                const name = String(nameVal || "");
-                
-                const teamVal = row.team || row.Team || row.group || row.Group || "";
-                const team = String(teamVal || "");
+                // For object format with parsed fields
+                const rowObj = row as { number: number; name: string; team: string };
+                const number = rowObj.number || 0;
+                const name = rowObj.name || "";
+                const team = rowObj.team || "";
                 
                 if (number > 0) {
                   importData.push([number, name, team]);
@@ -227,7 +223,6 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
     setActiveTab("details");
   };
   
-  // Reset form when dialog opens
   useEffect(() => {
     if (open) {
       resetForm();
