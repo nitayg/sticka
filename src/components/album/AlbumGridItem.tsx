@@ -40,6 +40,9 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
         title: "האלבום הועבר לסל המיחזור",
         description: `האלבום "${name}" הועבר לסל המיחזור בהצלחה`,
       });
+      
+      // Force refresh albums
+      window.dispatchEvent(new CustomEvent('albumDataChanged'));
     } catch (error) {
       console.error("Error deleting album:", error);
       toast({
@@ -56,7 +59,7 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
     <>
       <div
         className={cn(
-          "relative group aspect-square rounded-xl overflow-hidden cursor-pointer transition-all border-2 hover:border-primary",
+          "relative group h-full w-full rounded-xl overflow-hidden cursor-pointer transition-all border-2 hover:border-primary",
           isSelected ? "border-primary ring-2 ring-primary ring-offset-2" : "border-border"
         )}
         onClick={onSelect}
@@ -72,30 +75,30 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted-foreground/10 to-muted-foreground/30">
-              <span className="text-4xl font-bold text-foreground/30">
+              <span className="text-5xl font-bold text-foreground/30">
                 {name.substring(0, 1).toLocaleUpperCase()}
               </span>
             </div>
           )}
 
           {/* Darkened overlay for text */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
           {/* Album name */}
-          <div className="absolute bottom-0 left-0 right-0 p-2 text-xs font-semibold text-white line-clamp-2 text-center">
+          <div className="absolute bottom-0 left-0 right-0 p-3 text-sm font-semibold text-white line-clamp-2 text-center">
             {name}
           </div>
 
           {/* Action buttons */}
           <TooltipProvider>
-            <div className={`absolute top-1 right-1 flex gap-1 transition-opacity ${hovered ? 'opacity-100' : 'opacity-0'}`}>
+            <div className={`absolute top-2 right-2 flex gap-1 transition-opacity ${hovered ? 'opacity-100' : 'opacity-0'}`}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button 
-                    className="p-1 bg-white/90 rounded-full hover:bg-white text-gray-800"
+                    className="p-1.5 bg-white/90 rounded-full hover:bg-white text-gray-800"
                     onClick={handleEdit}
                   >
-                    <Pencil size={14} />
+                    <Pencil size={16} />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -106,10 +109,10 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button 
-                    className="p-1 bg-white/90 rounded-full hover:bg-white text-gray-800"
+                    className="p-1.5 bg-white/90 rounded-full hover:bg-white text-gray-800"
                     onClick={handleDelete}
                   >
-                    <Trash size={14} />
+                    <Trash size={16} />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>

@@ -3,7 +3,6 @@ import React, { useRef, useEffect, useState } from "react";
 import { Album } from "@/lib/types";
 import { ChevronLeft, ChevronRight, PlusCircle } from "lucide-react";
 import { Button } from "../ui/button";
-import { cn } from "@/lib/utils";
 import AlbumGridItem from "./AlbumGridItem";
 import AddAlbumForm from "@/components/add-album-form";
 
@@ -109,18 +108,18 @@ const AlbumCarouselGrid = ({
 
   // Render albums in carousel style
   return (
-    <div className="relative mt-2 pb-2 border-b">
+    <div className="relative mt-2 pb-4">
       <div 
         ref={carouselRef}
-        className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-2 py-1 px-1"
+        className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-3 py-2 px-1"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {/* Add Album Button */}
-        <div className="relative h-[100px] w-[100px] flex-shrink-0 rounded-md overflow-hidden border-2 border-dashed border-muted-foreground/30 flex items-center justify-center cursor-pointer group hover:border-primary/50 transition-colors">
+        <div className="relative h-[180px] w-[140px] flex-shrink-0 rounded-xl overflow-hidden border-2 border-dashed border-muted-foreground/30 flex items-center justify-center cursor-pointer group hover:border-primary/50 transition-colors">
           <AddAlbumForm iconOnly>
             <div className="flex flex-col items-center justify-center h-full w-full text-muted-foreground group-hover:text-primary transition-colors">
-              <PlusCircle className="h-10 w-10" />
-              <span className="text-xs mt-1">הוסף אלבום</span>
+              <PlusCircle className="h-12 w-12" />
+              <span className="text-sm mt-2">הוסף אלבום</span>
             </div>
           </AddAlbumForm>
         </div>
@@ -130,7 +129,7 @@ const AlbumCarouselGrid = ({
           <div
             key={album.id}
             data-album-id={album.id}
-            className="h-[100px] w-[100px] flex-shrink-0"
+            className="h-[180px] w-[140px] flex-shrink-0"
           >
             <AlbumGridItem
               id={album.id}
