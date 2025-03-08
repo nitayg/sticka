@@ -1,43 +1,68 @@
-
-import { useEffect } from "react";
-import { forceSync } from "@/lib/sync-manager";
+import { useEffect } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { deleteAlbum, updateAlbum } from '@/lib/album-operations';
+import { Album } from '@/lib/types';
+import { toast } from '@/components/ui/use-toast';
+import { StorageEvents } from '@/lib/sync';
 
 interface AlbumEventHandlerProps {
-  albums: any[];
-  selectedAlbumId: string;
-  handleAlbumChange: (albumId: string) => void;
-  onRefresh: () => void;
+  album: Album;
 }
 
-const AlbumEventHandler = ({
-  albums,
-  selectedAlbumId,
-  handleAlbumChange,
-  onRefresh
-}: AlbumEventHandlerProps) => {
-  // Set default album if none is selected
+const AlbumEventHandler: React.FC<AlbumEventHandlerProps> = ({ album }) => {
+  const queryClient = useQueryClient();
+
+  // Mutation for updating an album
+  const updateAlbumMutation = useMutation(updateAlbum, {
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['albums'] });
+      toast({
+        title: "האלבום עודכן בהצלחה!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "אירעה שגיאה בעדכון האלבום.",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation for deleting an album
+  const deleteAlbumMutation = useMutation(deleteAlbum, {
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['albums'] });
+      toast({
+        title: "האלבום נמחק בהצלחה!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "אירעה שגיאה במחיקת האלבום.",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   useEffect(() => {
-    if (albums.length > 0 && !selectedAlbumId) {
-      handleAlbumChange(albums[0].id);
-    }
-  }, [albums, selectedAlbumId, handleAlbumChange]);
-  
-  // Listen for album data changes
-  useEffect(() => {
-    const handleAlbumDataChanged = () => {
-      onRefresh();
-      // Force a sync when album data changes
-      forceSync();
+    const handleAlbumsUpdated = (event: any) => {
+      // Check if the updated album is the current album
+      if (event.detail && event.detail.find((updatedAlbum: Album) => updatedAlbum.id === album.id)) {
+        // Invalidate the query to refresh the data
+        queryClient.invalidateQueries({ queryKey: ['albums'] });
+      }
     };
-    
-    window.addEventListener('albumDataChanged', handleAlbumDataChanged);
-    
+
+    window.addEventListener(StorageEvents.ALBUMS, handleAlbumsUpdated);
+
     return () => {
-      window.removeEventListener('albumDataChanged', handleAlbumDataChanged);
+      window.removeEventListener(StorageEvents.ALBUMS, handleAlbumsUpdated);
     };
-  }, [onRefresh]);
-  
-  return null; // This is a hook component and doesn't render anything
+  }, [album.id, queryClient]);
+
+  return null; // This component doesn't render anything
 };
 
 export default AlbumEventHandler;

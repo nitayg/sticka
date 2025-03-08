@@ -1,8 +1,7 @@
-
 import { StorageEvents } from './constants';
 import { getFromStorage, saveToStorage, setIsConnected, getIsConnected } from './storage-utils';
 import { mergeData } from './merge-utils';
-import { setupRealtimeSubscriptions } from './realtime-subscriptions';
+import { setupRealtimeSubscriptions, reconnectRealtimeChannel } from './realtime-subscriptions';
 import { 
   fetchAlbums, 
   fetchStickers, 
@@ -19,6 +18,7 @@ import { Album, Sticker, User, ExchangeOffer } from '../types';
 let lastSyncTime: Date | null = null;
 let syncInProgress = false;
 let pendingSync = false;
+let realtimeChannel: ReturnType<typeof setupRealtimeSubscriptions> | null = null;
 
 // Initialize data from localStorage and Supabase
 export const initializeFromStorage = async () => {
@@ -39,6 +39,11 @@ export const initializeFromStorage = async () => {
       console.log('Device is online, triggering sync');
       setIsConnected(true);
       syncWithSupabase();
+      
+      // Reconnect realtime channel if it exists
+      if (realtimeChannel) {
+        reconnectRealtimeChannel(realtimeChannel);
+      }
     });
 
     window.addEventListener('offline', () => {
@@ -51,7 +56,7 @@ export const initializeFromStorage = async () => {
     console.log(`Initial connection status: ${getIsConnected() ? 'online' : 'offline'}`);
     
     // Listen for Supabase real-time updates
-    setupRealtimeSubscriptions();
+    realtimeChannel = setupRealtimeSubscriptions();
 
     // Handle storage events from other tabs/windows
     window.addEventListener('storage', (event) => {
@@ -192,3 +197,6 @@ export const forceSync = () => {
   }
   return Promise.resolve(false);
 };
+
+// Export the realtimeChannel for external access if needed
+export const getRealtimeChannel = () => realtimeChannel;

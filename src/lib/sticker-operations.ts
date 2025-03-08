@@ -1,206 +1,142 @@
 import { Sticker } from './types';
-import { stickers as initialStickers } from './initial-data';
-import { saveToStorage, syncWithSupabase } from './sync-manager';
+import { v4 as uuidv4 } from 'uuid';
+import { saveToStorage, getFromStorage } from './sync';
+import { toast } from '@/components/ui/use-toast';
+import { supabase } from './supabase';
 
-// Maintain data state
-export let stickerData = [...initialStickers];
-
-export const setStickerData = (data: Sticker[]) => {
-  stickerData = data;
-  // Save to localStorage and Supabase whenever data changes
-  saveToStorage('stickers', stickerData);
-  
-  // Force a sync with Supabase to ensure real-time updates
-  window.dispatchEvent(new CustomEvent('stickersDataChanged'));
+// Function to set sticker data (used when data is updated from another tab)
+export const setStickerData = (stickers: Sticker[]) => {
+  saveToStorage('stickers', stickers, false);
 };
 
-export const getStickersByAlbumId = (albumId: string) => {
-  return stickerData.filter(sticker => sticker.albumId === albumId);
+// Function to get all stickers by album ID
+export const getStickersByAlbumId = (albumId: string): Sticker[] => {
+  const stickers = getFromStorage<Sticker[]>('stickers', []);
+  return stickers.filter(sticker => sticker.albumId === albumId);
 };
 
-export const addSticker = (sticker: Omit<Sticker, "id">) => {
-  // Generate a truly unique ID with a timestamp component
-  // Format: sticker_<timestamp>_<random string>
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 15);
-  
-  const newSticker = {
-    ...sticker,
-    id: `sticker_${timestamp}_${random}`,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+// Function to add a new sticker
+export const addSticker = async (albumId: string, imageUrl: string): Promise<Sticker> => {
+  const newSticker: Sticker = {
+    id: uuidv4(),
+    albumId: albumId,
+    imageUrl: imageUrl,
+    owned: false,
+    duplicate: false,
+    lastModified: Date.now()
   };
-  
-  setStickerData([...stickerData, newSticker]);
-  
-  // Force a sync with Supabase
-  syncWithSupabase();
-  
+
+  const stickers = getFromStorage<Sticker[]>('stickers', []);
+  const updatedStickers = [...stickers, newSticker];
+  saveToStorage('stickers', updatedStickers);
   return newSticker;
 };
 
-export const updateSticker = (id: string, data: Partial<Sticker>) => {
-  // Check if team name is being updated
-  const originalSticker = stickerData.find(sticker => sticker.id === id);
-  const isTeamNameChanging = originalSticker && data.team && originalSticker.team !== data.team;
-  
-  // If team name is changing, update all stickers from the same team
-  if (isTeamNameChanging && originalSticker) {
-    const oldTeamName = originalSticker.team;
-    const newTeamName = data.team as string;
-    const newTeamLogo = data.teamLogo;
-    
-    // Update all stickers from this team
-    updateTeamNameAcrossStickers(oldTeamName, newTeamName, newTeamLogo);
-  }
-  
-  // Regular update for the current sticker
-  const updatedData = stickerData.map(sticker => 
-    sticker.id === id ? { 
-      ...sticker, 
-      ...data,
-      updatedAt: new Date().toISOString()  
-    } : sticker
-  );
-  
-  setStickerData(updatedData);
-  
-  // Force a sync with Supabase
-  syncWithSupabase();
-  
-  return stickerData.find(sticker => sticker.id === id);
-};
-
-export const deleteSticker = (id: string) => {
-  setStickerData(stickerData.filter(sticker => sticker.id !== id));
-  
-  // Force a sync with Supabase
-  syncWithSupabase();
-};
-
-export const toggleStickerOwned = (id: string) => {
-  return updateSticker(id, { 
-    isOwned: !stickerData.find(s => s.id === id)?.isOwned 
-  });
-};
-
-export const toggleStickerDuplicate = (id: string) => {
-  return updateSticker(id, { 
-    isDuplicate: !stickerData.find(s => s.id === id)?.isDuplicate 
-  });
-};
-
-export const updateTeamNameAcrossStickers = (oldTeamName: string, newTeamName: string, newLogo?: string) => {
-  const stickersToUpdate = stickerData.filter(s => s.team === oldTeamName);
-  
-  setStickerData(stickerData.map(sticker => {
-    if (sticker.team === oldTeamName) {
-      return {
-        ...sticker,
-        team: newTeamName,
-        teamLogo: newLogo || sticker.teamLogo,
-        updatedAt: new Date().toISOString()
-      };
+// Function to update an existing sticker
+export const updateSticker = async (stickerId: string, updates: Partial<Sticker>): Promise<Sticker | undefined> => {
+  const stickers = getFromStorage<Sticker[]>('stickers', []);
+  const updatedStickers = stickers.map(sticker => {
+    if (sticker.id === stickerId) {
+      return { ...sticker, ...updates, lastModified: Date.now() };
     }
     return sticker;
-  }));
-  
-  // Force a sync with Supabase after bulk update
-  syncWithSupabase();
-  
-  return stickersToUpdate.length;
-};
-
-export const importStickersFromCSV = (albumId: string, csvData: Array<[number, string, string]>) => {
-  const timestamp = Date.now();
-  
-  const newStickers = csvData.map(([number, name, team], index) => ({
-    id: `sticker_${timestamp}_${index}_${Math.random().toString(36).substring(2, 9)}`,
-    number,
-    name,
-    team,
-    category: "שחקנים", // ברירת מחדל
-    isOwned: false,
-    isDuplicate: false,
-    duplicateCount: 0,
-    albumId,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }));
-  
-  setStickerData([...stickerData, ...newStickers]);
-  
-  // Force a sync with Supabase to ensure real-time updates
-  syncWithSupabase();
-  
-  return newStickers;
-};
-
-// New function to handle adding stickers to inventory
-export const addStickersToInventory = (albumId: string, stickerNumbers: number[]) => {
-  const results = {
-    newlyOwned: 0,
-    alreadyOwned: 0,
-    notFound: 0,
-    duplicatesUpdated: 0
-  };
-  
-  stickerNumbers.forEach(number => {
-    // Find sticker in the selected album
-    const sticker = stickerData.find(s => s.albumId === albumId && s.number === number);
-    
-    if (!sticker) {
-      results.notFound++;
-      return;
-    }
-    
-    if (sticker.isOwned) {
-      // Sticker already owned - increment duplicate count
-      updateSticker(sticker.id, { 
-        isDuplicate: true, 
-        duplicateCount: (sticker.duplicateCount || 0) + 1 
-      });
-      results.duplicatesUpdated++;
-      results.alreadyOwned++;
-    } else {
-      // New sticker - mark as owned
-      updateSticker(sticker.id, { isOwned: true });
-      results.newlyOwned++;
-    }
   });
-  
-  // Force a sync after bulk operations
-  syncWithSupabase();
-  
-  return results;
+  saveToStorage('stickers', updatedStickers);
+  return updatedStickers.find(sticker => sticker.id === stickerId);
 };
 
-export const getStats = (albumId?: string) => {
-  const filteredStickers = albumId 
-    ? stickerData.filter(s => s.albumId === albumId)
-    : stickerData;
-    
-  return {
-    total: filteredStickers.length,
-    owned: filteredStickers.filter(s => s.isOwned).length,
-    needed: filteredStickers.filter(s => !s.isOwned).length,
-    duplicates: filteredStickers.filter(s => s.isDuplicate).length
-  };
+// Function to delete a sticker
+export const deleteSticker = async (stickerId: string): Promise<void> => {
+  const stickers = getFromStorage<Sticker[]>('stickers', []);
+  const updatedStickers = stickers.filter(sticker => sticker.id !== stickerId);
+  saveToStorage('stickers', updatedStickers);
 };
 
-// Get stickers that are in a transaction (Mock implementation)
-// This would be replaced with actual transaction data in a real app
-export const getStickerTransactions = () => {
-  // This is just a mock - in a real app, this would fetch from your transaction store
-  return {
-    "sticker3": { person: "דני", color: "bg-purple-100 border-purple-300" },
-    "sticker7": { person: "יוסי", color: "bg-blue-100 border-blue-300" },
-    "sticker15": { person: "רותי", color: "bg-pink-100 border-pink-300" },
-  };
+// Function to toggle the 'owned' status of a sticker
+export const toggleStickerOwned = async (stickerId: string): Promise<Sticker | undefined> => {
+  const stickers = getFromStorage<Sticker[]>('stickers', []);
+  const updatedStickers = stickers.map(sticker => {
+    if (sticker.id === stickerId) {
+      return { ...sticker, owned: !sticker.owned, lastModified: Date.now() };
+    }
+    return sticker;
+  });
+  saveToStorage('stickers', updatedStickers);
+  return updatedStickers.find(sticker => sticker.id === stickerId);
 };
 
-// New function to get duplicate count for a sticker
-export const getStickerDuplicateCount = (stickerId: string) => {
-  const sticker = stickerData.find(s => s.id === stickerId);
-  return sticker?.duplicateCount || 0;
+// Function to toggle the 'duplicate' status of a sticker
+export const toggleStickerDuplicate = async (stickerId: string): Promise<Sticker | undefined> => {
+  const stickers = getFromStorage<Sticker[]>('stickers', []);
+  const updatedStickers = stickers.map(sticker => {
+    if (sticker.id === stickerId) {
+      return { ...sticker, duplicate: !sticker.duplicate, lastModified: Date.now() };
+    }
+    return sticker;
+  });
+  saveToStorage('stickers', updatedStickers);
+  return updatedStickers.find(sticker => sticker.id === stickerId);
+};
+
+// Function to import stickers from a CSV file
+export const importStickersFromCSV = async (albumId: string, csvData: string): Promise<void> => {
+  const lines = csvData.split('\n');
+  const headers = lines[0].split(',');
+  const imageUrlIndex = headers.findIndex(header => header.trim() === 'imageUrl');
+
+  if (imageUrlIndex === -1) {
+    throw new Error('CSV file must have a column named "imageUrl"');
+  }
+
+  const newStickers: Sticker[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(',');
+    if (values.length > imageUrlIndex) {
+      const imageUrl = values[imageUrlIndex].trim();
+      if (imageUrl) {
+        const newSticker: Sticker = {
+          id: uuidv4(),
+          albumId: albumId,
+          imageUrl: imageUrl,
+          owned: false,
+          duplicate: false,
+          lastModified: Date.now()
+        };
+        newStickers.push(newSticker);
+      }
+    }
+  }
+
+  const stickers = getFromStorage<Sticker[]>('stickers', []);
+  const updatedStickers = [...stickers, ...newStickers];
+  saveToStorage('stickers', updatedStickers);
+};
+
+// Function to get sticker statistics
+export const getStats = (): { total: number; owned: number; duplicates: number } => {
+  const stickers = getFromStorage<Sticker[]>('stickers', []);
+  const total = stickers.length;
+  const owned = stickers.filter(sticker => sticker.owned).length;
+  const duplicates = stickers.filter(sticker => sticker.duplicate).length;
+  return { total, owned, duplicates };
+};
+
+// Function to add multiple stickers to inventory
+export const addStickersToInventory = async (albumId: string, numberOfStickers: number): Promise<void> => {
+  const newStickers: Sticker[] = [];
+  for (let i = 0; i < numberOfStickers; i++) {
+    const newSticker: Sticker = {
+      id: uuidv4(),
+      albumId: albumId,
+      imageUrl: '', // You might want to generate a default image URL or leave it empty
+      owned: false,
+      duplicate: false,
+      lastModified: Date.now()
+    };
+    newStickers.push(newSticker);
+  }
+
+  const stickers = getFromStorage<Sticker[]>('stickers', []);
+  const updatedStickers = [...stickers, ...newStickers];
+  saveToStorage('stickers', updatedStickers);
 };

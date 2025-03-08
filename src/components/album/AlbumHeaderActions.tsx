@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Download, Upload, Trash2, Recycle, RefreshCw } from "lucide-react";
 import { Button } from "../ui/button";
@@ -10,6 +9,7 @@ import { moveAlbumToRecycleBin } from "@/lib/recycle-bin";
 import { useToast } from "../ui/use-toast";
 import RecycleBinDialog from "../recycle-bin/RecycleBinDialog";
 import { forceSync } from "@/lib/sync-manager";
+import { StorageEvents } from '@/lib/sync';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,8 +29,8 @@ interface AlbumHeaderActionsProps {
   showImages: boolean;
   setShowImages: (show: boolean) => void;
   onRefresh: () => void;
-  albums: Album[]; // Add albums prop
-  onImportComplete: () => void; // Add onImportComplete prop
+  albums: Album[];
+  onImportComplete: () => void;
 }
 
 const AlbumHeaderActions = ({
@@ -61,7 +61,6 @@ const AlbumHeaderActions = ({
       description: "האלבום הועבר לסל המיחזור ויימחק לצמיתות אחרי 30 יום",
     });
     
-    // התרעננות נתונים
     onRefresh();
   };
   
@@ -95,7 +94,7 @@ const AlbumHeaderActions = ({
       <ImportExcelDialog 
         albums={albums} 
         selectedAlbum={selectedAlbum} 
-        setSelectedAlbum={() => {}} // This is a placeholder since we don't need to change albums from here
+        setSelectedAlbum={() => {}} 
         onImportComplete={onImportComplete} 
       />
       

@@ -1,7 +1,6 @@
-
 import { Album, Sticker } from './types';
 import { albums as initialAlbums } from './initial-data';
-import { saveToStorage, getFromStorage } from './sync-manager';
+import { saveToStorage, getFromStorage } from './sync';
 import { setAlbumData, getAlbumData } from './album-operations';
 import { stickerData, setStickerData } from './sticker-operations';
 
@@ -104,7 +103,7 @@ export const restoreAlbumFromRecycleBin = (albumId: string): void => {
     lastModified: Date.now() 
   };
   
-  // בדוק אם האלבום קיים במערכת (במצב מחוק)
+  // בדוק אם האלבום קיים ב��ערכת (במצב מחוק)
   const existingAlbumIndex = albums.findIndex(album => album.id === albumId);
   
   if (existingAlbumIndex >= 0) {

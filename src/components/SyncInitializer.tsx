@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { initializeFromStorage, StorageEvents } from '@/lib/sync-manager';
+import { initializeFromStorage, StorageEvents } from '@/lib/sync';
 import { setAlbumData } from '@/lib/album-operations';
 import { setStickerData } from '@/lib/sticker-operations';
 import { useToast } from './ui/use-toast';
