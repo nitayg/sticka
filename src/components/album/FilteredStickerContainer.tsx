@@ -34,130 +34,121 @@ const FilteredStickerContainer = ({
   const [localDirectFetch, setLocalDirectFetch] = useState<boolean>(false);
   const [directStickers, setDirectStickers] = useState<Sticker[]>([]);
   
-  // Fetch stickers if not provided in props or if a direct fetch is needed
+  // Fetch stickers directly if not provided in props
   useEffect(() => {
     if (selectedAlbumId) {
-      if (stickers.length === 0 || localDirectFetch) {
-        console.log("Fetching stickers directly for album", selectedAlbumId);
-        const fetchedStickers = getStickersByAlbumId(selectedAlbumId);
-        
-        console.log(`Directly fetched ${fetchedStickers.length} stickers for album ${selectedAlbumId}`);
+      // Always fetch stickers directly first time
+      const fetchedStickers = getStickersByAlbumId(selectedAlbumId);
+      console.log(`Direct stickers fetch returned ${fetchedStickers.length} stickers for album ${selectedAlbumId}`);
+      
+      if (fetchedStickers.length > 0) {
         setDirectStickers(fetchedStickers);
         
-        // If we found stickers directly but stickers in props is empty, trigger refresh
-        if (fetchedStickers.length > 0 && stickers.length === 0 && !localDirectFetch) {
-          console.log(`Found ${fetchedStickers.length} stickers directly, triggering refresh`);
+        // If we have stickers but props is empty, set the local fetch flag to use our direct stickers
+        if (stickers.length === 0) {
+          console.log(`No stickers found in props for album ${selectedAlbumId} trying to fetch them directly`);
           setLocalDirectFetch(true);
+          // Also trigger the parent refresh to ensure it gets the stickers
           onRefresh();
         }
       }
     } else {
-      // Reset direct stickers when album changes
+      // Reset when album changes
       setDirectStickers([]);
       setLocalDirectFetch(false);
     }
-  }, [selectedAlbumId, stickers.length, onRefresh, localDirectFetch]);
+  }, [selectedAlbumId]);
 
-  // Listen for forced refresh events with more specific handlers
+  // Listen for sticker data change events
   useEffect(() => {
-    const handleForceRefresh = () => {
-      console.log("Force refresh triggered in FilteredStickerContainer");
-      // Direct fetch on force refresh
-      if (selectedAlbumId) {
-        const fetchedStickers = getStickersByAlbumId(selectedAlbumId);
-        console.log(`Refreshed ${fetchedStickers.length} stickers for album ${selectedAlbumId}`);
-        setDirectStickers(fetchedStickers);
-      }
-      onRefresh();
-    };
-    
     const handleStickerDataChanged = (e: CustomEvent) => {
-      const eventAlbumId = e?.detail?.albumId;
-      // If no specific album in event, or it matches our current album
+      const detail = e.detail || {};
+      const eventAlbumId = detail.albumId;
+      const action = detail.action;
+      const count = detail.count;
+      
+      console.log(`Sticker data changed event: albumId=${eventAlbumId}, action=${action}, count=${count}`);
+      
+      // If the event is for our selected album or no specific album was mentioned
       if (!eventAlbumId || eventAlbumId === selectedAlbumId) {
-        console.log(`Sticker data changed for album ${eventAlbumId || 'unknown'}, refreshing`);
+        console.log(`Refreshing stickers for album ${selectedAlbumId} due to sticker data change`);
         
-        // Direct fetch on sticker data change
+        // Fetch the latest stickers directly
         if (selectedAlbumId) {
           const fetchedStickers = getStickersByAlbumId(selectedAlbumId);
-          console.log(`Refreshed ${fetchedStickers.length} stickers after sticker data changed`);
+          console.log(`After sticker data changed: fetched ${fetchedStickers.length} stickers directly for album ${selectedAlbumId}`);
           setDirectStickers(fetchedStickers);
           
-          // If we have stickers but props is empty, set the local fetch flag
+          // If we have stickers but the props is empty, set local fetch to true
           if (fetchedStickers.length > 0 && stickers.length === 0) {
             setLocalDirectFetch(true);
           }
+          
+          // Notify the parent component to refresh
+          onRefresh();
         }
-        
-        onRefresh();
       }
     };
     
-    const handleAlbumDataChanged = () => {
-      console.log("Album data changed, refreshing stickers");
-      onRefresh();
+    const handleForceRefresh = () => {
+      console.log("Force refresh triggered in FilteredStickerContainer");
       
-      // Also check for direct stickers since album data change might affect stickers
+      // Always fetch the latest stickers on force refresh
       if (selectedAlbumId) {
         const fetchedStickers = getStickersByAlbumId(selectedAlbumId);
+        console.log(`Force refresh: fetched ${fetchedStickers.length} stickers for album ${selectedAlbumId}`);
         setDirectStickers(fetchedStickers);
+        
+        // If props stickers are empty but we found stickers directly, use our direct stickers
+        if (stickers.length === 0 && fetchedStickers.length > 0) {
+          setLocalDirectFetch(true);
+        }
       }
+      
+      // Notify parent
+      onRefresh();
     };
     
-    // Add event listeners
-    window.addEventListener('forceRefresh', handleForceRefresh);
+    // Register event listeners
     window.addEventListener('stickerDataChanged', handleStickerDataChanged as EventListener);
-    window.addEventListener('albumDataChanged', handleAlbumDataChanged);
-    
-    // Trigger an initial check
-    if (selectedAlbumId && stickers.length === 0) {
-      const fetchedStickers = getStickersByAlbumId(selectedAlbumId);
-      
-      if (fetchedStickers.length > 0) {
-        console.log(`Initial check found ${fetchedStickers.length} stickers, setting direct stickers`);
-        setDirectStickers(fetchedStickers);
-        setLocalDirectFetch(true);
-        onRefresh();
-      }
-    }
+    window.addEventListener('forceRefresh', handleForceRefresh);
+    window.addEventListener('albumDataChanged', handleForceRefresh);
     
     return () => {
-      window.removeEventListener('forceRefresh', handleForceRefresh);
       window.removeEventListener('stickerDataChanged', handleStickerDataChanged as EventListener);
-      window.removeEventListener('albumDataChanged', handleAlbumDataChanged);
+      window.removeEventListener('forceRefresh', handleForceRefresh);
+      window.removeEventListener('albumDataChanged', handleForceRefresh);
     };
-  }, [onRefresh, selectedAlbumId, stickers.length]);
+  }, [selectedAlbumId, onRefresh, stickers.length]);
 
+  // Decide which stickers to use and apply filters
   const filteredStickers = useMemo(() => {
-    // Decide whether to use direct stickers or props stickers
-    const sourceStickers = (stickers.length === 0 && directStickers.length > 0) 
-                           ? directStickers 
-                           : stickers;
+    // If we should use direct stickers (when props are empty but direct fetch found stickers)
+    const sourceStickers = (localDirectFetch && directStickers.length > 0) 
+                          ? directStickers
+                          : stickers;
     
     if (sourceStickers.length === 0) {
-      console.log("No stickers available to filter");
       return [];
     }
     
-    console.log(`Filtering ${sourceStickers.length} stickers by ${activeTab === "number" ? "number range" : "team"}`);
-    
+    // Apply filters based on the active tab
     let filtered = sourceStickers;
     
-    // Apply number range filter
+    // Filter by number range
     if (activeTab === "number" && selectedRange) {
       const [rangeStart, rangeEnd] = selectedRange.split('-').map(Number);
       filtered = filtered.filter(sticker => 
         sticker.number >= rangeStart && sticker.number <= rangeEnd
       );
     } 
-    // Apply team filter
+    // Filter by team
     else if ((activeTab === "team" || activeTab === "manage") && selectedTeam) {
       filtered = filtered.filter(sticker => sticker.team === selectedTeam);
     }
     
-    console.log(`Filtered to ${filtered.length} stickers`);
     return filtered;
-  }, [stickers, directStickers, activeTab, selectedRange, selectedTeam]);
+  }, [stickers, directStickers, localDirectFetch, activeTab, selectedRange, selectedTeam]);
 
   return (
     <StickerCollection 

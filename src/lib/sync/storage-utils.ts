@@ -1,4 +1,3 @@
-
 import { StorageEvents } from './constants';
 
 // Filter out soft-deleted items for display
@@ -29,38 +28,59 @@ export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void
       }
     }
     
-    // Dispatch a custom event to notify other components
-    if (typeof window !== 'undefined') {
-      const eventName = key === 'albums' 
-        ? StorageEvents.ALBUMS 
-        : key === 'stickers'
-          ? StorageEvents.STICKERS
-          : key === 'users'
-            ? StorageEvents.USERS
-            : StorageEvents.EXCHANGE_OFFERS;
-      
-      window.dispatchEvent(new CustomEvent(eventName, { detail: data }));
-      
-      // Also dispatch the specific itemChanged event
-      if (key === 'stickers') {
-        window.dispatchEvent(new CustomEvent('stickerDataChanged'));
-        
-        // Also dispatch forceRefresh for components that might not listen to stickerDataChanged
-        window.dispatchEvent(new CustomEvent('forceRefresh'));
-        
-        // Add a small delay for components that might load later
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('forceRefresh'));
-        }, 200);
-      } else if (key === 'albums') {
-        window.dispatchEvent(new CustomEvent('albumDataChanged'));
-        
-        // Also dispatch forceRefresh for components that might not listen to albumDataChanged
-        window.dispatchEvent(new CustomEvent('forceRefresh'));
-      }
-    }
+    // Dispatch data change events
+    dispatchDataChangeEvents(key, data);
+    
   } catch (error) {
     console.error(`Error saving ${key} to storage:`, error);
+  }
+};
+
+// Dispatch appropriate events based on the data type that changed
+const dispatchDataChangeEvents = <T>(key: string, data: T): void => {
+  if (typeof window === 'undefined') return;
+  
+  // Determine which event to dispatch based on the key
+  const eventName = key === 'albums' 
+    ? StorageEvents.ALBUMS 
+    : key === 'stickers'
+      ? StorageEvents.STICKERS
+      : key === 'users'
+        ? StorageEvents.USERS
+        : StorageEvents.EXCHANGE_OFFERS;
+  
+  // Dispatch the primary event with the data
+  window.dispatchEvent(new CustomEvent(eventName, { detail: data }));
+  
+  // Dispatch additional specific events based on data type
+  if (key === 'stickers') {
+    console.log('Dispatching stickerDataChanged event after saving stickers');
+    window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+      detail: { action: 'save', count: Array.isArray(data) ? data.length : 1 } 
+    }));
+    
+    // Also dispatch forceRefresh for components that might not listen to stickerDataChanged
+    window.dispatchEvent(new CustomEvent('forceRefresh'));
+    
+    // Add a staggered sequence of refresh events to ensure all components get updated
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('stickerDataChanged'));
+      window.dispatchEvent(new CustomEvent('forceRefresh'));
+    }, 100);
+    
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('forceRefresh'));
+    }, 500);
+  } 
+  else if (key === 'albums') {
+    console.log('Dispatching albumDataChanged event after saving albums');
+    window.dispatchEvent(new CustomEvent('albumDataChanged'));
+    window.dispatchEvent(new CustomEvent('forceRefresh'));
+    
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('albumDataChanged'));
+      window.dispatchEvent(new CustomEvent('forceRefresh'));
+    }, 200);
   }
 };
 
@@ -74,8 +94,8 @@ export const getFromStorage = <T>(key: string, defaultValue: T, includeDeleted =
     if (memoryStorage[key]) {
       const data = memoryStorage[key] as T;
       
-      // If we're getting albums or other data that might have soft-deleted items,
-      // filter them out for UI purposes unless explicitly requested with includeDeleted
+      // If we're getting arrays that might have soft-deleted items,
+      // filter them out for UI purposes unless explicitly requested
       if (!includeDeleted && Array.isArray(data) && key !== 'recycleBin') {
         // Cast to any to check if items have isDeleted property
         const dataArray = data as any[];
@@ -152,18 +172,10 @@ export const sendToSupabase = async <T>(key: string, data: T): Promise<void> => 
       switch (key) {
         case 'albums':
           await saveAlbumBatch(data as Album[]);
-          
-          // Dispatch album-specific events after successful save
-          window.dispatchEvent(new CustomEvent('albumDataChanged'));
-          window.dispatchEvent(new CustomEvent('forceRefresh'));
           break;
           
         case 'stickers':
           await saveStickerBatch(data as Sticker[]);
-          
-          // Dispatch sticker-specific events after successful save
-          window.dispatchEvent(new CustomEvent('stickerDataChanged'));
-          window.dispatchEvent(new CustomEvent('forceRefresh'));
           break;
           
         case 'users':
@@ -179,20 +191,14 @@ export const sendToSupabase = async <T>(key: string, data: T): Promise<void> => 
           return;
       }
       
-      // Dispatch specific events after successful save with a short delay
-      setTimeout(() => {
-        if (key === 'stickers') {
-          window.dispatchEvent(new CustomEvent('stickerDataChanged'));
-        } else if (key === 'albums') {
-          window.dispatchEvent(new CustomEvent('albumDataChanged'));
-        }
-        
-        // Always trigger a general refresh event
-        window.dispatchEvent(new CustomEvent('forceRefresh'));
-      }, 200);
+      // Dispatch success event
+      window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_COMPLETE));
       
     } catch (error) {
       console.error(`Error sending data to Supabase (${key}):`, error);
+      window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_ERROR, { 
+        detail: { error } 
+      }));
     }
   }
 };

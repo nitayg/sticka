@@ -25,10 +25,18 @@ export const useAlbumData = ({
     queryFn: fetchAllAlbums
   });
   
-  // Fetch stickers for the selected album
+  // Fetch stickers for the selected album - with explicit logging
   const { data: stickers = [], isLoading: isStickersLoading } = useQuery({
     queryKey: ['stickers', selectedAlbumId, refreshKey],
-    queryFn: () => selectedAlbumId ? getStickersByAlbumId(selectedAlbumId) : [],
+    queryFn: () => {
+      if (!selectedAlbumId) return [];
+      
+      console.log(`Fetching stickers for album ${selectedAlbumId} from hook`);
+      const albumStickers = getStickersByAlbumId(selectedAlbumId);
+      console.log(`Hook found ${albumStickers.length} stickers for album ${selectedAlbumId}`);
+      
+      return albumStickers;
+    },
     enabled: !!selectedAlbumId
   });
 
@@ -68,7 +76,9 @@ export const useAlbumData = ({
   // Generate team list from stickers
   const teams = useMemo(() => {
     const teamSet = new Set<string>();
-    const stickersToCheck = activeTab === "manage" || showAllAlbumStickers ? getStickerData() : stickers;
+    const stickersToCheck = activeTab === "manage" || showAllAlbumStickers
+      ? getStickerData()
+      : stickers;
     
     stickersToCheck.forEach(sticker => {
       if (sticker.team) {
@@ -114,7 +124,9 @@ export const useAlbumData = ({
   // Map team logos to teams
   const teamLogos = useMemo(() => {
     const logoMap: Record<string, string> = {};
-    const stickersToCheck = activeTab === "manage" || showAllAlbumStickers ? getStickerData() : stickers;
+    const stickersToCheck = activeTab === "manage" || showAllAlbumStickers
+      ? getStickerData()
+      : stickers;
     
     stickersToCheck.forEach(sticker => {
       if (sticker.team && sticker.teamLogo) {

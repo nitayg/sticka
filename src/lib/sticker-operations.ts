@@ -1,62 +1,83 @@
 
-import { toggleDatabaseItem } from './utils';
 import { generateId } from './utils';
-import { Sticker, StickerData } from './types';
-import { getFromStorage, saveToStorage } from './sync/storage-utils';
-import { parseCSV } from '@/utils/csv-parser';
+import { stickers as stickersData } from './initial-data';
+import { Sticker } from './types';
+import { saveToStorage, getFromStorage } from './sync/storage-utils';
 
-// Export other functions from the module
-export * from './sticker-utils';
+// Get all stickers data
+export const getStickerData = (): Sticker[] => {
+  return getFromStorage('stickers', stickersData);
+};
 
-// Get all stickers for a specific album
+// Save stickers data
+export const setStickerData = (data: Sticker[]): void => {
+  console.log(`Saving ${data.length} stickers to storage`);
+  saveToStorage('stickers', data);
+};
+
+// Get stickers by album ID
 export const getStickersByAlbumId = (albumId: string): Sticker[] => {
-  const allStickers = getFromStorage<Sticker[]>('stickers', []);
-  return allStickers.filter(sticker => sticker.albumId === albumId);
+  const allStickers = getStickerData();
+  if (!albumId) return [];
+  
+  console.log(`Getting stickers for album ${albumId}. Total stickers: ${allStickers.length}`);
+  
+  const filteredStickers = allStickers.filter(sticker => sticker.albumId === albumId);
+  console.log(`Found ${filteredStickers.length} stickers for album ${albumId}`);
+  
+  return filteredStickers;
 };
 
 // Add a new sticker
-export const addSticker = (sticker: Omit<Sticker, 'id' | 'createdAt'>): Sticker => {
+export const addSticker = (sticker: Omit<Sticker, 'id'>): Sticker => {
   const newSticker: Sticker = {
     id: generateId(),
     ...sticker,
-    createdAt: new Date().toISOString(),
+    isOwned: sticker.isOwned || false,
+    isDuplicate: sticker.isDuplicate || false,
+    duplicateCount: sticker.duplicateCount || 0,
+    createdAt: new Date().getTime(),
   };
   
-  const stickers = getFromStorage<Sticker[]>('stickers', []);
+  const stickers = getStickerData();
   const updatedStickers = [...stickers, newSticker];
   
-  saveToStorage('stickers', updatedStickers);
+  console.log(`Adding new sticker #${newSticker.number} to album ${newSticker.albumId}`);
+  setStickerData(updatedStickers);
   
-  // Dispatch sticker added event
+  // Trigger stickerDataChanged event
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-      detail: { albumId: sticker.albumId }
+      detail: { albumId: newSticker.albumId, action: 'add' } 
     }));
   }
   
   return newSticker;
 };
 
-// Update an existing sticker
-export const updateSticker = (stickerId: string, updates: Partial<Sticker>): Sticker | null => {
-  const stickers = getFromStorage<Sticker[]>('stickers', []);
-  const stickerIndex = stickers.findIndex(s => s.id === stickerId);
+// Update a sticker
+export const updateSticker = (id: string, updates: Partial<Sticker>): Sticker | null => {
+  const stickers = getStickerData();
+  const stickerIndex = stickers.findIndex(sticker => sticker.id === id);
   
   if (stickerIndex === -1) {
-    console.error(`Sticker with ID ${stickerId} not found`);
+    console.error(`Sticker with ID ${id} not found`);
     return null;
   }
   
   const updatedSticker = { ...stickers[stickerIndex], ...updates };
-  const updatedStickers = [...stickers];
-  updatedStickers[stickerIndex] = updatedSticker;
+  const updatedStickers = [
+    ...stickers.slice(0, stickerIndex),
+    updatedSticker,
+    ...stickers.slice(stickerIndex + 1)
+  ];
   
-  saveToStorage('stickers', updatedStickers);
+  setStickerData(updatedStickers);
   
-  // Dispatch sticker updated event
+  // Trigger stickerDataChanged event
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-      detail: { albumId: updatedSticker.albumId }
+      detail: { albumId: updatedSticker.albumId, action: 'update' } 
     }));
   }
   
@@ -64,183 +85,162 @@ export const updateSticker = (stickerId: string, updates: Partial<Sticker>): Sti
 };
 
 // Delete a sticker
-export const deleteSticker = (stickerId: string): boolean => {
-  const stickers = getFromStorage<Sticker[]>('stickers', []);
-  const stickerIndex = stickers.findIndex(s => s.id === stickerId);
+export const deleteSticker = (id: string): boolean => {
+  const stickers = getStickerData();
+  const stickerToDelete = stickers.find(sticker => sticker.id === id);
   
-  if (stickerIndex === -1) {
-    console.error(`Sticker with ID ${stickerId} not found`);
+  if (!stickerToDelete) {
+    console.error(`Sticker with ID ${id} not found`);
     return false;
   }
   
-  const albumId = stickers[stickerIndex].albumId;
-  const updatedStickers = stickers.filter(s => s.id !== stickerId);
+  const albumId = stickerToDelete.albumId;
+  const updatedStickers = stickers.filter(sticker => sticker.id !== id);
   
-  saveToStorage('stickers', updatedStickers);
+  setStickerData(updatedStickers);
   
-  // Dispatch sticker deleted event
+  // Trigger stickerDataChanged event
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-      detail: { albumId }
+      detail: { albumId, action: 'delete' } 
     }));
   }
   
   return true;
 };
 
-// Toggle a sticker's "owned" status
-export const toggleStickerOwned = (stickerId: string): Sticker | null => {
-  const stickers = getFromStorage<Sticker[]>('stickers', []);
-  const stickerIndex = stickers.findIndex(s => s.id === stickerId);
+// Toggle owned status
+export const toggleStickerOwned = (id: string): Sticker | null => {
+  const stickers = getStickerData();
+  const sticker = stickers.find(s => s.id === id);
   
-  if (stickerIndex === -1) {
-    console.error(`Sticker with ID ${stickerId} not found`);
+  if (!sticker) {
+    console.error(`Sticker with ID ${id} not found`);
     return null;
   }
   
-  const updatedSticker = { 
-    ...stickers[stickerIndex], 
-    isOwned: !stickers[stickerIndex].isOwned 
-  };
-  
-  // If we're marking it as not owned, also mark it as not a duplicate
-  if (!updatedSticker.isOwned) {
-    updatedSticker.isDuplicate = false;
-  }
-  
-  const updatedStickers = [...stickers];
-  updatedStickers[stickerIndex] = updatedSticker;
-  
-  saveToStorage('stickers', updatedStickers);
-  
-  // Dispatch sticker toggled event
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-      detail: { albumId: updatedSticker.albumId }
-    }));
-  }
-  
-  return updatedSticker;
+  return updateSticker(id, { isOwned: !sticker.isOwned });
 };
 
-// Toggle a sticker's "duplicate" status
-export const toggleStickerDuplicate = (stickerId: string): Sticker | null => {
-  const stickers = getFromStorage<Sticker[]>('stickers', []);
-  const stickerIndex = stickers.findIndex(s => s.id === stickerId);
+// Toggle duplicate status
+export const toggleStickerDuplicate = (id: string): Sticker | null => {
+  const stickers = getStickerData();
+  const sticker = stickers.find(s => s.id === id);
   
-  if (stickerIndex === -1) {
-    console.error(`Sticker with ID ${stickerId} not found`);
+  if (!sticker) {
+    console.error(`Sticker with ID ${id} not found`);
     return null;
   }
   
-  // Can only mark as duplicate if it's owned
-  if (!stickers[stickerIndex].isOwned) {
-    console.error(`Cannot mark sticker as duplicate because it's not owned`);
+  if (!sticker.isOwned) {
+    console.error(`Cannot set as duplicate - sticker ${id} is not owned`);
     return null;
   }
   
-  const updatedSticker = { 
-    ...stickers[stickerIndex], 
-    isDuplicate: !stickers[stickerIndex].isDuplicate 
-  };
+  const duplicateCount = sticker.isDuplicate 
+    ? Math.max(0, (sticker.duplicateCount || 1) - 1) 
+    : 1;
   
-  const updatedStickers = [...stickers];
-  updatedStickers[stickerIndex] = updatedSticker;
+  const isDuplicate = duplicateCount > 0;
   
-  saveToStorage('stickers', updatedStickers);
-  
-  // Dispatch sticker toggled event
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-      detail: { albumId: updatedSticker.albumId }
-    }));
-  }
-  
-  return updatedSticker;
+  return updateSticker(id, { 
+    isDuplicate, 
+    duplicateCount: isDuplicate ? duplicateCount : 0 
+  });
 };
 
-// Import stickers from CSV data
+// IMPORTANT: This function is key to fixing the issue
 export const importStickersFromCSV = (albumId: string, data: [number, string, string][]): Sticker[] => {
-  console.log(`Importing ${data.length} stickers for album ${albumId}`);
-  
-  if (!albumId || !data || data.length === 0) {
-    console.error("Invalid album ID or empty data for CSV import");
+  if (!albumId || !data || !data.length) {
+    console.error(`Cannot import stickers. Missing albumId or data`, { albumId, dataLength: data?.length });
     return [];
   }
+
+  console.log(`Importing ${data.length} stickers from CSV for album ${albumId}`);
+  console.log(`First few entries:`, data.slice(0, 3));
   
-  const existingStickers = getFromStorage<Sticker[]>('stickers', []);
-  const albumStickers = existingStickers.filter(s => s.albumId === albumId);
+  // Get existing stickers for this album
+  const existingStickers = getStickerData().filter(sticker => sticker.albumId === albumId);
+  const existingNumbers = new Set(existingStickers.map(s => s.number));
+  
+  console.log(`Found ${existingStickers.length} existing stickers for album ${albumId}`);
+  
+  // Create new stickers
   const newStickers: Sticker[] = [];
+  const allStickers = getStickerData();
   
-  // Process each sticker from CSV
-  for (const [number, name, team] of data) {
-    // Check if this sticker number already exists for this album
-    const existingSticker = albumStickers.find(s => s.number === number);
-    
-    if (existingSticker) {
-      console.log(`Sticker #${number} already exists for album ${albumId}, skipping`);
-      continue;
+  data.forEach(([number, name, team]) => {
+    // Skip if the sticker already exists with this number in this album
+    if (existingNumbers.has(number)) {
+      console.log(`Skipping sticker #${number} - already exists in album`);
+      return;
     }
     
-    // Create a new sticker
     const newSticker: Sticker = {
       id: generateId(),
-      albumId,
       number,
-      name: name || `מדבקה #${number}`,
-      team: team || '',
+      name: name || `Sticker ${number}`,
+      team: team || 'Unknown',
+      teamLogo: '',
+      category: team || 'Default',
+      imageUrl: '',
       isOwned: false,
       isDuplicate: false,
-      image: '',
-      createdAt: new Date().toISOString(),
+      duplicateCount: 0,
+      albumId
     };
     
     newStickers.push(newSticker);
-  }
+  });
   
   if (newStickers.length === 0) {
-    console.log("No new stickers to import");
+    console.warn('No new stickers to import');
     return [];
   }
   
-  // Add new stickers to storage
-  const updatedStickers = [...existingStickers, ...newStickers];
-  saveToStorage('stickers', updatedStickers, true); // Force sync to cloud
+  // Save all stickers at once
+  console.log(`Adding ${newStickers.length} new stickers to album ${albumId}`);
+  const updatedStickers = [...allStickers, ...newStickers];
+  setStickerData(updatedStickers);
   
-  console.log(`Successfully imported ${newStickers.length} new stickers for album ${albumId}`);
-  
-  // Dispatch events to update UI - use multiple events for different listeners
-  if (typeof window !== 'undefined') {
-    // Create a custom event with album ID in detail
-    const customEvent = new CustomEvent('stickerDataChanged', {
-      detail: { albumId, count: newStickers.length }
-    });
-    window.dispatchEvent(customEvent);
-    
-    // Also dispatch a generic force refresh event
-    window.dispatchEvent(new CustomEvent('forceRefresh'));
-    
-    // Delayed refresh event for components that might not be ready yet
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('forceRefresh'));
-      window.dispatchEvent(new CustomEvent('stickerDataChanged', {
-        detail: { albumId, count: newStickers.length }
+  // Trigger events with a slight delay to ensure data is saved
+  setTimeout(() => {
+    if (typeof window !== 'undefined') {
+      console.log(`Dispatching sticker data changed events for ${newStickers.length} new stickers`);
+      
+      // Dispatch the specific event
+      window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+        detail: { 
+          albumId, 
+          action: 'import',
+          count: newStickers.length 
+        } 
       }));
-    }, 300);
-  }
+      
+      // Dispatch a general refresh event
+      window.dispatchEvent(new CustomEvent('forceRefresh'));
+      
+      // Additional event at a longer delay to catch components that might initialize later
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+          detail: { albumId, count: newStickers.length } 
+        }));
+        window.dispatchEvent(new CustomEvent('forceRefresh'));
+      }, 500);
+    }
+  }, 100);
   
   return newStickers;
 };
 
-// Get statistics for an album
-export const getStats = (albumId: string) => {
-  const stickers = getStickersByAlbumId(albumId);
+// Get album statistics
+export const getStats = () => {
+  const stickers = getStickerData();
   
   const totalStickers = stickers.length;
   const ownedStickers = stickers.filter(s => s.isOwned).length;
   const duplicateStickers = stickers.filter(s => s.isDuplicate).length;
   const neededStickers = totalStickers - ownedStickers;
-  
   const completionPercentage = totalStickers > 0 
     ? Math.round((ownedStickers / totalStickers) * 100) 
     : 0;
@@ -255,82 +255,41 @@ export const getStats = (albumId: string) => {
 };
 
 // Add stickers to inventory
-export const addStickersToInventory = (albumId: string, stickerNumbers: number[]): {
-  newlyOwned: number[],
-  duplicatesUpdated: number[],
-  notFound: number[]
-} => {
-  const allStickers = getFromStorage<Sticker[]>('stickers', []);
-  const updatedStickers = [...allStickers];
+export const addStickersToInventory = (albumId: string, stickerNumbers: number[]) => {
+  const stickers = getStickerData();
+  const albumStickers = stickers.filter(s => s.albumId === albumId);
   
-  const results = {
-    newlyOwned: [] as number[],
-    duplicatesUpdated: [] as number[],
-    notFound: [] as number[]
-  };
+  const newlyOwned: number[] = [];
+  const duplicatesUpdated: number[] = [];
+  const notFound: number[] = [];
   
-  // Process each sticker number
-  for (const number of stickerNumbers) {
-    // Find the sticker in the album
-    const stickerIndex = updatedStickers.findIndex(
-      s => s.albumId === albumId && s.number === number
-    );
+  stickerNumbers.forEach(number => {
+    const sticker = albumStickers.find(s => s.number === number);
     
-    if (stickerIndex === -1) {
-      // Sticker not found
-      results.notFound.push(number);
-      continue;
+    if (!sticker) {
+      notFound.push(number);
+      return;
     }
     
-    // Get the sticker
-    const sticker = updatedStickers[stickerIndex];
-    
-    if (sticker.isOwned) {
-      // Sticker is already owned, mark as duplicate
-      if (!sticker.isDuplicate) {
-        updatedStickers[stickerIndex] = {
-          ...sticker,
-          isDuplicate: true
-        };
-        results.duplicatesUpdated.push(number);
-      }
+    if (!sticker.isOwned) {
+      // Mark as owned for the first time
+      updateSticker(sticker.id, { isOwned: true });
+      newlyOwned.push(number);
     } else {
-      // Sticker is not owned, mark as owned
-      updatedStickers[stickerIndex] = {
-        ...sticker,
-        isOwned: true
-      };
-      results.newlyOwned.push(number);
+      // Already owned, mark as duplicate
+      updateSticker(sticker.id, { 
+        isDuplicate: true, 
+        duplicateCount: (sticker.duplicateCount || 0) + 1 
+      });
+      duplicatesUpdated.push(number);
     }
-  }
+  });
   
-  // Only save if changes were made
-  if (results.newlyOwned.length > 0 || results.duplicatesUpdated.length > 0) {
-    saveToStorage('stickers', updatedStickers);
-    
-    // Dispatch events to update UI
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('stickerDataChanged', {
-        detail: { albumId }
-      }));
-      window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
-    }
-  }
+  // Trigger events
+  setTimeout(() => {
+    window.dispatchEvent(new CustomEvent('forceRefresh'));
+    window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
+  }, 100);
   
-  return results;
-};
-
-// Generic function to get sticker data
-export const getStickerData = (): Sticker[] => {
-  return getFromStorage<Sticker[]>('stickers', []);
-};
-
-// Generic function to set sticker data
-export const setStickerData = (stickers: Sticker[]): void => {
-  saveToStorage('stickers', stickers);
-  
-  // Dispatch events to update UI
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('stickerDataChanged'));
-  }
+  return { newlyOwned, duplicatesUpdated, notFound };
 };

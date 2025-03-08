@@ -22,16 +22,16 @@ export {
 // Export sticker operations
 export {
   getStickersByAlbumId,
+  getStickerData,
+  setStickerData,
   addSticker,
   updateSticker,
   deleteSticker,
   toggleStickerOwned,
   toggleStickerDuplicate,
   importStickersFromCSV,
-  getStats,
   addStickersToInventory,
-  getStickerData,
-  setStickerData
+  getStats
 } from './sticker-operations';
 
 // Export recycle bin operations

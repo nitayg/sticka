@@ -42,12 +42,23 @@ const CsvImportField = ({ csvContent, setCsvContent }: CsvImportFieldProps) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const content = e.target?.result as string;
-        setCsvContent(content);
+        
+        // Clean up the content - handle different line breaks and separators
+        const cleanedContent = content
+          .replace(/\r\n/g, '\n')
+          .replace(/\r/g, '\n')
+          .trim();
+        
+        setCsvContent(cleanedContent);
         
         // Quick validation of content
-        const lines = content.split('\n').filter(line => line.trim().length > 0);
+        const lines = cleanedContent.split('\n').filter(line => line.trim().length > 0);
         setLineCount(lines.length);
         setFileName(selectedFile.name);
+        
+        // Sample a few lines to show in the console for debugging
+        const sampleLines = lines.slice(0, 5);
+        console.log("CSV Sample lines:", sampleLines);
         
         if (lines.length === 0) {
           toast({

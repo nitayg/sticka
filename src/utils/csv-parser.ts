@@ -1,119 +1,95 @@
 
-/**
- * Parse CSV content into usable data
- * 
- * @param csvContent The CSV content as a string
- * @returns Array of objects or arrays representing the CSV data
- */
-export const parseCSV = (csvContent: string): Array<any> => {
-  if (!csvContent || typeof csvContent !== 'string') {
-    console.error("Empty or invalid CSV content");
-    return [];
-  }
-
-  // Split by lines and filter out empty ones
-  const lines = csvContent.split(/\r?\n/).filter(line => line.trim().length > 0);
+export const parseCSV = (csvContent: string) => {
+  if (!csvContent) return [];
   
-  if (lines.length === 0) {
-    console.error("No valid lines in CSV content");
-    return [];
-  }
-
-  console.log(`Parsing CSV content with ${lines.length} lines`);
-
-  // Detect delimiter - typically comma, semicolon, or tab
-  const detectDelimiter = (line: string): string => {
-    const delimiters = [',', ';', '\t'];
-    let bestDelimiter = ',';
-    let maxCount = 0;
-    
-    for (const delimiter of delimiters) {
-      const count = (line.match(new RegExp(delimiter, 'g')) || []).length;
-      if (count > maxCount) {
-        maxCount = count;
-        bestDelimiter = delimiter;
-      }
-    }
-    
-    return bestDelimiter;
-  };
-
-  const delimiter = detectDelimiter(lines[0]);
+  // Clean up the input - handle different line breaks
+  const cleanContent = csvContent
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .trim();
+  
+  // Split by lines and filter out empty ones
+  const lines = cleanContent.split('\n').filter(line => line.trim().length > 0);
+  if (lines.length === 0) return [];
+  
+  console.log(`Parsing CSV with ${lines.length} lines`);
+  console.log(`First few lines:`, lines.slice(0, 3));
+  
+  // Detect delimiter - try tabs, commas, and semicolons
+  let delimiter = detectDelimiter(lines[0]);
   console.log(`Detected delimiter: "${delimiter}"`);
   
-  // Parse line function that handles quotes
-  const parseLine = (line: string): string[] => {
-    const result: string[] = [];
-    let insideQuotes = false;
-    let currentValue = '';
+  // Check if first line is a header
+  const isFirstLineHeader = isHeaderLine(lines[0]);
+  console.log(`First line appears to be a header: ${isFirstLineHeader}`);
+  
+  // Skip header line if detected
+  const dataLines = isFirstLineHeader ? lines.slice(1) : lines;
+  
+  // Parse each data line
+  return dataLines.map((line, index) => {
+    // Split the line by the delimiter
+    const fields = line.split(delimiter).map(field => field.trim());
     
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      
-      if (char === '"') {
-        insideQuotes = !insideQuotes;
-      } else if (char === delimiter && !insideQuotes) {
-        result.push(currentValue.trim());
-        currentValue = '';
-      } else {
-        currentValue += char;
-      }
+    if (fields.length < 1) {
+      console.log(`Skipping line ${index + 1} - not enough fields`);
+      return null;
     }
     
-    // Add the last value
-    result.push(currentValue.trim());
+    // Extract fields - allow flexible field order
+    const [number, name, team] = fields;
     
-    // Ensure at least 3 elements in each row (for number, name, team)
-    while (result.length < 3) {
-      result.push("");
-    }
+    // If we're returning an object format
+    const result = {
+      number: parseNumberField(number),
+      name: name || `Sticker ${number}`,
+      team: team || 'Unknown',
+    };
+    
+    // Include raw data for debugging
+    console.log(`Parsed line ${index + 1}:`, result);
     
     return result;
-  };
-  
-  // Check if first line is a header
-  const firstLine = parseLine(lines[0]);
-  const secondLine = lines.length > 1 ? parseLine(lines[1]) : [];
-  
-  // Try to detect if the first line is a header
-  // A header line typically contains text values, while data lines contain at least one number
-  const isHeader = firstLine.some(item => isNaN(Number(item))) && 
-                   secondLine.length > 0 && 
-                   secondLine.some(item => !isNaN(Number(item)));
-  
-  console.log(`CSV has header: ${isHeader}`);
-  
-  try {
-    // Process as object array if has header
-    if (isHeader) {
-      const headers = firstLine.map(header => 
-        header.replace(/['"]/g, '').trim()
-      );
-      
-      return lines.slice(1).map(line => {
-        const values = parseLine(line);
-        const rowObject: Record<string, any> = {};
-        
-        headers.forEach((header, index) => {
-          if (index < values.length) {
-            const value = values[index].replace(/['"]/g, '').trim();
-            rowObject[header] = value;
-          }
-        });
-        
-        return rowObject;
-      });
-    } 
-    // Process as array of arrays if no header
-    else {
-      return lines.map(line => {
-        return parseLine(line).map(value => 
-          value.replace(/['"]/g, '').trim()
-        );
-      });
-    }
-  } catch (error) {
-    console.error("Error parsing CSV:", error);
-    throw new Error("Failed to parse CSV data: " + (error instanceof Error ? error.message : String(error)));
-  }
+  }).filter(Boolean); // Filter out null entries
 };
+
+// Helper to detect the most likely delimiter in a CSV line
+function detectDelimiter(line: string): string {
+  if (!line) return ',';
+  
+  const delimiters = ['\t', ',', ';'];
+  let maxCount = 0;
+  let bestDelimiter = ','; // Default
+  
+  for (const delimiter of delimiters) {
+    const count = (line.match(new RegExp(delimiter, 'g')) || []).length;
+    if (count > maxCount) {
+      maxCount = count;
+      bestDelimiter = delimiter;
+    }
+  }
+  
+  return bestDelimiter;
+}
+
+// Check if a line appears to be a header by looking for common header words
+function isHeaderLine(line: string): boolean {
+  const headerKeywords = [
+    'מספר', 'number', 'name', 'שם', 'team', 'קבוצה', 'סדרה',
+    'category', 'קטגוריה', 'sticker', 'מדבקה', 'id'
+  ];
+  
+  const lowerLine = line.toLowerCase();
+  return headerKeywords.some(keyword => lowerLine.includes(keyword.toLowerCase()));
+}
+
+// Helper to parse number fields safely
+function parseNumberField(value: string): number {
+  if (!value) return 0;
+  
+  // Clean the string value first
+  const cleanValue = value.replace(/[^\d.-]/g, '');
+  const parsed = parseInt(cleanValue, 10);
+  
+  return isNaN(parsed) ? 0 : parsed;
+}
