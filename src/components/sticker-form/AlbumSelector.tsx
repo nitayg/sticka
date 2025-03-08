@@ -41,8 +41,8 @@ const AlbumSelector = ({ albumId, setAlbumId }: AlbumSelectorProps) => {
       const newAlbumId = generateId();
       
       // Create and add the new album
-      const result = await addAlbum({
-        id: newAlbumId, // Adding the missing id property
+      const album = await addAlbum({
+        id: newAlbumId,
         name: newAlbumName,
         description: newAlbumDescription,
         year: newAlbumYear,
@@ -52,11 +52,11 @@ const AlbumSelector = ({ albumId, setAlbumId }: AlbumSelectorProps) => {
       
       toast({
         title: "אלבום נוסף בהצלחה",
-        description: `האלבום "${newAlbumName}" נוסף בהצלחה`,
+        description: `האלבום "${album.name}" נוסף בהצלחה`,
       });
       
       // Update the selected album to the newly added one
-      setAlbumId(newAlbumId);
+      setAlbumId(album.id);
       
       // Close the dialog and reset form
       setIsAddAlbumOpen(false);
