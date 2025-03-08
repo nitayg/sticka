@@ -1,6 +1,6 @@
 
 import { create } from 'zustand';
-import { exchangeOffers } from '@/lib/data';
+import { exchangeOffers } from '@/lib/initial-data';
 import { 
   getStickersByAlbumId,
   addStickersToInventory,
@@ -111,21 +111,6 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
     
     // Get stickers for logging
     const albumStickers = getStickersByAlbumId(albumId);
-    const numbers = stickerNumbers.map(num => num);
-    
-    // Identify which stickers were newly owned vs duplicates updated
-    const newlyOwned: number[] = [];
-    const newDuplicates: number[] = [];
-    const updatedDuplicates: number[] = [];
-    
-    // Process result for the log
-    if (result.newlyOwned > 0) {
-      newlyOwned.push(...numbers.slice(0, result.newlyOwned));
-    }
-    
-    if (result.duplicatesUpdated > 0) {
-      updatedDuplicates.push(...numbers.slice(result.newlyOwned, result.newlyOwned + result.duplicatesUpdated));
-    }
     
     // Update the most recent log entry with the real results
     const album = getAlbumById(albumId);
@@ -139,9 +124,9 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
       // Create updated entry
       const updatedEntry = {
         ...firstEntry,
-        newStickers: newlyOwned,
-        newDuplicates: newDuplicates,
-        updatedDuplicates: updatedDuplicates
+        newStickers: result.newlyOwned,
+        newDuplicates: [],
+        updatedDuplicates: result.duplicatesUpdated
       };
       
       // Clear and then restore the log with the updated entry
@@ -152,9 +137,9 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
         albumId,
         albumName: album?.name || "אלבום לא ידוע",
         source: "קליטה ישירה",
-        newStickers: newlyOwned,
-        newDuplicates: newDuplicates,
-        updatedDuplicates: updatedDuplicates,
+        newStickers: result.newlyOwned,
+        newDuplicates: [],
+        updatedDuplicates: result.duplicatesUpdated,
       });
     }
     
@@ -164,9 +149,9 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
     
     // Return the information about which stickers were processed
     return Promise.resolve({
-      newlyOwned: newlyOwned,
-      duplicatesUpdated: [...newDuplicates, ...updatedDuplicates],
-      notFound: result.notFound > 0 ? numbers.slice(result.newlyOwned + result.duplicatesUpdated) : []
+      newlyOwned: result.newlyOwned,
+      duplicatesUpdated: result.duplicatesUpdated,
+      notFound: result.notFound
     });
   }
 }));

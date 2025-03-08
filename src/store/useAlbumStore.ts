@@ -1,6 +1,6 @@
 
 import { create } from 'zustand';
-import { getStickersByAlbumId, stickerData } from '@/lib/sticker-operations';
+import { getStickersByAlbumId } from '@/lib/sticker-operations';
 
 type AlbumTab = "number" | "team" | "manage";
 type ViewMode = "grid" | "list" | "compact";

@@ -29,17 +29,10 @@ export const getStickersByAlbumId = (albumId: string): Sticker[] => {
 };
 
 // Function to add a new sticker
-export const addSticker = async (albumId: string, imageUrl: string): Promise<Sticker> => {
+export const addSticker = (stickerData: Omit<Sticker, 'id' | 'lastModified'>): Sticker => {
   const newSticker: Sticker = {
     id: uuidv4(),
-    albumId: albumId,
-    name: "",
-    team: "",
-    category: "",
-    number: 0,
-    imageUrl: imageUrl,
-    isOwned: false,
-    isDuplicate: false,
+    ...stickerData,
     lastModified: Date.now()
   };
 
@@ -50,7 +43,7 @@ export const addSticker = async (albumId: string, imageUrl: string): Promise<Sti
 };
 
 // Function to update an existing sticker
-export const updateSticker = async (stickerId: string, updates: Partial<Sticker>): Promise<Sticker | undefined> => {
+export const updateSticker = (stickerId: string, updates: Partial<Sticker>): Sticker | undefined => {
   const stickers = getStickerData();
   const updatedStickers = stickers.map(sticker => {
     if (sticker.id === stickerId) {
@@ -63,14 +56,14 @@ export const updateSticker = async (stickerId: string, updates: Partial<Sticker>
 };
 
 // Function to delete a sticker
-export const deleteSticker = async (stickerId: string): Promise<void> => {
+export const deleteSticker = (stickerId: string): void => {
   const stickers = getStickerData();
   const updatedStickers = stickers.filter(sticker => sticker.id !== stickerId);
   setStickerData(updatedStickers);
 };
 
 // Function to toggle the 'owned' status of a sticker
-export const toggleStickerOwned = async (stickerId: string): Promise<Sticker | undefined> => {
+export const toggleStickerOwned = (stickerId: string): Sticker | undefined => {
   const stickers = getStickerData();
   const updatedStickers = stickers.map(sticker => {
     if (sticker.id === stickerId) {
@@ -83,7 +76,7 @@ export const toggleStickerOwned = async (stickerId: string): Promise<Sticker | u
 };
 
 // Function to toggle the 'duplicate' status of a sticker
-export const toggleStickerDuplicate = async (stickerId: string): Promise<Sticker | undefined> => {
+export const toggleStickerDuplicate = (stickerId: string): Sticker | undefined => {
   const stickers = getStickerData();
   const updatedStickers = stickers.map(sticker => {
     if (sticker.id === stickerId) {
@@ -96,7 +89,7 @@ export const toggleStickerDuplicate = async (stickerId: string): Promise<Sticker
 };
 
 // Function to import stickers from a CSV file
-export const importStickersFromCSV = async (albumId: string, csvData: any[]): Promise<Sticker[]> => {
+export const importStickersFromCSV = (albumId: string, csvData: [number, string, string][]): Sticker[] => {
   const newStickers: Sticker[] = [];
   
   for (const [number, name, team] of csvData) {
@@ -123,42 +116,52 @@ export const importStickersFromCSV = async (albumId: string, csvData: any[]): Pr
 };
 
 // Function to get sticker statistics
-export const getStats = (): { total: number; owned: number; duplicates: number } => {
+export const getStats = (): { total: number; owned: number; needed: number; duplicates: number } => {
   const stickers = getStickerData();
   const total = stickers.length;
   const owned = stickers.filter(sticker => sticker.isOwned).length;
+  const needed = total - owned;
   const duplicates = stickers.filter(sticker => sticker.isDuplicate).length;
-  return { total, owned, duplicates };
+  return { total, owned, needed, duplicates };
 };
 
 // Function to add multiple stickers to inventory
-export const addStickersToInventory = async (albumId: string, numberOfStickers: number): Promise<Sticker[]> => {
-  const newStickers: Sticker[] = [];
-  for (let i = 0; i < numberOfStickers; i++) {
-    const newSticker: Sticker = {
-      id: uuidv4(),
-      albumId: albumId,
-      name: "",
-      team: "",
-      category: "שחקנים",
-      number: i + 1,
-      imageUrl: '',
-      isOwned: false,
-      isDuplicate: false,
-      lastModified: Date.now()
-    };
-    newStickers.push(newSticker);
-  }
-
-  const stickers = getStickerData();
-  const updatedStickers = [...stickers, ...newStickers];
-  setStickerData(updatedStickers);
+export const addStickersToInventory = (albumId: string, stickerNumbers: number[]): { 
+  newlyOwned: number[]; 
+  duplicatesUpdated: number[]; 
+  notFound: number[] 
+} => {
+  const albumStickers = getStickersByAlbumId(albumId);
+  const newlyOwned: number[] = [];
+  const duplicatesUpdated: number[] = [];
+  const notFound: number[] = [];
   
-  return newStickers;
+  for (const number of stickerNumbers) {
+    const sticker = albumStickers.find(s => s.number === number);
+    
+    if (sticker) {
+      if (!sticker.isOwned) {
+        // Mark as owned
+        updateSticker(sticker.id, { isOwned: true });
+        newlyOwned.push(number);
+      } else if (!sticker.isDuplicate) {
+        // Mark as duplicate
+        updateSticker(sticker.id, { isDuplicate: true });
+        duplicatesUpdated.push(number);
+      } else {
+        // Already owned and marked as duplicate
+        duplicatesUpdated.push(number);
+      }
+    } else {
+      notFound.push(number);
+    }
+  }
+  
+  return { newlyOwned, duplicatesUpdated, notFound };
 };
 
 // Function to update team names across stickers
-export const updateTeamNameAcrossStickers = (oldName: string, newName: string): Promise<void> => {
+export const updateTeamNameAcrossStickers = (oldName: string, newName: string): void => {
   const stickers = getStickerData();
   const updatedStickers = stickers.map(sticker => {
     if (sticker.team === oldName) {
@@ -167,5 +170,4 @@ export const updateTeamNameAcrossStickers = (oldName: string, newName: string): 
     return sticker;
   });
   setStickerData(updatedStickers);
-  return Promise.resolve();
 };

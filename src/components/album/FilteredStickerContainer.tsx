@@ -2,7 +2,6 @@
 import { useMemo } from "react";
 import { Sticker } from "@/lib/types";
 import StickerCollection from "../StickerCollection";
-import { getStickersByAlbumId } from "@/lib/sticker-operations";
 
 interface FilteredStickerContainerProps {
   stickers: Sticker[];

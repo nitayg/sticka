@@ -15,7 +15,10 @@ const AlbumEventHandler: React.FC<AlbumEventHandlerProps> = ({ album }) => {
 
   // Mutation for updating an album
   const updateAlbumMutation = useMutation({
-    mutationFn: (data: Partial<Album>) => updateAlbum(album.id, data),
+    mutationFn: (data: Partial<Album>) => {
+      const updatedAlbum = updateAlbum(album.id, data);
+      return Promise.resolve(updatedAlbum);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['albums'] });
       toast({
@@ -33,7 +36,10 @@ const AlbumEventHandler: React.FC<AlbumEventHandlerProps> = ({ album }) => {
 
   // Mutation for deleting an album
   const deleteAlbumMutation = useMutation({
-    mutationFn: () => deleteAlbum(album.id),
+    mutationFn: () => {
+      deleteAlbum(album.id);
+      return Promise.resolve();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['albums'] });
       toast({
