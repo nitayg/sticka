@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Album, PlusCircle, Edit, Trash2 } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import AlbumGridItem from "./AlbumGridItem"; // Fixed import path
 import { Button } from "@/components/ui/button";
@@ -119,18 +119,18 @@ const FilterControls = ({
       <ScrollArea className="w-full whitespace-nowrap">
         <div className="flex space-x-3 p-1">
           {/* Add Album Button */}
-          <div className="relative h-[70px] w-[70px] flex-shrink-0 rounded-xl overflow-hidden border-2 border-dashed border-muted-foreground/30 flex items-center justify-center cursor-pointer group hover:border-primary/50 transition-colors">
+          <div className="relative h-[100px] w-[100px] flex-shrink-0 rounded-md overflow-hidden border-2 border-dashed border-muted-foreground/30 flex items-center justify-center cursor-pointer group hover:border-primary/50 transition-colors">
             <AddAlbumForm iconOnly>
               <div className="flex flex-col items-center justify-center h-full w-full text-muted-foreground group-hover:text-primary transition-colors">
-                <PlusCircle className="h-6 w-6" />
-                <span className="text-[10px] mt-1">הוסף אלבום</span>
+                <PlusCircle className="h-10 w-10" />
+                <span className="text-xs mt-1">הוסף אלבום</span>
               </div>
             </AddAlbumForm>
           </div>
           
           {/* Album List */}
           {albums.map((album) => (
-            <div className="h-[70px] w-[70px] flex-shrink-0 relative" key={album.id}>
+            <div className="h-[100px] w-[100px] flex-shrink-0 relative" key={album.id}>
               <AlbumGridItem
                 id={album.id}
                 name={album.name}

@@ -1,3 +1,4 @@
+
 import { Image } from "lucide-react";
 import { Album } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -72,7 +73,7 @@ const StickerImage = ({
           <div className="absolute top-0 left-0 w-0 h-0 border-solid border-t-[12px] border-t-yellow-400 border-r-[12px] border-r-transparent"></div>
         )}
         {inTransaction && transactionPerson && (
-          <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-center text-[8px] py-0.5 truncate">
+          <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-center text-[10px] py-0.5 truncate">
             {getFirstName(transactionPerson)}
           </div>
         )}
