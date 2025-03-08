@@ -1,70 +1,100 @@
 
-export type CSVData = Array<[number, string, string]>;
-
 /**
- * Parse CSV content into structured data
+ * Parse CSV content into usable data
+ * 
+ * @param csvContent The CSV content as a string
+ * @returns Array of objects or arrays representing the CSV data
  */
-export const parseCSVContent = (fileContent: string): {
-  parsedData: CSVData,
-  newTeams: string[],
-  existingTeams: Set<string>
-} => {
-  const lines = fileContent.split('\n').filter(line => line.trim());
-  
-  // Check if the first line looks like a header
-  const firstLine = lines[0];
-  const isHeader = firstLine && 
-    (firstLine.toLowerCase().includes('מספר') || 
-      firstLine.toLowerCase().includes('number') ||
-      firstLine.toLowerCase().includes('שם') ||
-      firstLine.toLowerCase().includes('name') ||
-      firstLine.toLowerCase().includes('קבוצה') ||
-      firstLine.toLowerCase().includes('team'));
-  
-  // Skip the header line if detected
-  const dataLines = isHeader ? lines.slice(1) : lines;
-  
-  if (dataLines.length === 0) {
-    throw new Error("הקובץ ריק או מכיל רק כותרות");
+export const parseCSV = (csvContent: string): Array<any> => {
+  if (!csvContent || typeof csvContent !== 'string') {
+    return [];
   }
+
+  // Split by lines and filter out empty ones
+  const lines = csvContent.split(/\r?\n/).filter(line => line.trim().length > 0);
   
-  const parsedCsvData = dataLines.map(line => {
-    const [numberStr, name, team] = line.split(',').map(item => item.trim());
-    const number = parseInt(numberStr);
+  if (lines.length === 0) {
+    return [];
+  }
+
+  // Detect delimiter - typically comma or semicolon
+  const detectDelimiter = (line: string): string => {
+    const delimiters = [',', ';', '\t'];
+    let bestDelimiter = ',';
+    let maxCount = 0;
     
-    if (isNaN(number) || !name || !team) {
-      throw new Error(`שורה לא תקינה: ${line}`);
+    for (const delimiter of delimiters) {
+      const count = (line.match(new RegExp(delimiter, 'g')) || []).length;
+      if (count > maxCount) {
+        maxCount = count;
+        bestDelimiter = delimiter;
+      }
     }
     
-    return [number, name, team] as [number, string, string];
-  });
-
-  return {
-    parsedData: parsedCsvData,
-    newTeams: [],
-    existingTeams: new Set()
+    return bestDelimiter;
   };
-};
 
-/**
- * Reads a file and returns its content as a string Promise
- */
-export const readFileAsText = (file: File): Promise<string> => {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
+  const delimiter = detectDelimiter(lines[0]);
+  
+  // Parse line function that handles quotes
+  const parseLine = (line: string): string[] => {
+    const result: string[] = [];
+    let insideQuotes = false;
+    let currentValue = '';
     
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        resolve(event.target.result as string);
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      
+      if (char === '"') {
+        insideQuotes = !insideQuotes;
+      } else if (char === delimiter && !insideQuotes) {
+        result.push(currentValue.trim());
+        currentValue = '';
       } else {
-        reject(new Error("קריאת הקובץ נכשלה"));
+        currentValue += char;
       }
-    };
+    }
     
-    reader.onerror = () => {
-      reject(new Error("לא ניתן לקרוא את הקובץ, אנא ודא שהקובץ תקין ויש לך הרשאות לקרוא אותו"));
-    };
+    // Add the last value
+    result.push(currentValue.trim());
     
-    reader.readAsText(file);
-  });
+    return result;
+  };
+  
+  // Check if first line is a header
+  const firstLine = parseLine(lines[0]);
+  const secondLine = lines.length > 1 ? parseLine(lines[1]) : [];
+  
+  const isHeader = firstLine.some(item => isNaN(Number(item))) && 
+                   secondLine.length > 0 && 
+                   secondLine.some(item => !isNaN(Number(item)));
+  
+  // Process as object array if has header
+  if (isHeader) {
+    const headers = firstLine.map(header => 
+      header.replace(/['"]/g, '').trim()
+    );
+    
+    return lines.slice(1).map(line => {
+      const values = parseLine(line);
+      const rowObject: Record<string, any> = {};
+      
+      headers.forEach((header, index) => {
+        if (index < values.length) {
+          const value = values[index].replace(/['"]/g, '').trim();
+          rowObject[header] = value;
+        }
+      });
+      
+      return rowObject;
+    });
+  } 
+  // Process as array of arrays if no header
+  else {
+    return lines.map(line => {
+      return parseLine(line).map(value => 
+        value.replace(/['"]/g, '').trim()
+      );
+    });
+  }
 };

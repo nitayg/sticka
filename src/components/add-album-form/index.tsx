@@ -17,6 +17,8 @@ import { generateId } from "@/lib/utils";
 import { useAlbumStore } from "@/store/useAlbumStore";
 import { useToast } from "@/components/ui/use-toast";
 import { addAlbum } from "@/lib/album-operations";
+import { importStickersFromCSV } from "@/lib/sticker-operations";
+import { parseCSV } from "@/utils/csv-parser";
 
 interface AddAlbumFormProps {
   onAlbumAdded?: () => void;
@@ -65,6 +67,53 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
       
       // Add album to storage
       await addAlbum(newAlbum);
+      
+      // Process CSV data if available
+      if (csvContent) {
+        try {
+          // Parse CSV content
+          const parsedData = parseCSV(csvContent);
+          
+          if (parsedData && parsedData.length > 0) {
+            // Map to format expected by importStickersFromCSV
+            const importData: [number, string, string][] = parsedData.map(row => {
+              // Handle different CSV formats by looking at the row structure
+              if (Array.isArray(row) && row.length >= 3) {
+                // If already in array format with 3+ items
+                const number = parseInt(row[0].toString());
+                return [number, row[1].toString(), row[2].toString()];
+              } else if (typeof row === 'object') {
+                // If in object format with named properties
+                const number = parseInt((row.number || row.Number || row.num || "0").toString());
+                const name = (row.name || row.Name || row.title || "").toString();
+                const team = (row.team || row.Team || row.group || "").toString();
+                return [number, name, team];
+              } else {
+                // Fallback for unexpected formats
+                return [0, "", ""];
+              }
+            }).filter(row => row[0] > 0); // Filter out invalid rows
+            
+            // Import the stickers
+            if (importData.length > 0) {
+              const importedStickers = importStickersFromCSV(newAlbumId, importData);
+              
+              // Show success toast for imported stickers
+              toast({
+                title: "מדבקות יובאו בהצלחה",
+                description: `יובאו ${importedStickers.length} מדבקות לאלבום`,
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Error parsing CSV:", error);
+          toast({
+            title: "שגיאה בייבוא מדבקות",
+            description: "אירעה שגיאה בעת ייבוא המדבקות מהקובץ",
+            variant: "destructive",
+          });
+        }
+      }
       
       // Set the newly created album as the selected album
       handleAlbumChange(newAlbumId);

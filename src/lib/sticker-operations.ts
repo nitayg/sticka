@@ -93,13 +93,16 @@ export const importStickersFromCSV = (albumId: string, csvData: [number, string,
   const newStickers: Sticker[] = [];
   
   for (const [number, name, team] of csvData) {
+    // Skip invalid entries
+    if (!number || number <= 0) continue;
+    
     const newSticker: Sticker = {
       id: uuidv4(),
       albumId: albumId,
-      name: name || "",
+      name: name || `Sticker #${number}`,
       team: team || "",
       category: "שחקנים",
-      number: typeof number === 'number' ? number : 0,
+      number: typeof number === 'number' ? number : parseInt(number.toString()),
       imageUrl: "",
       isOwned: false,
       isDuplicate: false,
@@ -111,6 +114,8 @@ export const importStickersFromCSV = (albumId: string, csvData: [number, string,
   const stickers = getStickerData();
   const updatedStickers = [...stickers, ...newStickers];
   setStickerData(updatedStickers);
+  
+  console.log(`Imported ${newStickers.length} stickers for album ${albumId}`);
   
   return newStickers;
 };
