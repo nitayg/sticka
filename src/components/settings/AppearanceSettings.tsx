@@ -5,7 +5,20 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Monitor } from "lucide-react";
+import { Moon, Sun, Monitor, RotateCcw, AlertTriangle } from "lucide-react";
+import { clearAllStorageData } from "@/lib/sync/storage-utils";
+import { syncWithSupabase } from "@/lib/sync/sync-manager";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface AppearanceSettingsProps {
   onSave: () => void;
@@ -58,6 +71,18 @@ const AppearanceSettings = ({ onSave }: AppearanceSettingsProps) => {
     if (value === "dark" || value === "light" || value === "system") {
       setSelectedTheme(value);
     }
+  };
+
+  // פונקציה לאיפוס כל הנתונים המקומיים
+  const handleResetStorage = async () => {
+    // Clear all localStorage and memory storage
+    clearAllStorageData();
+    
+    // Reload data from Supabase
+    await syncWithSupabase(true);
+    
+    // Show success message
+    onSave();
   };
 
   return (
@@ -116,6 +141,39 @@ const AppearanceSettings = ({ onSave }: AppearanceSettingsProps) => {
               <Label htmlFor="font-large" className="font-normal text-lg">טקסט גדול</Label>
             </div>
           </RadioGroup>
+        </div>
+        
+        <div className="space-y-2 pt-4 border-t">
+          <Label className="font-semibold">פעולות מערכת</Label>
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="destructive"
+                className="w-full mt-2 gap-2"
+              >
+                <RotateCcw className="h-4 w-4" />
+                <span>איפוס נתונים מקומיים</span>
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>לאפס את כל הנתונים המקומיים?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  פעולה זו תמחק את כל הנתונים השמורים באחסון המקומי ותטען מחדש את המידע מהשרת.
+                  <div className="flex items-center gap-2 mt-2 p-2 rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span>פעולה זו אינה ניתנת לביטול.</span>
+                  </div>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>ביטול</AlertDialogCancel>
+                <AlertDialogAction onClick={handleResetStorage}>איפוס נתונים</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          
         </div>
 
         <Button

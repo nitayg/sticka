@@ -1,3 +1,4 @@
+
 import { StorageEvents } from './constants';
 
 // Filter out soft-deleted items for display
@@ -84,6 +85,31 @@ export const getIsConnected = () => isConnected;
 // Export isConnected setter for sync-manager
 export const setIsConnected = (value: boolean) => {
   isConnected = value;
+};
+
+// Clear all localStorage data and memory storage
+export const clearAllStorageData = (): void => {
+  try {
+    // Clear all localStorage data
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.clear();
+      console.log('Cleared all localStorage data');
+    }
+    
+    // Clear in-memory storage as well
+    for (const key in memoryStorage) {
+      delete memoryStorage[key];
+    }
+    
+    console.log('Cleared all in-memory storage data');
+    
+    // Trigger a sync event to reload data from Supabase
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_START));
+    }
+  } catch (error) {
+    console.error('Error clearing storage data:', error);
+  }
 };
 
 // Import this for the sendToSupabase function
