@@ -37,14 +37,13 @@ const AlbumEventHandler: React.FC<AlbumEventHandlerProps> = ({ album }) => {
   // Mutation for deleting an album
   const deleteAlbumMutation = useMutation({
     mutationFn: () => {
-      deleteAlbum(album.id);
-      return Promise.resolve();
+      return deleteAlbum(album.id);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['albums'] });
-      toast({
-        title: "האלבום נמחק בהצלחה!",
-      });
+    onSuccess: (success) => {
+      if (success) {
+        queryClient.invalidateQueries({ queryKey: ['albums'] });
+        queryClient.invalidateQueries({ queryKey: ['stickers'] });
+      }
     },
     onError: (error) => {
       toast({
@@ -64,10 +63,19 @@ const AlbumEventHandler: React.FC<AlbumEventHandlerProps> = ({ album }) => {
       }
     };
 
+    const handleAlbumDeleted = (event: any) => {
+      if (event.detail && event.detail.albumId === album.id) {
+        queryClient.invalidateQueries({ queryKey: ['albums'] });
+        queryClient.invalidateQueries({ queryKey: ['stickers'] });
+      }
+    };
+
     window.addEventListener(StorageEvents.ALBUMS, handleAlbumsUpdated);
+    window.addEventListener('albumDeleted', handleAlbumDeleted);
 
     return () => {
       window.removeEventListener(StorageEvents.ALBUMS, handleAlbumsUpdated);
+      window.removeEventListener('albumDeleted', handleAlbumDeleted);
     };
   }, [album.id, queryClient]);
 

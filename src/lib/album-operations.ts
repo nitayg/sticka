@@ -80,7 +80,7 @@ export const updateAlbum = (albumId: string, updates: Partial<Album>): Album | u
 };
 
 // Function to delete an album - Improved to ensure proper deletion both locally and on Supabase
-export const deleteAlbum = async (albumId: string): Promise<void> => {
+export const deleteAlbum = async (albumId: string): Promise<boolean> => {
   console.log('Deleting album with ID:', albumId);
   
   try {
@@ -96,12 +96,11 @@ export const deleteAlbum = async (albumId: string): Promise<void> => {
         description: "אירעה שגיאה במחיקת האלבום מהשרת. נסה שוב מאוחר יותר.",
         variant: "destructive",
       });
-      return;
+      return false;
     }
     
-    // 3. Only if Supabase deletion succeeds, remove from local array
+    // 3. Remove from local array - completely remove it, not just mark as deleted
     const albums = getAlbumData();
-    // Use filter to completely remove the album, not just mark as deleted
     const updatedAlbums = albums.filter(album => album.id !== albumId);
     setAlbumData(updatedAlbums);
     
@@ -115,6 +114,7 @@ export const deleteAlbum = async (albumId: string): Promise<void> => {
       description: "האלבום נמחק בהצלחה מהמערכת ומהשרת.",
     });
     
+    return true;
   } catch (error) {
     console.error('Error deleting album:', error);
     toast({
@@ -122,6 +122,7 @@ export const deleteAlbum = async (albumId: string): Promise<void> => {
       description: "אירעה שגיאה במחיקת האלבום. נסה שוב מאוחר יותר.",
       variant: "destructive",
     });
+    return false;
   }
 };
 

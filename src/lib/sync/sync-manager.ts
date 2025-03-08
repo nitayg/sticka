@@ -127,22 +127,25 @@ export const syncWithSupabase = async (isInitialSync = false) => {
     
     // Merge and save data, respecting deletions and modifications
     if (albumsData && albumsData.length > 0) {
-      // Filter out any local albums that have been deleted from Supabase
+      // Filter out any local albums that have been deleted
       const supabaseAlbumIds = albumsData.map(album => album.id);
       
       // Keep only local albums that still exist on the server or ones that haven't been synchronized yet
+      // Filter out locally deleted albums
       const filteredLocalAlbums = localAlbums.filter(album => 
-        supabaseAlbumIds.includes(album.id) || !album.lastModified // Keep newly created albums that haven't been synced
+        !album.isDeleted && 
+        (supabaseAlbumIds.includes(album.id) || !album.lastModified)
       );
       
       const mergedAlbums = mergeData(filteredLocalAlbums, albumsData);
       saveToStorage('albums', mergedAlbums, false);
       
       // Make sure to upload all albums back to Supabase
-      await saveAlbumBatch(mergedAlbums);
+      await saveAlbumBatch(mergedAlbums.filter(album => !album.isDeleted));
     } else if (isInitialSync && localAlbums.length > 0) {
       console.log('Uploading local albums to Supabase');
-      await saveAlbumBatch(localAlbums);
+      // Only upload non-deleted albums
+      await saveAlbumBatch(localAlbums.filter(album => !album.isDeleted));
     }
 
     if (stickersData && stickersData.length > 0) {

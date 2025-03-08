@@ -21,7 +21,7 @@ export async function fetchAlbums() {
     description: album.description,
     year: album.year,
     coverImage: album.coverimage,
-    lastModified: album.lastmodified,
+    lastModified: album.lastmodified || Date.now(), // Ensure lastModified has a value
     isDeleted: album.isdeleted || false
   }));
 
@@ -38,8 +38,8 @@ export async function saveAlbum(album: Album) {
     description: album.description,
     year: album.year,
     coverimage: album.coverImage,
-    lastmodified: album.lastModified,
-    isdeleted: album.isDeleted
+    lastmodified: album.lastModified || Date.now(), // Ensure lastModified has a value
+    isdeleted: album.isDeleted || false
   };
   console.log('JSON שנשלח:', JSON.stringify(supabaseAlbum, null, 2));
   const { data, error } = await supabase
@@ -82,8 +82,8 @@ export async function saveAlbumBatch(albums: Album[]) {
     description: album.description,
     year: album.year,
     coverimage: album.coverImage,
-    lastmodified: album.lastModified,
-    isdeleted: album.isDeleted
+    lastmodified: album.lastModified || Date.now(), // Ensure lastModified has a value
+    isdeleted: album.isDeleted || false
   }));
   
   return await saveBatch('albums', adjustedItems);
