@@ -16,17 +16,35 @@ export const mergeData = <T extends { id: string; lastModified?: number; isDelet
     const remoteLastModified = remoteItem.lastModified || 0;
     const localLastModified = localItem?.lastModified || 0;
     
-    // If the remote item is newer, or if it's marked as deleted and local isn't, use remote
+    // If remote item is marked as deleted and is newer than local, use remote
+    if (remoteItem.isDeleted && (!localItem?.isDeleted || remoteLastModified >= localLastModified)) {
+      mergedMap.set(remoteItem.id, { ...remoteItem });
+      return;
+    }
+    
+    // If local item is marked as deleted and is newer than remote, keep local
+    if (localItem?.isDeleted && localLastModified > remoteLastModified) {
+      return; // Keep the local deleted state
+    }
+    
+    // For non-deleted items, use the newer version
     if (!localItem || remoteLastModified > localLastModified) {
       mergedMap.set(remoteItem.id, { ...remoteItem });
-    } else if (remoteItem.isDeleted && !localItem.isDeleted && remoteLastModified >= localLastModified) {
-      // If remote is deleted and local is not, and remote is at least as recent, use remote (keep it deleted)
-      mergedMap.set(remoteItem.id, { ...remoteItem });
-    } else if (localItem.isDeleted && !remoteItem.isDeleted && localLastModified > remoteLastModified) {
-      // If local is deleted and remote is not, and local is more recent, keep it deleted
-      mergedMap.set(remoteItem.id, { ...localItem });
     }
   });
   
   return Array.from(mergedMap.values());
+};
+
+// Helper function to mark related items as deleted
+export const markRelatedItemsAsDeleted = <T extends { id: string; albumId?: string; lastModified?: number; isDeleted?: boolean }>(
+  items: T[],
+  albumId: string,
+  timestamp: number
+): T[] => {
+  return items.map(item => 
+    item.albumId === albumId 
+      ? { ...item, isDeleted: true, lastModified: timestamp }
+      : item
+  );
 };

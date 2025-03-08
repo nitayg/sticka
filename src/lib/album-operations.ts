@@ -2,7 +2,8 @@
 import { Album } from './types';
 import { albums as initialAlbums } from './initial-data';
 import { setStickerData, getStickerData } from './sticker-operations';
-import { saveToStorage, syncWithSupabase } from './sync';
+import { saveToStorage, syncWithSupabase, getFromStorage } from './sync';
+import { markRelatedItemsAsDeleted } from './sync/merge-utils';
 
 // Maintain data state
 let albumData = [...initialAlbums];
@@ -72,7 +73,7 @@ export const updateAlbum = (id: string, data: Partial<Album>) => {
 export const deleteAlbum = (id: string) => {
   const timestamp = Date.now();
   
-  // Soft delete - mark as deleted instead of removing
+  // 1. Mark album as deleted
   setAlbumData(albumData.map(album => 
     album.id === id ? {
       ...album,
@@ -81,15 +82,16 @@ export const deleteAlbum = (id: string) => {
     } : album
   ));
   
-  // Mark all related stickers as deleted too
+  // 2. Mark all related stickers as deleted too
   const stickers = getStickerData();
-  setStickerData(stickers.map(sticker => 
-    sticker.albumId === id ? {
-      ...sticker,
-      isDeleted: true,
-      lastModified: timestamp
-    } : sticker
-  ));
+  setStickerData(markRelatedItemsAsDeleted(stickers, id, timestamp));
+  
+  // 3. Get exchange offers (including deleted ones for sync purposes)
+  const exchangeOffers = getFromStorage('exchangeOffers', [], true);
+  
+  // 4. Mark related exchange offers as deleted
+  const updatedExchangeOffers = markRelatedItemsAsDeleted(exchangeOffers, id, timestamp);
+  saveToStorage('exchangeOffers', updatedExchangeOffers);
   
   // Trigger a custom event to notify components that album data has changed
   window.dispatchEvent(new CustomEvent('albumDataChanged'));
