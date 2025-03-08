@@ -127,18 +127,18 @@ export const syncWithSupabase = async (isInitialSync = false) => {
     
     // Merge and save data, respecting deletions and modifications
     if (albumsData && albumsData.length > 0) {
-      // Ensure deleted albums from Supabase stay deleted
-      const supabaseDeletedAlbums = albumsData.filter(album => album.isDeleted).map(album => album.id);
+      // Filter out any local albums that have been deleted from Supabase
+      const supabaseAlbumIds = albumsData.map(album => album.id);
       
-      // Mark any local albums that are in the deleted list as deleted
-      const updatedLocalAlbums = localAlbums.map(album => 
-        supabaseDeletedAlbums.includes(album.id) ? { ...album, isDeleted: true } : album
+      // Keep only local albums that still exist on the server or ones that haven't been synchronized yet
+      const filteredLocalAlbums = localAlbums.filter(album => 
+        supabaseAlbumIds.includes(album.id) || !album.lastModified // Keep newly created albums that haven't been synced
       );
       
-      const mergedAlbums = mergeData(updatedLocalAlbums, albumsData);
+      const mergedAlbums = mergeData(filteredLocalAlbums, albumsData);
       saveToStorage('albums', mergedAlbums, false);
       
-      // Make sure to upload all albums (including deleted ones) back to Supabase
+      // Make sure to upload all albums back to Supabase
       await saveAlbumBatch(mergedAlbums);
     } else if (isInitialSync && localAlbums.length > 0) {
       console.log('Uploading local albums to Supabase');

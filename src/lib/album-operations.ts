@@ -1,3 +1,4 @@
+
 import { Album } from './types';
 import { v4 as uuidv4 } from 'uuid';
 import { saveToStorage, getFromStorage, StorageEvents } from './sync';
@@ -78,24 +79,15 @@ export const updateAlbum = (albumId: string, updates: Partial<Album>): Album | u
   return updatedAlbum;
 };
 
-// Function to delete an album - completely rewritten to fix Supabase deletion issues
+// Function to delete an album - Improved to ensure proper deletion both locally and on Supabase
 export const deleteAlbum = async (albumId: string): Promise<void> => {
   console.log('Deleting album with ID:', albumId);
   
   try {
-    // 1. First mark as deleted in local storage
-    const albums = getAlbumData();
-    const album = albums.find(a => a.id === albumId);
-    
-    if (!album) {
-      console.error('Album not found for deletion:', albumId);
-      return;
-    }
-    
-    // 2. Delete stickers associated with this album
+    // 1. First delete associated stickers
     await deleteStickersByAlbumId(albumId);
     
-    // 3. Delete from Supabase
+    // 2. Delete from Supabase first to ensure server-side deletion
     const success = await deleteAlbumFromSupabase(albumId);
     if (!success) {
       console.error('Failed to delete album from Supabase');
@@ -107,14 +99,21 @@ export const deleteAlbum = async (albumId: string): Promise<void> => {
       return;
     }
     
-    // 4. Remove from local array only after Supabase deletion succeeded
+    // 3. Only if Supabase deletion succeeds, remove from local array
+    const albums = getAlbumData();
+    // Use filter to completely remove the album, not just mark as deleted
     const updatedAlbums = albums.filter(album => album.id !== albumId);
     setAlbumData(updatedAlbums);
     
     console.log('Album deleted successfully from both local storage and Supabase');
     
-    // 5. Dispatch an event to notify components about the deletion
+    // 4. Dispatch an event to notify components about the deletion
     window.dispatchEvent(new CustomEvent('albumDeleted', { detail: { albumId } }));
+    
+    toast({
+      title: "האלבום נמחק בהצלחה",
+      description: "האלבום נמחק בהצלחה מהמערכת ומהשרת.",
+    });
     
   } catch (error) {
     console.error('Error deleting album:', error);

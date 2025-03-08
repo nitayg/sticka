@@ -21,6 +21,8 @@ export async function fetchAlbums() {
     description: album.description,
     year: album.year,
     coverImage: album.coverimage,
+    lastModified: album.lastmodified,
+    isDeleted: album.isdeleted || false
   }));
 
   console.log('Adjusted data:', JSON.stringify(adjustedData, null, 2));
@@ -36,6 +38,8 @@ export async function saveAlbum(album: Album) {
     description: album.description,
     year: album.year,
     coverimage: album.coverImage,
+    lastmodified: album.lastModified,
+    isdeleted: album.isDeleted
   };
   console.log('JSON שנשלח:', JSON.stringify(supabaseAlbum, null, 2));
   const { data, error } = await supabase
@@ -51,14 +55,18 @@ export async function saveAlbum(album: Album) {
 
 export async function deleteAlbumFromSupabase(id: string) {
   console.log('Deleting album from Supabase:', id);
+  
+  // Hard delete from Supabase instead of soft delete
   const { error } = await supabase
     .from('albums')
     .delete()
     .eq('id', id);
+    
   if (error) {
-    console.error('Error deleting album:', error);
+    console.error('Error deleting album from Supabase:', error);
     return false;
   }
+  console.log('Album deleted successfully from Supabase.');
   return true;
 }
 
@@ -74,6 +82,8 @@ export async function saveAlbumBatch(albums: Album[]) {
     description: album.description,
     year: album.year,
     coverimage: album.coverImage,
+    lastmodified: album.lastModified,
+    isdeleted: album.isDeleted
   }));
   
   return await saveBatch('albums', adjustedItems);
