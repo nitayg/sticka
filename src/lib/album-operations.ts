@@ -28,6 +28,11 @@ export const getAlbumData = () => {
   return albumsData;
 };
 
+// Function to get all albums - adding this exported function
+export const getAllAlbums = (): Album[] => {
+  return getAlbumData().filter(album => !album.isDeleted);
+};
+
 // Function to add a new album
 export const addAlbum = async (albumData: Omit<Album, 'lastModified'>): Promise<Album> => {
   const album: Album = {

@@ -47,4 +47,3 @@ export {
   syncWithSupabase,
   StorageEvents
 } from './sync';
-

@@ -83,32 +83,37 @@ export const parseCSV = (csvContent: string): Array<any> => {
   
   console.log(`CSV has header: ${isHeader}`);
   
-  // Process as object array if has header
-  if (isHeader) {
-    const headers = firstLine.map(header => 
-      header.replace(/['"]/g, '').trim()
-    );
-    
-    return lines.slice(1).map(line => {
-      const values = parseLine(line);
-      const rowObject: Record<string, any> = {};
-      
-      headers.forEach((header, index) => {
-        if (index < values.length) {
-          const value = values[index].replace(/['"]/g, '').trim();
-          rowObject[header] = value;
-        }
-      });
-      
-      return rowObject;
-    });
-  } 
-  // Process as array of arrays if no header
-  else {
-    return lines.map(line => {
-      return parseLine(line).map(value => 
-        value.replace(/['"]/g, '').trim()
+  try {
+    // Process as object array if has header
+    if (isHeader) {
+      const headers = firstLine.map(header => 
+        header.replace(/['"]/g, '').trim()
       );
-    });
+      
+      return lines.slice(1).map(line => {
+        const values = parseLine(line);
+        const rowObject: Record<string, any> = {};
+        
+        headers.forEach((header, index) => {
+          if (index < values.length) {
+            const value = values[index].replace(/['"]/g, '').trim();
+            rowObject[header] = value;
+          }
+        });
+        
+        return rowObject;
+      });
+    } 
+    // Process as array of arrays if no header
+    else {
+      return lines.map(line => {
+        return parseLine(line).map(value => 
+          value.replace(/['"]/g, '').trim()
+        );
+      });
+    }
+  } catch (error) {
+    console.error("Error parsing CSV:", error);
+    throw new Error("Failed to parse CSV data: " + (error instanceof Error ? error.message : String(error)));
   }
 };

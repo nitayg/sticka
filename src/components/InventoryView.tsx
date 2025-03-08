@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "./Header";
 import StickerIntakeForm from "./StickerIntakeForm";
 import { useInventoryStore } from "@/store/useInventoryStore";
-import { getAllAlbums } from "@/lib/data";
+import { getAllAlbums } from "@/lib/album-operations";
 import { fetchStickersByAlbumId } from "@/lib/queries";
 import { useToast } from "@/components/ui/use-toast";
 import InventoryFilters from "./inventory/InventoryFilters";
@@ -47,7 +47,7 @@ const InventoryView = () => {
   });
   
   useEffect(() => {
-    if (albums.length > 0 && !selectedAlbumId) {
+    if (albums && albums.length > 0 && !selectedAlbumId) {
       // Try to get last selected album from localStorage
       const lastSelectedAlbum = localStorage.getItem('lastSelectedAlbumId');
       if (lastSelectedAlbum && albums.some(album => album.id === lastSelectedAlbum)) {
@@ -127,7 +127,7 @@ const InventoryView = () => {
     );
   }
 
-  if (albums.length === 0) {
+  if (albums && albums.length === 0) {
     return (
       <div className="space-y-3 animate-fade-in">
         <Header 
