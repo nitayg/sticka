@@ -51,6 +51,7 @@ const TeamListItem = ({
           selectedTeam={selectedTeam}
           onTeamSelect={onTeamSelect}
           onEditClick={handleEditClick}
+          onTeamsUpdate={onTeamsUpdate}
         />
       )}
     </div>

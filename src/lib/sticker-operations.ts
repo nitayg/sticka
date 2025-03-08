@@ -1,4 +1,3 @@
-
 import { Sticker } from './types';
 import { v4 as uuidv4 } from 'uuid';
 import { saveToStorage, getFromStorage } from './sync';
