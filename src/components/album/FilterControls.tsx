@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Album, PlusCircle, Edit, Trash2 } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import AlbumGridItem from "../AlbumGridItem"; 
+import AlbumGridItem from "./AlbumGridItem"; // Fixed import path
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import AddAlbumForm from "@/components/add-album-form";
