@@ -1,8 +1,7 @@
-
 import { Album } from './types';
 import { albums as initialAlbums } from './initial-data';
 import { stickerData, setStickerData } from './sticker-operations';
-import { saveToStorage, syncWithSupabase } from './sync-manager';
+import { saveToStorage, syncWithSupabase } from './sync';
 
 // Maintain data state
 let albumData = [...initialAlbums];

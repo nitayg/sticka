@@ -1,4 +1,3 @@
-
 import { Suspense, lazy, useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -7,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/hooks/use-theme";
 import SplashScreen from "@/components/SplashScreen";
 import ManifestUpdater from "@/components/settings/ManifestUpdater";
-import { initializeFromStorage } from "@/lib/sync-manager";
+import { initializeFromStorage } from "@/lib/sync";
 
 // Lazy-load the main Index component
 const Index = lazy(() => import("./pages/Index"));

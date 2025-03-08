@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { isSyncInProgress, getLastSyncTime, StorageEvents } from '@/lib/sync-manager';
+import { isSyncInProgress, getLastSyncTime, StorageEvents } from '@/lib/sync';
 
 const SyncIndicator = () => {
   const [syncing, setSyncing] = useState(isSyncInProgress());

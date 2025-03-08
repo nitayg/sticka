@@ -46,4 +46,5 @@ export {
   initializeFromStorage,
   syncWithSupabase,
   StorageEvents
-} from './sync-manager';
+} from './sync';
+

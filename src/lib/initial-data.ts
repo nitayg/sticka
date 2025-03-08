@@ -1,6 +1,6 @@
 
 import { Album, Sticker, User, ExchangeOffer } from './types';
-import { getFromStorage } from './sync-manager';
+import { getFromStorage } from './sync';
 
 // Initialize data from localStorage or use empty arrays as defaults
 export const albums: Album[] = getFromStorage<Album[]>('albums', []);
