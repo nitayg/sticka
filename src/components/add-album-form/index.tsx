@@ -1,4 +1,3 @@
-
 import { useState, ReactNode } from "react";
 import { Plus } from "lucide-react";
 import { 
@@ -54,7 +53,6 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
     setIsSubmitting(true);
     
     try {
-      // Create album
       const newAlbumId = generateId();
       const newAlbum = {
         id: newAlbumId,
@@ -65,40 +63,37 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
         coverImage: imageUrl,
       };
       
-      // Add album to storage
       await addAlbum(newAlbum);
       
-      // Process CSV data if available
       if (csvContent) {
         try {
-          // Parse CSV content
           const parsedData = parseCSV(csvContent);
           
           if (parsedData && parsedData.length > 0) {
-            // Transform data to ensure it meets the expected format
-            const importData: [number, string, string][] = parsedData.map(row => {
-              // Handle different CSV formats by looking at the row structure
-              if (Array.isArray(row) && row.length >= 3) {
-                // If already in array format with 3+ items
-                const number = parseInt(row[0].toString()) || 0;
-                return [number, row[1].toString() || "", row[2].toString() || ""];
-              } else if (typeof row === 'object' && row !== null) {
-                // If in object format with named properties
-                const number = parseInt((row.number || row.Number || row.num || "0").toString()) || 0;
-                const name = (row.name || row.Name || row.title || "").toString();
-                const team = (row.team || row.Team || row.group || "").toString();
-                return [number, name, team];
-              } else {
-                // Fallback for unexpected formats
-                return [0, "", ""];
-              }
-            }).filter(row => row[0] > 0); // Filter out invalid rows
+            const importData: [number, string, string][] = [];
             
-            // Import the stickers
+            parsedData.forEach(row => {
+              if (Array.isArray(row) && row.length >= 3) {
+                const number = parseInt(row[0]) || 0;
+                const name = row[1] || "";
+                const team = row[2] || "";
+                if (number > 0) {
+                  importData.push([number, name, team]);
+                }
+              } else if (typeof row === 'object' && row !== null) {
+                const numVal = row.number || row.Number || row.num || "0";
+                const number = parseInt(typeof numVal === 'string' ? numVal : String(numVal)) || 0;
+                const name = String(row.name || row.Name || row.title || "");
+                const team = String(row.team || row.Team || row.group || "");
+                if (number > 0) {
+                  importData.push([number, name, team]);
+                }
+              }
+            });
+            
             if (importData.length > 0) {
               const importedStickers = importStickersFromCSV(newAlbumId, importData);
               
-              // Show success toast for imported stickers
               toast({
                 title: "מדבקות יובאו בהצלחה",
                 description: `יובאו ${importedStickers.length} מדבקות לאלבום`,
@@ -115,10 +110,8 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
         }
       }
       
-      // Set the newly created album as the selected album
       handleAlbumChange(newAlbumId);
       
-      // Close the dialog and reset form
       setOpen(false);
       setName("");
       setDescription("");
@@ -127,13 +120,11 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
       setImageUrl("");
       setCsvContent("");
       
-      // Show success toast
       toast({
         title: "אלבום נוסף בהצלחה",
         description: `האלבום "${name}" נוסף בהצלחה`,
       });
       
-      // Call callback if provided
       if (onAlbumAdded) {
         onAlbumAdded();
       }

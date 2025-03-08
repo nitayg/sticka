@@ -1,8 +1,10 @@
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { useToast } from "../ui/use-toast";
+import { Button } from "../ui/button";
+import { AlertCircle, FileText } from "lucide-react";
 
 interface CsvImportFieldProps {
   csvContent: string;
@@ -12,6 +14,8 @@ interface CsvImportFieldProps {
 const CsvImportField = ({ csvContent, setCsvContent }: CsvImportFieldProps) => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [lineCount, setLineCount] = useState<number | null>(null);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -29,6 +33,9 @@ const CsvImportField = ({ csvContent, setCsvContent }: CsvImportFieldProps) => {
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
+        setFileName(null);
+        setLineCount(null);
+        setCsvContent('');
         return;
       }
       
@@ -39,6 +46,9 @@ const CsvImportField = ({ csvContent, setCsvContent }: CsvImportFieldProps) => {
         
         // Quick validation of content
         const lines = content.split('\n').filter(line => line.trim().length > 0);
+        setLineCount(lines.length);
+        setFileName(selectedFile.name);
+        
         if (lines.length === 0) {
           toast({
             title: "קובץ ריק",
@@ -62,16 +72,27 @@ const CsvImportField = ({ csvContent, setCsvContent }: CsvImportFieldProps) => {
           variant: "destructive",
           duration: 3000,
         });
+        setFileName(null);
+        setLineCount(null);
       };
       
       reader.readAsText(selectedFile);
     }
   };
 
+  const clearFile = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    setCsvContent('');
+    setFileName(null);
+    setLineCount(null);
+  };
+
   return (
-    <div className="space-y-2 text-right">
+    <div className="space-y-3 text-right">
       <Label htmlFor="file">העלאת קובץ CSV</Label>
-      <div className="space-y-1">
+      <div className="space-y-2">
         <Input 
           id="file" 
           type="file" 
@@ -84,10 +105,37 @@ const CsvImportField = ({ csvContent, setCsvContent }: CsvImportFieldProps) => {
           פורמט הקובץ: מספר, שם, קבוצה/סדרה בכל שורה. 
           המערכת תזהה באופן אוטומטי שורת כותרת אם קיימת.
         </p>
-        {csvContent && (
-          <p className="text-xs text-green-500 text-right">
-            הקובץ נטען בהצלחה ומוכן לייבוא.
-          </p>
+        
+        {csvContent && fileName && (
+          <div className="bg-muted/50 p-3 rounded-md mt-2">
+            <div className="flex items-center justify-between">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={clearFile}
+                className="h-7 px-2 text-xs"
+              >
+                נקה
+              </Button>
+              <div className="flex items-center text-xs text-muted-foreground gap-1">
+                <FileText className="h-3 w-3" />
+                <span>{fileName}</span>
+              </div>
+            </div>
+            
+            {lineCount && (
+              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                <span>הקובץ מכיל {lineCount} שורות מוכנות לייבוא</span>
+              </p>
+            )}
+          </div>
+        )}
+        
+        {!csvContent && (
+          <div className="text-xs flex items-center gap-1 text-amber-600 mt-2">
+            <AlertCircle className="h-3 w-3" />
+            <span>טרם הועלה קובץ למערכת</span>
+          </div>
         )}
       </div>
     </div>
