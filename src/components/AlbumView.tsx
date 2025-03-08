@@ -100,7 +100,15 @@ const AlbumView = () => {
       {/* Event handling component - only render if an album is selected */}
       {selectedAlbumData && <AlbumEventHandler album={selectedAlbumData} />}
       
-      {/* Album header with title and actions */}
+      {/* Album selection grid (Facebook Stories style) */}
+      <FilterControls
+        albums={albums}
+        selectedAlbum={selectedAlbumId}
+        handleAlbumChange={handleAlbumChange}
+        onTeamsManage={handleTeamsManagement}
+      />
+      
+      {/* Album header with title and actions - now BELOW the grid */}
       <AlbumHeader 
         albums={albums}
         selectedAlbum={selectedAlbumId}
@@ -110,14 +118,6 @@ const AlbumView = () => {
         setShowImages={setShowImages}
         onRefresh={handleRefresh}
         onImportComplete={handleRefresh}
-      />
-      
-      {/* Album selection and filters */}
-      <FilterControls
-        albums={albums}
-        selectedAlbum={selectedAlbumId}
-        handleAlbumChange={handleAlbumChange}
-        onTeamsManage={handleTeamsManagement}
       />
       
       {/* Tab navigation and range/team selection */}

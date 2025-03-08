@@ -48,7 +48,7 @@
 }
 
 .fb-story-item {
-  @apply aspect-square rounded-lg overflow-hidden relative cursor-pointer border border-gray-800 transition-transform;
+  @apply aspect-auto rounded-lg overflow-hidden relative cursor-pointer border border-gray-800 transition-transform;
 }
 
 .fb-story-item:hover {
@@ -104,4 +104,14 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Hide scrollbar but allow scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

@@ -166,14 +166,23 @@ const AlbumHeaderActions = ({
                     האלבום וכל המדבקות שלו יועברו לסל המיחזור.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter className="flex-row-reverse justify-start">
+                <AlertDialogFooter className="flex space-x-2 justify-end">
+                  <AlertDialogCancel className="p-0 m-0">
+                    <Button variant="outline" size="icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                        <path d="M18 6 6 18"></path>
+                        <path d="m6 6 12 12"></path>
+                      </svg>
+                    </Button>
+                  </AlertDialogCancel>
                   <AlertDialogAction 
                     onClick={handleDeleteAlbum}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    className="p-0 m-0"
                   >
-                    העבר לסל המיחזור
+                    <Button variant="destructive" size="icon">
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
                   </AlertDialogAction>
-                  <AlertDialogCancel>ביטול</AlertDialogCancel>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

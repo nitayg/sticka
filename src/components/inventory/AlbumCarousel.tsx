@@ -15,19 +15,19 @@ const AlbumCarousel = ({ albums, selectedAlbumId, onAlbumChange }: AlbumCarousel
   const carouselRef = useRef<HTMLDivElement>(null);
   const isRtl = document.dir === 'rtl' || document.documentElement.lang === 'he';
   
-  // בדוק את כיוון האתר ואת הסימון של RTL
+  // Check direction
   useEffect(() => {
     if (carouselRef.current) {
       carouselRef.current.dir = isRtl ? 'rtl' : 'ltr';
     }
   }, [isRtl]);
   
-  // גלול לאלבום הנבחר כאשר הוא משתנה
+  // Scroll to selected album when it changes
   useEffect(() => {
     if (carouselRef.current && selectedAlbumId) {
       const selectedElement = carouselRef.current.querySelector(`[data-album-id="${selectedAlbumId}"]`);
       if (selectedElement) {
-        // חשב את המיקום לגלילה
+        // Calculate scroll position
         const containerWidth = carouselRef.current.offsetWidth;
         const elementOffset = isRtl 
           ? carouselRef.current.scrollWidth - selectedElement.getBoundingClientRect().right + carouselRef.current.getBoundingClientRect().right - containerWidth
@@ -42,7 +42,7 @@ const AlbumCarousel = ({ albums, selectedAlbumId, onAlbumChange }: AlbumCarousel
     }
   }, [selectedAlbumId, isRtl]);
 
-  // פונקציות גלילה
+  // Scroll functions
   const scrollCarousel = (direction: 'left' | 'right') => {
     if (carouselRef.current) {
       const scrollAmount = carouselRef.current.clientWidth * 0.75;
@@ -63,7 +63,7 @@ const AlbumCarousel = ({ albums, selectedAlbumId, onAlbumChange }: AlbumCarousel
     scrollCarousel(isRtl ? 'left' : 'right');
   };
 
-  // בדוק אם צריך להציג את החיצים
+  // Check if arrows should be shown
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(false);
 
@@ -73,7 +73,7 @@ const AlbumCarousel = ({ albums, selectedAlbumId, onAlbumChange }: AlbumCarousel
         const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
         const maxScrollLeft = scrollWidth - clientWidth;
         
-        // עדכן את מצב החיצים בהתאם ל-RTL
+        // Update arrow state based on RTL
         if (isRtl) {
           setShowLeftArrow(Math.abs(scrollLeft) < maxScrollLeft - 10);
           setShowRightArrow(scrollLeft < -10);
@@ -84,7 +84,6 @@ const AlbumCarousel = ({ albums, selectedAlbumId, onAlbumChange }: AlbumCarousel
       }
     };
 
-    // בדוק בעת הטעינה ובכל פעם שיש שינוי גלילה
     checkScrollable();
     const carousel = carouselRef.current;
     if (carousel) {
@@ -100,12 +99,12 @@ const AlbumCarousel = ({ albums, selectedAlbumId, onAlbumChange }: AlbumCarousel
     };
   }, [isRtl]);
 
-  // רנדר את האלבומים
+  // Render albums in Facebook stories style
   return (
-    <div className="relative">
+    <div className="relative mt-2">
       <div 
         ref={carouselRef}
-        className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-3 py-2 px-1"
+        className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-2 py-1 px-1"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {albums.map((album) => (
@@ -113,29 +112,27 @@ const AlbumCarousel = ({ albums, selectedAlbumId, onAlbumChange }: AlbumCarousel
             key={album.id}
             data-album-id={album.id}
             className={cn(
-              "min-w-[150px] cursor-pointer rounded-lg border p-3 transition-all duration-200 ease-in-out snap-start hover:bg-accent/50",
-              selectedAlbumId === album.id ? "bg-accent shadow-md" : "bg-card"
+              "fb-story-item min-w-[90px] h-[160px]",
+              selectedAlbumId === album.id ? "border-2 border-blue-500" : ""
             )}
             onClick={() => onAlbumChange(album.id)}
           >
-            <div className="text-center space-y-2">
-              {album.coverImage && (
-                <div className="relative w-full h-20 overflow-hidden rounded">
-                  <img 
-                    src={album.coverImage} 
-                    alt={album.name} 
-                    className="object-cover w-full h-full hover:scale-110 transition-transform duration-300"
-                  />
-                </div>
-              )}
-              <div className="font-medium truncate">{album.name}</div>
-              <div className="text-xs text-muted-foreground">{album.totalStickers} מדבקות</div>
-            </div>
+            {album.coverImage ? (
+              <img 
+                src={album.coverImage} 
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="h-full w-full bg-gray-800 flex items-center justify-center">
+                <span className="text-3xl text-gray-500">?</span>
+              </div>
+            )}
           </div>
         ))}
       </div>
       
-      {/* כפתורי ניווט */}
+      {/* Navigation buttons */}
       {showLeftArrow && (
         <Button
           size="icon"

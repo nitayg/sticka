@@ -29,9 +29,8 @@ const SyncIndicator = () => {
   }
   
   return (
-    <div className="fixed top-20 right-4 p-3 flex items-center rounded-md bg-background border z-50">
-      <Loader2 className="animate-spin h-4 w-4 ml-2" />
-      <span className="text-sm font-semibold">מסנכרן...</span>
+    <div className="fixed top-16 left-4 p-2 flex items-center justify-center rounded-full bg-blue-500 h-8 w-8 z-50">
+      <Loader2 className="animate-spin h-4 w-4 text-white" />
     </div>
   );
 };
