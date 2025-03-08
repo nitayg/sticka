@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "./Header";
@@ -11,6 +12,8 @@ import InventoryStats from "./inventory/InventoryStats";
 import InventoryTitle from "./inventory/InventoryTitle";
 import InventoryHeaderActions from "./inventory/InventoryHeaderActions";
 import InventoryContent from "./inventory/InventoryContent";
+import EmptyState from "./EmptyState";
+import { Album } from "lucide-react";
 
 const InventoryView = () => {
   const {
@@ -32,12 +35,12 @@ const InventoryView = () => {
   const { toast } = useToast();
   const [reportFormat, setReportFormat] = useState<'numbers' | 'names'>('numbers');
   
-  const { data: albums = [] } = useQuery({
+  const { data: albums = [], isLoading: isAlbumsLoading } = useQuery({
     queryKey: ['albums'],
     queryFn: getAllAlbums
   });
   
-  const { data: albumStickers = [] } = useQuery({
+  const { data: albumStickers = [], isLoading: isStickersLoading } = useQuery({
     queryKey: ['stickers', selectedAlbumId],
     queryFn: () => fetchStickersByAlbumId(selectedAlbumId),
     enabled: !!selectedAlbumId,
@@ -45,9 +48,22 @@ const InventoryView = () => {
   
   useEffect(() => {
     if (albums.length > 0 && !selectedAlbumId) {
-      handleAlbumChange(albums[0].id);
+      // Try to get last selected album from localStorage
+      const lastSelectedAlbum = localStorage.getItem('lastSelectedAlbumId');
+      if (lastSelectedAlbum && albums.some(album => album.id === lastSelectedAlbum)) {
+        handleAlbumChange(lastSelectedAlbum);
+      } else {
+        handleAlbumChange(albums[0].id);
+      }
     }
   }, [albums, selectedAlbumId, handleAlbumChange]);
+  
+  // Store selected album ID when it changes
+  useEffect(() => {
+    if (selectedAlbumId) {
+      localStorage.setItem('lastSelectedAlbumId', selectedAlbumId);
+    }
+  }, [selectedAlbumId]);
   
   const filteredStickers = albumStickers.filter(sticker => {
     if (activeTab === "all") return true;
@@ -96,6 +112,39 @@ const InventoryView = () => {
       });
     }
   };
+
+  if (isAlbumsLoading) {
+    return (
+      <div className="space-y-3 animate-fade-in">
+        <Header 
+          title="מלאי" 
+          subtitle="ניהול אוסף המדבקות שלך"
+        />
+        <div className="flex items-center justify-center p-12">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (albums.length === 0) {
+    return (
+      <div className="space-y-3 animate-fade-in">
+        <Header 
+          title="מלאי" 
+          subtitle="ניהול אוסף המדבקות שלך"
+        />
+        <EmptyState
+          icon={<Album className="h-12 w-12" />}
+          title="אין אלבומים פעילים"
+          description="הוסף אלבום חדש כדי להתחיל"
+          action={
+            <AddAlbumForm onAlbumAdded={handleRefresh} />
+          }
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3 animate-fade-in">
@@ -148,5 +197,8 @@ const InventoryView = () => {
     </div>
   );
 };
+
+// Import AddAlbumForm here to avoid circular imports
+import AddAlbumForm from "./add-album-form";
 
 export default InventoryView;

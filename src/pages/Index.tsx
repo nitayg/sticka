@@ -1,6 +1,6 @@
 
-import { lazy, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Layout from "@/components/Layout";
 
 // Lazy-loaded components
@@ -20,10 +20,23 @@ const PageLoadingFallback = () => (
   </div>
 );
 
+// Route change tracker for persisting album selection
+const RouteChangeTracker = () => {
+  const location = useLocation();
+  
+  useEffect(() => {
+    // When route changes, store the current location
+    localStorage.setItem('lastRoute', location.pathname);
+  }, [location]);
+  
+  return null;
+};
+
 const Index = () => {
   return (
     <Router>
       <Layout>
+        <RouteChangeTracker />
         <Suspense fallback={<PageLoadingFallback />}>
           <Routes>
             <Route path="/" element={<AlbumView />} />

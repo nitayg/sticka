@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Download, Upload, Trash2, Recycle, RefreshCw } from "lucide-react";
 import { Button } from "../ui/button";
@@ -21,6 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface AlbumHeaderActionsProps {
   selectedAlbum: string;
@@ -106,23 +108,39 @@ const AlbumHeaderActions = ({
       />
       
       <div className="rtl:space-x-reverse space-x-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsRecycleBinOpen(true)}
-        >
-          <Recycle className="h-4 w-4 ml-1 rtl:mr-0 rtl:ml-1" />
-          סל מיחזור
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsRecycleBinOpen(true)}
+              >
+                <Recycle className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              סל מיחזור
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         
         {selectedAlbum && (
           <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm">
-                <Trash2 className="h-4 w-4 ml-1 rtl:mr-0 rtl:ml-1" />
-                מחק אלבום
-              </Button>
-            </AlertDialogTrigger>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="icon">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  מחק אלבום
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <AlertDialogContent dir="rtl">
               <AlertDialogHeader>
                 <AlertDialogTitle>מחיקת אלבום</AlertDialogTitle>

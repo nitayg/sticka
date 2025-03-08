@@ -1,6 +1,6 @@
 
 import { ReactNode, useState, useEffect } from "react";
-import { Album, Image, List, ArrowLeftRight, Moon, Sun, X } from "lucide-react";
+import { Album, Image, List, ArrowLeftRight, Moon, Sun, X, ChartBar } from "lucide-react";
 import DesktopSidebar from "./DesktopSidebar";
 import MobileHeader from "./MobileHeader";
 import MobileMenu from "./MobileMenu";
@@ -8,6 +8,12 @@ import MobileNavigation from "./MobileNavigation";
 import { NavigationItem } from "@/lib/types";
 import { useTheme } from "@/hooks/use-theme";
 import { Button } from "./ui/button";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import StatsPanel from "./StatsPanel";
 
 interface LayoutProps {
   children: ReactNode;
@@ -72,7 +78,7 @@ const Layout = ({ children }: LayoutProps) => {
         />
 
         {/* Main Content - with improved padding and scrolling */}
-        <main className={`flex-1 md:pt-0 pt-12 p-3 sm:p-5 lg:py-6 lg:px-8 overflow-y-auto overflow-x-hidden pb-16 md:pb-6 transition-all duration-300 ${sidebarCollapsed ? 'lg:pr-20' : 'lg:pr-8'}`}>
+        <main className={`flex-1 md:pt-0 pt-12 p-3 sm:p-5 lg:py-6 lg:px-8 overflow-y-auto overflow-x-hidden pb-20 md:pb-6 transition-all duration-300 ${sidebarCollapsed ? 'lg:pr-20' : 'lg:pr-8'}`}>
           <div className="max-w-6xl mx-auto w-full">
             <div className="hidden lg:flex justify-between items-center mb-4">
               <Button 
@@ -85,18 +91,31 @@ const Layout = ({ children }: LayoutProps) => {
                 <span className="sr-only">Toggle Sidebar</span>
               </Button>
               
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={toggleTheme} 
-                className="ml-auto"
-              >
-                {theme === 'dark' ? 
-                  <Sun className="h-4 w-4" /> : 
-                  <Moon className="h-4 w-4" />
-                }
-                <span className="sr-only">Toggle Theme</span>
-              </Button>
+              <div className="flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <ChartBar className="h-4 w-4" />
+                      <span className="sr-only">סטטיסטיקות</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-0" align="end">
+                    <StatsPanel albumId={currentAlbumId} />
+                  </PopoverContent>
+                </Popover>
+                
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={toggleTheme}
+                >
+                  {theme === 'dark' ? 
+                    <Sun className="h-4 w-4" /> : 
+                    <Moon className="h-4 w-4" />
+                  }
+                  <span className="sr-only">Toggle Theme</span>
+                </Button>
+              </div>
             </div>
             
             {children}

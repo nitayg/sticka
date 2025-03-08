@@ -1,3 +1,4 @@
+
 import { Suspense, lazy, useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -85,7 +86,7 @@ const App = () => {
     <ThemeProvider defaultTheme="light" storageKey="sticker-album-theme">
       <QueryClientProvider client={queryClient}>
         <TooltipProvider delayDuration={300}>
-          {showSplash && <SplashScreen onComplete={handleSplashComplete} minDisplayTime={1800} />}
+          {showSplash && <SplashScreen onComplete={handleSplashComplete} minDisplayTime={2000} />}
           <Toaster />
           <Sonner position="top-center" closeButton />
           <Suspense fallback={<LoadingFallback />}>

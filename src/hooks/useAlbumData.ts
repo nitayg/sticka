@@ -20,17 +20,20 @@ export const useAlbumData = ({
   showAllAlbumStickers
 }: UseAlbumDataProps) => {
   // Fetch albums
-  const { data: albums = [] } = useQuery({
+  const { data: albums = [], isLoading: isAlbumsLoading } = useQuery({
     queryKey: ['albums', refreshKey],
     queryFn: fetchAllAlbums
   });
   
   // Fetch stickers for the selected album
-  const { data: stickers = [] } = useQuery({
+  const { data: stickers = [], isLoading: isStickersLoading } = useQuery({
     queryKey: ['stickers', selectedAlbumId, refreshKey],
     queryFn: () => selectedAlbumId ? getStickersByAlbumId(selectedAlbumId) : [],
     enabled: !!selectedAlbumId
   });
+
+  // Is loading any data
+  const isLoading = isAlbumsLoading || (selectedAlbumId && isStickersLoading);
 
   // Create transaction map from exchange offers
   const transactionMap = useMemo(() => {
@@ -72,7 +75,22 @@ export const useAlbumData = ({
         teamSet.add(sticker.team);
       }
     });
-    return Array.from(teamSet).sort();
+    
+    // Sort by sticker order, not alphabetically
+    if (stickers.length > 0) {
+      const teamOrder: Record<string, number> = {};
+      stickers.forEach((sticker, index) => {
+        if (sticker.team && !(sticker.team in teamOrder)) {
+          teamOrder[sticker.team] = index;
+        }
+      });
+      
+      return Array.from(teamSet).sort((a, b) => {
+        return (teamOrder[a] || 9999) - (teamOrder[b] || 9999);
+      });
+    }
+    
+    return Array.from(teamSet);
   }, [stickers, activeTab, showAllAlbumStickers]);
 
   // Generate number ranges from stickers
@@ -112,6 +130,7 @@ export const useAlbumData = ({
     transactionMap,
     teams,
     numberRanges,
-    teamLogos
+    teamLogos,
+    isLoading
   };
 };

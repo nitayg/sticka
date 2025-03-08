@@ -13,7 +13,6 @@ import ImageUploadFile from "./sticker-details/ImageUploadFile";
 import StickerActions from "./sticker-details/StickerActions";
 import StickerImage from "./sticker-details/StickerImage";
 import { useInventoryStore } from "@/store/useInventoryStore";
-import { TooltipProvider } from "./ui/tooltip";
 
 interface StickerDetailsDialogProps {
   sticker: Sticker | null;
@@ -105,6 +104,7 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
                   inTransaction={!!transaction}
                   transactionColor={transaction?.color}
                   transactionPerson={transaction?.person}
+                  isRecentlyAdded={false}
                 />
               </div>
               

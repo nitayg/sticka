@@ -8,7 +8,7 @@ interface SplashScreenProps {
   minDisplayTime?: number; // Added optional prop for minimum display time
 }
 
-const SplashScreen = ({ onComplete, minDisplayTime = 0 }: SplashScreenProps) => {
+const SplashScreen = ({ onComplete, minDisplayTime = 2000 }: SplashScreenProps) => {
   const [progress, setProgress] = useState(0);
   const [isShowing, setIsShowing] = useState(true);
 

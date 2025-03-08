@@ -87,11 +87,12 @@ const StickerCard = ({
           inTransaction={!!transaction}
           transactionColor={transaction?.color}
           transactionPerson={transaction?.person}
+          isRecentlyAdded={isRecentlyAdded}
         />
       </div>
       
       <div className={cn(
-        compact ? "px-2 py-1.5 space-y-0.5" : "px-2 py-2 space-y-1",
+        compact ? "px-2 pt-1 pb-2 space-y-0.5" : "px-2 py-2 space-y-1",
         "dark:text-gray-200"
       )}>
         <div className="space-y-0.5">

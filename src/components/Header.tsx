@@ -11,7 +11,7 @@ interface HeaderProps {
 const Header = ({ title, subtitle, action, className }: HeaderProps) => {
   return (
     <div className={cn(
-      "flex flex-col sm:flex-row sm:items-center justify-between space-y-1 sm:space-y-0 pb-3",
+      "flex flex-col sm:flex-row sm:items-center justify-between space-y-1 sm:space-y-0 pb-3 sticky top-0 bg-background z-10",
       "animate-fade-up",
       className
     )}>
