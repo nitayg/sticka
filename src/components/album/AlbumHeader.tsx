@@ -27,8 +27,8 @@ const AlbumHeader = ({
   const selectedAlbumData = albums.find(album => album.id === selectedAlbum);
   
   return (
-    <div className="pb-2 mb-1">
-      <div className="flex flex-col">
+    <div className="py-2 mb-1">
+      <div className="flex items-center justify-between">
         <AlbumTitle selectedAlbumData={selectedAlbumData} />
         
         <AlbumHeaderActions

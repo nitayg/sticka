@@ -1,6 +1,6 @@
 
 import { ReactNode, useState, useEffect } from "react";
-import { Album, List, ArrowLeftRight, ShoppingBag, Bell, Home, Menu } from "lucide-react";
+import { List, ArrowLeftRight, Home } from "lucide-react";
 import MobileHeader from "./MobileHeader";
 import MobileMenu from "./MobileMenu";
 import { NavigationItem } from "@/lib/types";
@@ -14,6 +14,8 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentAlbumId, setCurrentAlbumId] = useState<string | undefined>(undefined);
+  const [showFooter, setShowFooter] = useState(true);
+  const [lastScrollPosition, setLastScrollPosition] = useState(0);
   const { theme } = useTheme();
 
   // Listen for album changes from children components
@@ -32,12 +34,30 @@ const Layout = ({ children }: LayoutProps) => {
     };
   }, []);
 
+  // Handle scroll for hiding footer
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentPosition = window.scrollY;
+      const isScrollingDown = currentPosition > lastScrollPosition;
+      
+      // Show/hide footer based on scroll direction
+      if (isScrollingDown && currentPosition > 50) {
+        setShowFooter(false);
+      } else {
+        setShowFooter(true);
+      }
+      
+      setLastScrollPosition(currentPosition);
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollPosition]);
+
   const navigation: NavigationItem[] = [
     { name: "בית", href: "/", icon: Home },
     { name: "מלאי", href: "/inventory", icon: List },
-    { name: "עסקאות", href: "/exchange", icon: ArrowLeftRight },
-    { name: "חנות", href: "/scan", icon: ShoppingBag },
-    { name: "התראות", href: "#", icon: Bell },
+    { name: "עסקאות", href: "/exchange", icon: ArrowLeftRight }
   ];
 
   return (
@@ -54,15 +74,15 @@ const Layout = ({ children }: LayoutProps) => {
 
       <div className="flex flex-1">
         {/* Main Content - with improved padding and scrolling */}
-        <main className="flex-1 pt-14 pb-24 overflow-y-auto overflow-x-hidden w-full">
+        <main className="flex-1 pt-2 pb-24 overflow-y-auto overflow-x-hidden w-full">
           <div className="max-w-4xl mx-auto px-1">
             {children}
           </div>
         </main>
       </div>
 
-      {/* Facebook-style footer navigation with more bottom padding */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-black text-white border-t border-gray-800">
+      {/* Facebook-style footer navigation with transition */}
+      <div className={`fixed bottom-0 left-0 right-0 z-50 bg-black text-white border-t border-gray-800 transition-transform duration-300 ${showFooter ? 'translate-y-0' : 'translate-y-full'}`}>
         <div className="w-full flex justify-between items-center px-2 pt-2 pb-8">
           {navigation.map((item, index) => (
             <a

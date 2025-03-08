@@ -5,6 +5,7 @@ import { useTheme } from "@/hooks/use-theme";
 import SettingsButton from "./settings/SettingsButton";
 import ViewModeToggle from "./ViewModeToggle";
 import { useAlbumStore } from "@/store/useAlbumStore";
+import SyncIndicator from "./SyncIndicator";
 
 interface MobileHeaderProps {
   isMenuOpen: boolean;
@@ -20,7 +21,7 @@ const MobileHeader = ({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) => {
   };
 
   return (
-    <div className="fixed top-0 inset-x-0 h-14 bg-background z-50 border-b border-gray-800">
+    <div className="sticky top-0 inset-x-0 h-14 bg-background z-50 border-b border-gray-800">
       <div className="flex h-full items-center px-4 justify-between">
         {/* Left side - Logo */}
         <div className="flex items-center">
@@ -34,6 +35,7 @@ const MobileHeader = ({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) => {
         
         {/* Right side - Action buttons */}
         <div className="flex items-center space-x-1 rtl:space-x-reverse">
+          <SyncIndicator />
           <Button
             variant="ghost"
             size="icon"
