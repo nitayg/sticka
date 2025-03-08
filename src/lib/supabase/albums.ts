@@ -56,7 +56,7 @@ export async function saveAlbum(album: Album) {
 export async function deleteAlbumFromSupabase(id: string) {
   console.log('Deleting album from Supabase:', id);
   
-  // Hard delete from Supabase instead of soft delete
+  // Hard delete from Supabase
   const { error } = await supabase
     .from('albums')
     .delete()
@@ -66,6 +66,18 @@ export async function deleteAlbumFromSupabase(id: string) {
     console.error('Error deleting album from Supabase:', error);
     return false;
   }
+  
+  // Verify deletion was successful by trying to fetch the album
+  const { data } = await supabase
+    .from('albums')
+    .select('*')
+    .eq('id', id);
+    
+  if (data && data.length > 0) {
+    console.error('Album still exists after deletion attempt', data);
+    return false;
+  }
+  
   console.log('Album deleted successfully from Supabase.');
   return true;
 }

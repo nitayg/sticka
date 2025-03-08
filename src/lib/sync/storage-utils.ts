@@ -1,4 +1,3 @@
-
 import { StorageEvents } from './constants';
 
 // Filter out soft-deleted items for display
@@ -10,69 +9,70 @@ export const filterDeleted = <T>(items: T[]): T[] => {
   });
 };
 
-// Save data to localStorage and optionally Supabase
+// Save data directly to Supabase without using localStorage
 export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void => {
   try {
-    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-      console.warn('Storage not available - running in a non-browser environment');
-      return;
-    }
+    console.log(`Saving ${Array.isArray(data) ? data.length : 1} item(s) to ${key} in cloud`);
     
-    console.log(`Saving ${Array.isArray(data) ? data.length : 1} item(s) to ${key}`);
-    
-    const jsonData = JSON.stringify(data);
-    localStorage.setItem(key, jsonData);
-    
-    // Sync to Supabase if required
+    // Sync to Supabase always
     if (syncToCloud && isConnected) {
       console.log(`Syncing ${key} to Supabase`);
       sendToSupabase(key, data);
       
       // Trigger a sync-start event to show indicator
-      window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_START));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_START));
+      }
     }
     
     // Dispatch a custom event to notify other components
-    const eventName = key === 'albums' 
-      ? StorageEvents.ALBUMS 
-      : key === 'stickers'
-        ? StorageEvents.STICKERS
-        : key === 'users'
-          ? StorageEvents.USERS
-          : StorageEvents.EXCHANGE_OFFERS;
-    
-    window.dispatchEvent(new CustomEvent(eventName, { detail: data }));
+    if (typeof window !== 'undefined') {
+      const eventName = key === 'albums' 
+        ? StorageEvents.ALBUMS 
+        : key === 'stickers'
+          ? StorageEvents.STICKERS
+          : key === 'users'
+            ? StorageEvents.USERS
+            : StorageEvents.EXCHANGE_OFFERS;
+      
+      window.dispatchEvent(new CustomEvent(eventName, { detail: data }));
+    }
   } catch (error) {
     console.error(`Error saving ${key} to storage:`, error);
   }
 };
 
-// Get data from localStorage with error handling
+// In-memory storage for data when localStorage is not used
+const memoryStorage: Record<string, any> = {};
+
+// Get data from in-memory storage instead of localStorage
 export const getFromStorage = <T>(key: string, defaultValue: T, includeDeleted = false): T => {
   try {
-    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-      console.warn('Storage not available - running in a non-browser environment');
-      return defaultValue;
+    // Return from memory storage if exists
+    if (memoryStorage[key]) {
+      const data = memoryStorage[key] as T;
+      
+      // If we're getting albums or other data that might have soft-deleted items,
+      // filter them out for UI purposes unless explicitly requested with includeDeleted
+      if (!includeDeleted && Array.isArray(data) && key !== 'recycleBin') {
+        // Cast to any to check if items have isDeleted property
+        const dataArray = data as any[];
+        return filterDeleted(dataArray) as unknown as T;
+      }
+      
+      return data;
     }
     
-    const storedData = localStorage.getItem(key);
-    if (!storedData) return defaultValue;
-    
-    const parsedData = JSON.parse(storedData) as T;
-    
-    // If we're getting albums or other data that might have soft-deleted items,
-    // filter them out for UI purposes unless explicitly requested with includeDeleted
-    if (!includeDeleted && Array.isArray(parsedData) && key !== 'recycleBin') {
-      // Cast to any to check if items have isDeleted property
-      const dataArray = parsedData as any[];
-      return filterDeleted(dataArray) as unknown as T;
-    }
-    
-    return parsedData;
+    return defaultValue;
   } catch (error) {
     console.error(`Error getting ${key} from storage:`, error);
     return defaultValue;
   }
+};
+
+// Set data to in-memory storage
+export const setMemoryStorage = <T>(key: string, data: T): void => {
+  memoryStorage[key] = data;
 };
 
 // Track connection state
@@ -99,6 +99,9 @@ import { Album, Sticker, User, ExchangeOffer } from '../types';
 export const sendToSupabase = async <T>(key: string, data: T): Promise<void> => {
   if (Array.isArray(data)) {
     console.log(`Sending ${data.length} items to Supabase for key: ${key}`);
+    
+    // Store data in memory storage
+    setMemoryStorage(key, data);
     
     // Save the data to Supabase based on the key
     try {

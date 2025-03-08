@@ -1,5 +1,6 @@
+
 import { StorageEvents } from './constants';
-import { getFromStorage, saveToStorage, setIsConnected, getIsConnected } from './storage-utils';
+import { getFromStorage, saveToStorage, setIsConnected, getIsConnected, setMemoryStorage } from './storage-utils';
 import { mergeData } from './merge-utils';
 import { setupRealtimeSubscriptions, reconnectRealtimeChannel } from './realtime-subscriptions';
 import { 
@@ -20,14 +21,14 @@ let syncInProgress = false;
 let pendingSync = false;
 let realtimeChannel: ReturnType<typeof setupRealtimeSubscriptions> | null = null;
 
-// Initialize data from localStorage and Supabase
+// Initialize data directly from Supabase
 export const initializeFromStorage = async () => {
   try {
-    console.log('Initializing data from storage and Supabase...');
+    console.log('Initializing data from Supabase...');
     
     // Check if we're in a browser environment
-    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-      console.warn('Storage not available - running in a non-browser environment');
+    if (typeof window === 'undefined') {
+      console.warn('Running in a non-browser environment');
       return;
     }
 
@@ -57,38 +58,6 @@ export const initializeFromStorage = async () => {
     
     // Listen for Supabase real-time updates
     realtimeChannel = setupRealtimeSubscriptions();
-
-    // Handle storage events from other tabs/windows
-    window.addEventListener('storage', (event) => {
-      if (!event.key) return;
-      
-      switch(event.key) {
-        case 'albums':
-          if (event.newValue) {
-            const newAlbums = JSON.parse(event.newValue);
-            window.dispatchEvent(new CustomEvent(StorageEvents.ALBUMS, { detail: newAlbums }));
-          }
-          break;
-        case 'stickers':
-          if (event.newValue) {
-            const newStickers = JSON.parse(event.newValue);
-            window.dispatchEvent(new CustomEvent(StorageEvents.STICKERS, { detail: newStickers }));
-          }
-          break;
-        case 'users':
-          if (event.newValue) {
-            const newUsers = JSON.parse(event.newValue);
-            window.dispatchEvent(new CustomEvent(StorageEvents.USERS, { detail: newUsers }));
-          }
-          break;
-        case 'exchangeOffers':
-          if (event.newValue) {
-            const newOffers = JSON.parse(event.newValue);
-            window.dispatchEvent(new CustomEvent(StorageEvents.EXCHANGE_OFFERS, { detail: newOffers }));
-          }
-          break;
-      }
-    });
     
     console.log('Storage initialization complete');
   } catch (error) {
@@ -96,7 +65,7 @@ export const initializeFromStorage = async () => {
   }
 };
 
-// Sync local data with Supabase - only triggered by explicit actions, not automatically
+// Sync data directly with Supabase - only get data from cloud, not from local storage
 export const syncWithSupabase = async (isInitialSync = false) => {
   if (syncInProgress) {
     pendingSync = true;
@@ -119,78 +88,29 @@ export const syncWithSupabase = async (isInitialSync = false) => {
       fetchExchangeOffers()
     ]);
 
-    // Get local data (including deleted items)
-    const localAlbums = getFromStorage<Album[]>('albums', [], true);
-    const localStickers = getFromStorage<Sticker[]>('stickers', [], true);
-    const localUsers = getFromStorage<User[]>('users', [], true);
-    const localExchangeOffers = getFromStorage<ExchangeOffer[]>('exchangeOffers', [], true);
+    // Store fetched data directly in memory (no localStorage)
+    if (albumsData) {
+      setMemoryStorage('albums', albumsData);
+      // Dispatch event to notify components
+      window.dispatchEvent(new CustomEvent(StorageEvents.ALBUMS, { detail: albumsData }));
+    }
     
-    // Merge and save data, respecting deletions and modifications
-    if (albumsData && albumsData.length > 0) {
-      // Filter out any local albums that have been deleted
-      const supabaseAlbumIds = albumsData.map(album => album.id);
-      
-      // Keep only local albums that still exist on the server or ones that haven't been synchronized yet
-      // Filter out locally deleted albums
-      const filteredLocalAlbums = localAlbums.filter(album => 
-        !album.isDeleted && 
-        (supabaseAlbumIds.includes(album.id) || !album.lastModified)
-      );
-      
-      const mergedAlbums = mergeData(filteredLocalAlbums, albumsData);
-      saveToStorage('albums', mergedAlbums, false);
-      
-      // Make sure to upload all albums back to Supabase
-      await saveAlbumBatch(mergedAlbums.filter(album => !album.isDeleted));
-    } else if (isInitialSync && localAlbums.length > 0) {
-      console.log('Uploading local albums to Supabase');
-      // Only upload non-deleted albums
-      await saveAlbumBatch(localAlbums.filter(album => !album.isDeleted));
+    if (stickersData) {
+      setMemoryStorage('stickers', stickersData);
+      // Dispatch event to notify components
+      window.dispatchEvent(new CustomEvent(StorageEvents.STICKERS, { detail: stickersData }));
     }
-
-    if (stickersData && stickersData.length > 0) {
-      // Get list of deleted album IDs
-      const deletedAlbumIds = [...localAlbums, ...(albumsData || [])]
-        .filter(album => album.isDeleted)
-        .map(album => album.id);
-      
-      // Mark stickers as deleted if their album is deleted
-      const updatedLocalStickers = localStickers.map(sticker => 
-        sticker.albumId && deletedAlbumIds.includes(sticker.albumId) 
-          ? { ...sticker, isDeleted: true } 
-          : sticker
-      );
-      
-      const mergedStickers = mergeData(updatedLocalStickers, stickersData);
-      saveToStorage('stickers', mergedStickers, false);
-      
-      // Make sure to upload all stickers (including deleted ones) back to Supabase
-      await saveStickerBatch(mergedStickers);
-    } else if (isInitialSync && localStickers.length > 0) {
-      console.log('Uploading local stickers to Supabase');
-      await saveStickerBatch(localStickers);
+    
+    if (usersData) {
+      setMemoryStorage('users', usersData);
+      // Dispatch event to notify components
+      window.dispatchEvent(new CustomEvent(StorageEvents.USERS, { detail: usersData }));
     }
-
-    if (usersData && usersData.length > 0) {
-      const mergedUsers = mergeData(localUsers, usersData);
-      saveToStorage('users', mergedUsers, false);
-      
-      // Make sure to upload all users (including deleted ones) back to Supabase
-      await saveUserBatch(mergedUsers);
-    } else if (isInitialSync && localUsers.length > 0) {
-      console.log('Uploading local users to Supabase');
-      await saveUserBatch(localUsers);
-    }
-
-    if (exchangeOffersData && exchangeOffersData.length > 0) {
-      const mergedExchangeOffers = mergeData(localExchangeOffers, exchangeOffersData);
-      saveToStorage('exchangeOffers', mergedExchangeOffers, false);
-      
-      // Make sure to upload all exchange offers (including deleted ones) back to Supabase
-      await saveExchangeOfferBatch(mergedExchangeOffers);
-    } else if (isInitialSync && localExchangeOffers.length > 0) {
-      console.log('Uploading local exchange offers to Supabase');
-      await saveExchangeOfferBatch(localExchangeOffers);
+    
+    if (exchangeOffersData) {
+      setMemoryStorage('exchangeOffers', exchangeOffersData);
+      // Dispatch event to notify components
+      window.dispatchEvent(new CustomEvent(StorageEvents.EXCHANGE_OFFERS, { detail: exchangeOffersData }));
     }
 
     // Update sync tracking
