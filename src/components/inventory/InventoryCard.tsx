@@ -7,9 +7,10 @@ interface InventoryCardProps {
   value: number;
   active: boolean;
   onClick: () => void;
+  className?: string; // Add className as an optional prop
 }
 
-const InventoryCard = ({ title, value, active, onClick }: InventoryCardProps) => {
+const InventoryCard = ({ title, value, active, onClick, className }: InventoryCardProps) => {
   // Select icon based on card title
   const getIcon = () => {
     switch (title) {
@@ -35,7 +36,8 @@ const InventoryCard = ({ title, value, active, onClick }: InventoryCardProps) =>
         "text-right",
         active 
           ? "border-interactive bg-interactive/5 shadow-sm" 
-          : "border-border bg-card hover:bg-secondary"
+          : "border-border bg-card hover:bg-secondary",
+        className
       )}
     >
       <div className="text-lg font-bold">
