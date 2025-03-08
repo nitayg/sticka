@@ -35,11 +35,11 @@ const FilteredStickerContainer = ({
   // Fetch stickers if not provided in props
   useEffect(() => {
     if (selectedAlbumId && stickers.length === 0) {
-      console.log("No stickers found for album", selectedAlbumId, "trying to fetch them directly");
+      console.log("No stickers found in props for album", selectedAlbumId, "trying to fetch them directly");
       const directStickers = getStickersByAlbumId(selectedAlbumId);
       
       if (directStickers.length > 0 && stickers.length === 0) {
-        console.log("Found stickers directly but they're not in state, triggering refresh");
+        console.log(`Found ${directStickers.length} stickers directly for album ${selectedAlbumId}, triggering refresh`);
         onRefresh();
       }
     }
@@ -52,20 +52,30 @@ const FilteredStickerContainer = ({
       onRefresh();
     };
     
+    const handleStickerDataChanged = (e: CustomEvent) => {
+      const albumId = e.detail?.albumId;
+      if (!albumId || albumId === selectedAlbumId) {
+        console.log(`Sticker data changed for album ${albumId || 'unknown'}, refreshing`);
+        onRefresh();
+      }
+    };
+    
     window.addEventListener('forceRefresh', handleForceRefresh);
-    window.addEventListener('stickerDataChanged', handleForceRefresh);
+    window.addEventListener('stickerDataChanged', handleStickerDataChanged as EventListener);
+    window.addEventListener('albumDataChanged', handleForceRefresh);
     
     return () => {
       window.removeEventListener('forceRefresh', handleForceRefresh);
-      window.removeEventListener('stickerDataChanged', handleForceRefresh);
+      window.removeEventListener('stickerDataChanged', handleStickerDataChanged as EventListener);
+      window.removeEventListener('albumDataChanged', handleForceRefresh);
     };
-  }, [onRefresh]);
+  }, [onRefresh, selectedAlbumId]);
 
   const filteredStickers = useMemo(() => {
     // If no stickers in props, try to get them directly
     if (stickers.length === 0 && selectedAlbumId) {
       const directStickers = getStickersByAlbumId(selectedAlbumId);
-      console.log("Direct stickers fetch returned", directStickers.length, "stickers");
+      console.log("Direct stickers fetch returned", directStickers.length, "stickers for album", selectedAlbumId);
       
       if (directStickers.length > 0) {
         let filtered = directStickers;

@@ -1,4 +1,3 @@
-
 import { Sticker } from './types';
 import { v4 as uuidv4 } from 'uuid';
 import { saveToStorage, getFromStorage } from './sync';
@@ -119,16 +118,22 @@ export const toggleStickerDuplicate = (stickerId: string): Sticker | undefined =
   return updatedStickers.find(sticker => sticker.id === stickerId);
 };
 
-// Function to import stickers from a CSV file - completely rewritten for better typing
+// Function to import stickers from a CSV file - completely rewritten for better typing and debugging
 export const importStickersFromCSV = (albumId: string, csvData: [number, string, string][]): Sticker[] => {
   const newStickers: Sticker[] = [];
   console.log(`Importing ${csvData.length} stickers for album ${albumId}`);
+  
+  // Debug the incoming data
+  console.log("CSV Data:", JSON.stringify(csvData, null, 2));
   
   for (const row of csvData) {
     const [number, name, team] = row;
     
     // Skip invalid entries
-    if (!number || number <= 0) continue;
+    if (!number || number <= 0) {
+      console.warn(`Skipping invalid sticker entry: ${JSON.stringify(row)}`);
+      continue;
+    }
     
     const stickerId = `sticker_${albumId}_${number}_${Date.now()}${Math.random().toString(36).substr(2, 5)}`;
     
@@ -146,23 +151,28 @@ export const importStickersFromCSV = (albumId: string, csvData: [number, string,
       lastModified: Date.now(),
       isDeleted: false
     };
+    
+    console.log(`Created sticker: #${number} - ${name} (team: ${team})`);
     newStickers.push(newSticker);
   }
 
   // Get current stickers and add the new ones
   const stickers = getStickerData();
+  console.log(`Adding ${newStickers.length} stickers to existing ${stickers.length} stickers`);
   const updatedStickers = [...stickers, ...newStickers];
   setStickerData(updatedStickers);
   
-  console.log(`Successfully imported ${newStickers.length} stickers for album ${albumId}`);
-  
   // Save to Supabase in batches
+  console.log(`Saving ${newStickers.length} stickers to Supabase`);
   saveStickerBatch(newStickers).catch(error => {
     console.error('Error saving stickers to Supabase:', error);
   });
   
-  // Trigger event to notify UI components
+  // Trigger multiple events to notify UI components
+  console.log('Dispatching sticker data change events');
   window.dispatchEvent(new CustomEvent('stickerDataChanged', { detail: { albumId } }));
+  window.dispatchEvent(new CustomEvent('forceRefresh'));
+  window.dispatchEvent(new CustomEvent('albumDataChanged'));
   
   return newStickers;
 };

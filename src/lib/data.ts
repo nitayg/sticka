@@ -29,7 +29,9 @@ export {
   toggleStickerDuplicate,
   importStickersFromCSV,
   getStats,
-  addStickersToInventory
+  addStickersToInventory,
+  getStickerData,
+  setStickerData
 } from './sticker-operations';
 
 // Export recycle bin operations

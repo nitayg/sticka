@@ -1,4 +1,3 @@
-
 import { StorageEvents } from './constants';
 
 // Filter out soft-deleted items for display
@@ -14,6 +13,9 @@ export const filterDeleted = <T>(items: T[]): T[] => {
 export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void => {
   try {
     console.log(`Saving ${Array.isArray(data) ? data.length : 1} item(s) to ${key} in cloud`);
+    
+    // Store data in memory storage first
+    setMemoryStorage(key, data);
     
     // Sync to Supabase always
     if (syncToCloud && isConnected) {
@@ -37,6 +39,13 @@ export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void
             : StorageEvents.EXCHANGE_OFFERS;
       
       window.dispatchEvent(new CustomEvent(eventName, { detail: data }));
+      
+      // Also dispatch the specific itemChanged event
+      if (key === 'stickers') {
+        window.dispatchEvent(new CustomEvent('stickerDataChanged'));
+      } else if (key === 'albums') {
+        window.dispatchEvent(new CustomEvent('albumDataChanged'));
+      }
     }
   } catch (error) {
     console.error(`Error saving ${key} to storage:`, error);
@@ -126,9 +135,6 @@ export const sendToSupabase = async <T>(key: string, data: T): Promise<void> => 
   if (Array.isArray(data)) {
     console.log(`Sending ${data.length} items to Supabase for key: ${key}`);
     
-    // Store data in memory storage
-    setMemoryStorage(key, data);
-    
     // Save the data to Supabase based on the key
     try {
       switch (key) {
@@ -147,6 +153,13 @@ export const sendToSupabase = async <T>(key: string, data: T): Promise<void> => 
         default:
           console.error(`Unknown key: ${key}`);
           return;
+      }
+      
+      // Dispatch specific events after successful save
+      if (key === 'stickers') {
+        window.dispatchEvent(new CustomEvent('stickerDataChanged'));
+      } else if (key === 'albums') {
+        window.dispatchEvent(new CustomEvent('albumDataChanged'));
       }
     } catch (error) {
       console.error(`Error sending data to Supabase (${key}):`, error);

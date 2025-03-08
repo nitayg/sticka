@@ -68,10 +68,12 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
       
       // Add album to storage and Supabase
       await addAlbum(newAlbum);
+      console.log("Album created successfully:", newAlbum);
       
       // Process CSV data if provided
       if (csvContent) {
         try {
+          console.log("Processing CSV content, length:", csvContent.length);
           const parsedData = parseCSV(csvContent);
           console.log("Parsed CSV data:", parsedData);
           
@@ -81,9 +83,10 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
             
             // Process data from parser - supports both array and object formats
             parsedData.forEach(row => {
-              if (Array.isArray(row) && row.length >= 3) {
+              if (Array.isArray(row) && row.length >= 1) {
                 // For array format, values are already in the right order
-                const number = parseInt(row[0].toString()) || 0;
+                const numStr = row[0]?.toString() || "0";
+                const number = parseInt(numStr) || 0;
                 const name = row[1]?.toString() || "";
                 const team = row[2]?.toString() || "";
                 
@@ -106,6 +109,8 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
                 }
               }
             });
+            
+            console.log("Formatted import data:", importData);
             
             // Only import if we have valid data
             if (importData.length > 0) {
@@ -152,14 +157,24 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
         onAlbumAdded();
       }
       
-      // Force refresh to ensure components get updated
+      // Force refresh to ensure components get updated - use multiple events and timeout to ensure proper update
       window.dispatchEvent(new CustomEvent('albumDataChanged'));
       
       // Add a small delay and refresh again to ensure stickers are loaded
       setTimeout(() => {
+        console.log("Triggering delayed refresh events");
         window.dispatchEvent(new CustomEvent('forceRefresh'));
-        window.dispatchEvent(new CustomEvent('stickerDataChanged', { detail: { albumId: newAlbumId } }));
+        window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+          detail: { albumId: newAlbumId } 
+        }));
       }, 500);
+      
+      // Add another longer delay for final refresh
+      setTimeout(() => {
+        console.log("Triggering final refresh events");
+        window.dispatchEvent(new CustomEvent('forceRefresh'));
+        window.dispatchEvent(new CustomEvent('albumDataChanged'));
+      }, 1500);
       
     } catch (error) {
       console.error("Error adding album:", error);
