@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Album, PlusCircle, Edit, Trash2 } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import AlbumGridItem from "./AlbumGridItem"; 
+import AlbumGridItem from "../AlbumGridItem"; 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import AddAlbumForm from "@/components/add-album-form";
@@ -119,9 +119,9 @@ const FilterControls = ({
       <ScrollArea className="w-full whitespace-nowrap">
         <div className="flex space-x-3 p-1">
           {/* Add Album Button */}
-          <div className="relative h-[70px] w-[70px] flex-shrink-0 rounded-xl overflow-hidden border-2 border-dashed border-muted-foreground/30 flex items-center justify-center cursor-pointer">
+          <div className="relative h-[70px] w-[70px] flex-shrink-0 rounded-xl overflow-hidden border-2 border-dashed border-muted-foreground/30 flex items-center justify-center cursor-pointer group hover:border-primary/50 transition-colors">
             <AddAlbumForm iconOnly>
-              <div className="flex flex-col items-center justify-center h-full w-full text-muted-foreground hover:text-primary transition-colors">
+              <div className="flex flex-col items-center justify-center h-full w-full text-muted-foreground group-hover:text-primary transition-colors">
                 <PlusCircle className="h-6 w-6" />
                 <span className="text-[10px] mt-1">הוסף אלבום</span>
               </div>
@@ -130,41 +130,15 @@ const FilterControls = ({
           
           {/* Album List */}
           {albums.map((album) => (
-            <div className="h-[70px] w-[70px] flex-shrink-0 relative group" key={album.id}>
+            <div className="h-[70px] w-[70px] flex-shrink-0 relative" key={album.id}>
               <AlbumGridItem
                 id={album.id}
                 name={album.name}
                 coverImage={album.coverImage}
                 isSelected={selectedAlbum === album.id}
                 onSelect={() => handleAlbumChange(album.id)}
-                onEdit={() => {}} // Empty function since we'll use the overlay buttons
+                onEdit={() => handleAlbumEdit(album.id)}
               />
-              
-              {/* Edit/Delete overlay buttons */}
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 rounded-full bg-white text-gray-900 hover:bg-gray-200"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAlbumEdit(album.id);
-                  }}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 rounded-full bg-white text-gray-900 hover:bg-gray-200"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAlbumDelete(album.id);
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
             </div>
           ))}
         </div>

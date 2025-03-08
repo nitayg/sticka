@@ -1,4 +1,3 @@
-
 import { Image } from "lucide-react";
 import { Album } from "@/lib/types";
 import { cn } from "@/lib/utils";

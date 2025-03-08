@@ -37,12 +37,6 @@ const CompactStickerItem = ({
           compactView={true}
           isRecentlyAdded={isRecentlyAdded}
         />
-        
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent py-1 px-2">
-          <div className="text-white text-center text-xs">
-            #{sticker.number}
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -17,7 +17,7 @@ const StickerCollectionGrid = ({
     <div className={cn(
       "transition-all duration-200 ease-in-out",
       viewMode === 'list' && "divide-y divide-border",
-      viewMode === 'compact' && "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2",
+      viewMode === 'compact' && "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-1.5",
       viewMode === 'grid' && "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 pb-4",
       activeFilter && "pt-2"
     )}>
