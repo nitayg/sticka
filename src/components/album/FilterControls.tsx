@@ -1,15 +1,13 @@
 
 import { useState } from "react";
-import { PlusCircle } from "lucide-react";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import AlbumGridItem from "./AlbumGridItem"; // Fixed import path
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import AddAlbumForm from "@/components/add-album-form";
 import AlbumBasicInfo from "@/components/add-album-form/AlbumBasicInfo";
 import AlbumImageUploader from "@/components/add-album-form/AlbumImageUploader";
 import { useToast } from "@/components/ui/use-toast";
 import { updateAlbum, deleteAlbum } from "@/lib/album-operations";
+import AlbumCarouselGrid from "./AlbumCarouselGrid";
 
 interface FilterControlsProps {
   albums: any[];
@@ -115,35 +113,13 @@ const FilterControls = ({
   };
 
   return (
-    <div className="pb-2 border-b">
-      <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex space-x-3 p-1">
-          {/* Add Album Button */}
-          <div className="relative h-[100px] w-[100px] flex-shrink-0 rounded-md overflow-hidden border-2 border-dashed border-muted-foreground/30 flex items-center justify-center cursor-pointer group hover:border-primary/50 transition-colors">
-            <AddAlbumForm iconOnly>
-              <div className="flex flex-col items-center justify-center h-full w-full text-muted-foreground group-hover:text-primary transition-colors">
-                <PlusCircle className="h-10 w-10" />
-                <span className="text-xs mt-1">הוסף אלבום</span>
-              </div>
-            </AddAlbumForm>
-          </div>
-          
-          {/* Album List */}
-          {albums.map((album) => (
-            <div className="h-[100px] w-[100px] flex-shrink-0 relative" key={album.id}>
-              <AlbumGridItem
-                id={album.id}
-                name={album.name}
-                coverImage={album.coverImage}
-                isSelected={selectedAlbum === album.id}
-                onSelect={() => handleAlbumChange(album.id)}
-                onEdit={() => handleAlbumEdit(album.id)}
-              />
-            </div>
-          ))}
-        </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+    <div>
+      <AlbumCarouselGrid 
+        albums={albums}
+        selectedAlbumId={selectedAlbum}
+        onAlbumChange={handleAlbumChange}
+        onEdit={handleAlbumEdit}
+      />
 
       {/* Album Edit Dialog */}
       <Dialog open={!!editingAlbum} onOpenChange={(open) => !open && setEditingAlbum(null)}>
