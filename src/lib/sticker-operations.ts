@@ -161,13 +161,27 @@ export const addStickersToInventory = (albumId: string, stickerNumbers: number[]
 };
 
 // Function to update team names across stickers
-export const updateTeamNameAcrossStickers = (oldName: string, newName: string): void => {
+export const updateTeamNameAcrossStickers = (oldName: string, newName: string, newLogo?: string): number => {
   const stickers = getStickerData();
+  let updatedCount = 0;
+  
   const updatedStickers = stickers.map(sticker => {
     if (sticker.team === oldName) {
-      return { ...sticker, team: newName, lastModified: Date.now() };
+      updatedCount++;
+      const updates: Partial<Sticker> = { 
+        team: newName, 
+        lastModified: Date.now() 
+      };
+      
+      if (newLogo) {
+        updates.teamLogo = newLogo;
+      }
+      
+      return { ...sticker, ...updates };
     }
     return sticker;
   });
+  
   setStickerData(updatedStickers);
+  return updatedCount;
 };

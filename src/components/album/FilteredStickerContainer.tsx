@@ -29,7 +29,7 @@ const FilteredStickerContainer = ({
   transactionMap
 }: FilteredStickerContainerProps) => {
   const filteredStickers = useMemo(() => {
-    // We'll use the stickers prop that's passed in, not stickerData
+    // We'll use the stickers prop that's passed in
     let filtered = stickers;
     
     if (activeTab === "number" && selectedRange) {

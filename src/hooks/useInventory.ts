@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { 
@@ -34,7 +33,6 @@ export default function useInventory() {
     }
   }, [selectedAlbumId, refreshKey]);
   
-  // Add listener for inventory data changes from exchange system
   useEffect(() => {
     const handleInventoryDataChanged = () => {
       setRefreshKey(prev => prev + 1);
@@ -47,19 +45,14 @@ export default function useInventory() {
     };
   }, []);
   
-  // Function to update transaction map based on exchange offers
   const updateTransactionMap = (albumId: string) => {
     const newTransactionMap: Record<string, { person: string, color: string }> = {};
     
-    // Get relevant exchanges for this album
     const relevantExchanges = exchangeOffers.filter(exchange => exchange.albumId === albumId);
     
-    // Map stickers to their transactions
     relevantExchanges.forEach(exchange => {
-      // Find stickers that the user will receive
       const stickerNumbers = exchange.wantedStickerId.map(id => parseInt(id));
       
-      // Get actual stickers
       const albumStickers = getStickersByAlbumId(albumId);
       
       stickerNumbers.forEach(number => {
@@ -109,17 +102,17 @@ export default function useInventory() {
   const handleStickerIntake = (albumId: string, stickerNumbers: number[]) => {
     const results = addStickersToInventory(albumId, stickerNumbers);
     
-    const totalUpdated = results.newlyOwned + results.duplicatesUpdated;
+    const totalUpdated = results.newlyOwned.length + results.duplicatesUpdated.length;
     
     let message = `נוספו ${totalUpdated} מדבקות למלאי.`;
-    if (results.newlyOwned > 0) {
-      message += ` ${results.newlyOwned} מדבקות חדשות.`;
+    if (results.newlyOwned.length > 0) {
+      message += ` ${results.newlyOwned.length} מדבקות חדשות.`;
     }
-    if (results.duplicatesUpdated > 0) {
-      message += ` ${results.duplicatesUpdated} מדבקות כפולות עודכנו.`;
+    if (results.duplicatesUpdated.length > 0) {
+      message += ` ${results.duplicatesUpdated.length} מדבקות כפולות עודכנו.`;
     }
-    if (results.notFound > 0) {
-      message += ` ${results.notFound} מדבקות לא נמצאו.`;
+    if (results.notFound.length > 0) {
+      message += ` ${results.notFound.length} מדבקות לא נמצאו.`;
     }
     
     toast({
@@ -129,7 +122,6 @@ export default function useInventory() {
     
     handleRefresh();
     
-    // Notify other components about the change
     window.dispatchEvent(new CustomEvent('albumDataChanged'));
   };
 
