@@ -7,6 +7,7 @@
  */
 export const parseCSV = (csvContent: string): Array<any> => {
   if (!csvContent || typeof csvContent !== 'string') {
+    console.error("Empty or invalid CSV content");
     return [];
   }
 
@@ -14,10 +15,13 @@ export const parseCSV = (csvContent: string): Array<any> => {
   const lines = csvContent.split(/\r?\n/).filter(line => line.trim().length > 0);
   
   if (lines.length === 0) {
+    console.error("No valid lines in CSV content");
     return [];
   }
 
-  // Detect delimiter - typically comma or semicolon
+  console.log(`Parsing CSV content with ${lines.length} lines`);
+
+  // Detect delimiter - typically comma, semicolon, or tab
   const detectDelimiter = (line: string): string => {
     const delimiters = [',', ';', '\t'];
     let bestDelimiter = ',';
@@ -35,6 +39,7 @@ export const parseCSV = (csvContent: string): Array<any> => {
   };
 
   const delimiter = detectDelimiter(lines[0]);
+  console.log(`Detected delimiter: "${delimiter}"`);
   
   // Parse line function that handles quotes
   const parseLine = (line: string): string[] => {
@@ -58,6 +63,11 @@ export const parseCSV = (csvContent: string): Array<any> => {
     // Add the last value
     result.push(currentValue.trim());
     
+    // Ensure at least 3 elements in each row (for number, name, team)
+    while (result.length < 3) {
+      result.push("");
+    }
+    
     return result;
   };
   
@@ -65,9 +75,13 @@ export const parseCSV = (csvContent: string): Array<any> => {
   const firstLine = parseLine(lines[0]);
   const secondLine = lines.length > 1 ? parseLine(lines[1]) : [];
   
+  // Try to detect if the first line is a header
+  // A header line typically contains text values, while data lines contain at least one number
   const isHeader = firstLine.some(item => isNaN(Number(item))) && 
                    secondLine.length > 0 && 
                    secondLine.some(item => !isNaN(Number(item)));
+  
+  console.log(`CSV has header: ${isHeader}`);
   
   // Process as object array if has header
   if (isHeader) {
@@ -89,17 +103,12 @@ export const parseCSV = (csvContent: string): Array<any> => {
       return rowObject;
     });
   } 
-  // Process as array of arrays if no header - ensure each row has at least 3 elements
+  // Process as array of arrays if no header
   else {
     return lines.map(line => {
       const values = parseLine(line).map(value => 
         value.replace(/['"]/g, '').trim()
       );
-      
-      // Ensure at least 3 elements in each row (for number, name, team)
-      while (values.length < 3) {
-        values.push("");
-      }
       
       return values;
     });

@@ -1,4 +1,5 @@
-import { useState, ReactNode } from "react";
+
+import { useState, ReactNode, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { 
   Dialog, 
@@ -68,23 +69,34 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
       if (csvContent) {
         try {
           const parsedData = parseCSV(csvContent);
+          console.log("Parsed CSV data:", parsedData);
           
           if (parsedData && parsedData.length > 0) {
+            // פורמט המידע בצורת מערך תלת-איברי [מספר, שם, קבוצה]
             const importData: [number, string, string][] = [];
             
+            // עיבוד הנתונים מהפרסר - תומך גם במערך וגם באובייקט
             parsedData.forEach(row => {
               if (Array.isArray(row) && row.length >= 3) {
-                const number = parseInt(row[0]) || 0;
-                const name = row[1] || "";
-                const team = row[2] || "";
+                // במקרה של מערך, הערכים כבר בסדר הנכון
+                const number = parseInt(row[0].toString()) || 0;
+                const name = row[1]?.toString() || "";
+                const team = row[2]?.toString() || "";
+                
                 if (number > 0) {
                   importData.push([number, name, team]);
                 }
               } else if (typeof row === 'object' && row !== null) {
-                const numVal = row.number || row.Number || row.num || "0";
+                // במקרה של אובייקט, צריך למפות את המפתחות
+                const numVal = row.number || row.Number || row.num || row.NUM || "0";
                 const number = parseInt(typeof numVal === 'string' ? numVal : String(numVal)) || 0;
-                const name = String(row.name || row.Name || row.title || "");
-                const team = String(row.team || row.Team || row.group || "");
+                
+                const nameVal = row.name || row.Name || row.title || row.Title || "";
+                const name = String(nameVal || "");
+                
+                const teamVal = row.team || row.Team || row.group || row.Group || "";
+                const team = String(teamVal || "");
+                
                 if (number > 0) {
                   importData.push([number, name, team]);
                 }
@@ -92,6 +104,7 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
             });
             
             if (importData.length > 0) {
+              console.log("Importing stickers:", importData);
               const importedStickers = importStickersFromCSV(newAlbumId, importData);
               
               toast({
@@ -110,15 +123,11 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
         }
       }
       
+      // אחרי הוספת האלבום החדש, יש לבחור בו אוטומטית
       handleAlbumChange(newAlbumId);
       
       setOpen(false);
-      setName("");
-      setDescription("");
-      setYear(new Date().getFullYear().toString());
-      setTotalStickers("");
-      setImageUrl("");
-      setCsvContent("");
+      resetForm();
       
       toast({
         title: "אלבום נוסף בהצלחה",
@@ -128,6 +137,12 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
       if (onAlbumAdded) {
         onAlbumAdded();
       }
+      
+      // אחרי שניה, נרענן שוב כדי לוודא שהמדבקות מוצגות
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('albumDataChanged'));
+      }, 1000);
+      
     } catch (error) {
       console.error("Error adding album:", error);
       toast({
@@ -139,6 +154,23 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
       setIsSubmitting(false);
     }
   };
+  
+  const resetForm = () => {
+    setName("");
+    setDescription("");
+    setYear(new Date().getFullYear().toString());
+    setTotalStickers("");
+    setImageUrl("");
+    setCsvContent("");
+    setActiveTab("details");
+  };
+  
+  // איפוס טופס בפתיחה מחדש
+  useEffect(() => {
+    if (open) {
+      resetForm();
+    }
+  }, [open]);
   
   const trigger = iconOnly ? (
     <Button 

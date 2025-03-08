@@ -127,7 +127,15 @@ export const syncWithSupabase = async (isInitialSync = false) => {
     
     // Merge and save data, respecting deletions and modifications
     if (albumsData && albumsData.length > 0) {
-      const mergedAlbums = mergeData(localAlbums, albumsData);
+      // Ensure deleted albums from Supabase stay deleted
+      const supabaseDeletedAlbums = albumsData.filter(album => album.isDeleted).map(album => album.id);
+      
+      // Mark any local albums that are in the deleted list as deleted
+      const updatedLocalAlbums = localAlbums.map(album => 
+        supabaseDeletedAlbums.includes(album.id) ? { ...album, isDeleted: true } : album
+      );
+      
+      const mergedAlbums = mergeData(updatedLocalAlbums, albumsData);
       saveToStorage('albums', mergedAlbums, false);
       
       // Make sure to upload all albums (including deleted ones) back to Supabase
@@ -138,7 +146,19 @@ export const syncWithSupabase = async (isInitialSync = false) => {
     }
 
     if (stickersData && stickersData.length > 0) {
-      const mergedStickers = mergeData(localStickers, stickersData);
+      // Get list of deleted album IDs
+      const deletedAlbumIds = [...localAlbums, ...(albumsData || [])]
+        .filter(album => album.isDeleted)
+        .map(album => album.id);
+      
+      // Mark stickers as deleted if their album is deleted
+      const updatedLocalStickers = localStickers.map(sticker => 
+        sticker.albumId && deletedAlbumIds.includes(sticker.albumId) 
+          ? { ...sticker, isDeleted: true } 
+          : sticker
+      );
+      
+      const mergedStickers = mergeData(updatedLocalStickers, stickersData);
       saveToStorage('stickers', mergedStickers, false);
       
       // Make sure to upload all stickers (including deleted ones) back to Supabase

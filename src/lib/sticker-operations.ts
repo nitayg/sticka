@@ -91,22 +91,27 @@ export const toggleStickerDuplicate = (stickerId: string): Sticker | undefined =
 // Function to import stickers from a CSV file
 export const importStickersFromCSV = (albumId: string, csvData: [number, string, string][]): Sticker[] => {
   const newStickers: Sticker[] = [];
+  console.log(`Importing ${csvData.length} stickers for album ${albumId}`);
   
   for (const [number, name, team] of csvData) {
     // Skip invalid entries
     if (!number || number <= 0) continue;
     
+    const stickerId = `sticker_${albumId}_${number}_${Date.now()}${Math.random().toString(36).substr(2, 5)}`;
+    
     const newSticker: Sticker = {
-      id: uuidv4(),
+      id: stickerId,
       albumId: albumId,
-      name: name || `Sticker #${number}`,
+      name: name || `מדבקה #${number}`,
       team: team || "",
       category: "שחקנים",
       number: number,
       imageUrl: "",
       isOwned: false,
       isDuplicate: false,
-      lastModified: Date.now()
+      duplicateCount: 0,
+      lastModified: Date.now(),
+      isDeleted: false
     };
     newStickers.push(newSticker);
   }
@@ -115,7 +120,10 @@ export const importStickersFromCSV = (albumId: string, csvData: [number, string,
   const updatedStickers = [...stickers, ...newStickers];
   setStickerData(updatedStickers);
   
-  console.log(`Imported ${newStickers.length} stickers for album ${albumId}`);
+  console.log(`Successfully imported ${newStickers.length} stickers for album ${albumId}`);
+  
+  // מיד לאחר היבוא, מפעילים אירוע כדי להודיע לממשק על השינוי
+  window.dispatchEvent(new CustomEvent('stickerDataChanged', { detail: { albumId } }));
   
   return newStickers;
 };

@@ -1,127 +1,137 @@
 
 import { useState } from "react";
-import { Album } from "@/lib/types";
-import { Pencil, Trash2 } from "lucide-react";
-import { Button } from "../ui/button";
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from "../ui/alert-dialog";
+import { cn } from "@/lib/utils";
+import { Pencil, Trash } from "lucide-react";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { useToast } from "@/components/ui/use-toast";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { moveAlbumToRecycleBin } from "@/lib/recycle-bin";
-import { useToast } from "../ui/use-toast";
 
 interface AlbumGridItemProps {
-  album: Album;
+  id: string;
+  name: string;
+  coverImage?: string;
   isSelected: boolean;
-  onClick: () => void;
-  onRefresh: () => void;
+  onSelect: () => void;
+  onEdit?: (id: string) => void;
 }
 
-const AlbumGridItem = ({ album, isSelected, onClick, onRefresh }: AlbumGridItemProps) => {
-  const [isHovering, setIsHovering] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: AlbumGridItemProps) => {
+  const [hovered, setHovered] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { toast } = useToast();
-  
-  const handleMouseEnter = () => {
-    setIsHovering(true);
-  };
-  
-  const handleMouseLeave = () => {
-    setIsHovering(false);
-  };
-  
-  const handleEditClick = (e: React.MouseEvent) => {
+
+  const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Add edit functionality
-    console.log("Edit album", album.id);
+    if (onEdit) {
+      onEdit(id);
+    }
   };
-  
-  const handleDeleteClick = (e: React.MouseEvent) => {
+
+  const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsDeleteDialogOpen(true);
+    setShowDeleteDialog(true);
   };
-  
-  const confirmDelete = () => {
-    moveAlbumToRecycleBin(album.id);
-    setIsDeleteDialogOpen(false);
-    
-    toast({
-      title: "אלבום הועבר לסל המיחזור",
-      description: `האלבום "${album.name}" הועבר לסל המיחזור ויימחק לצמיתות אחרי 30 יום`,
-    });
-    
-    onRefresh();
+
+  const confirmDelete = async () => {
+    try {
+      await moveAlbumToRecycleBin(id);
+      toast({
+        title: "האלבום הועבר לסל המיחזור",
+        description: `האלבום "${name}" הועבר לסל המיחזור בהצלחה`,
+      });
+    } catch (error) {
+      console.error("Error deleting album:", error);
+      toast({
+        title: "שגיאה במחיקת האלבום",
+        description: "אירעה שגיאה בעת העברת האלבום לסל המיחזור",
+        variant: "destructive",
+      });
+    } finally {
+      setShowDeleteDialog(false);
+    }
   };
-  
+
   return (
     <>
-      <div 
-        className={`fb-story-item aspect-[9/16] cursor-pointer ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
-        onClick={onClick}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onTouchStart={() => setIsHovering(true)}
-        onTouchEnd={() => setTimeout(() => setIsHovering(false), 2000)}
-      >
-        {/* Album cover */}
-        <img 
-          src={album.coverImage || "/placeholder.svg"} 
-          alt={album.name} 
-          className="w-full h-full object-cover"
-        />
-        
-        {/* Album gradient overlay */}
-        <div className="fb-story-gradient">
-          <p className="fb-story-title">{album.name}</p>
-        </div>
-        
-        {/* Edit & Delete icons */}
-        {(isHovering || isSelected) && (
-          <div className="absolute top-1 right-1 flex flex-col gap-1">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-7 w-7 rounded-full bg-black/50 hover:bg-black/70"
-              onClick={handleEditClick}
-            >
-              <Pencil className="h-3.5 w-3.5 text-white" />
-            </Button>
-            
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-7 w-7 rounded-full bg-black/50 hover:bg-red-500/70"
-              onClick={handleDeleteClick}
-            >
-              <Trash2 className="h-3.5 w-3.5 text-white" />
-            </Button>
-          </div>
+      <div
+        className={cn(
+          "relative group aspect-square rounded-xl overflow-hidden cursor-pointer transition-all border-2 hover:border-primary",
+          isSelected ? "border-primary ring-2 ring-primary ring-offset-2" : "border-border"
         )}
+        onClick={onSelect}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <div className="w-full h-full bg-muted relative">
+          {coverImage ? (
+            <img 
+              src={coverImage} 
+              alt={name} 
+              className="object-cover w-full h-full"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted-foreground/10 to-muted-foreground/30">
+              <span className="text-4xl font-bold text-foreground/30">
+                {name.substring(0, 1).toLocaleUpperCase()}
+              </span>
+            </div>
+          )}
+
+          {/* Darkened overlay for text */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+
+          {/* Album name */}
+          <div className="absolute bottom-0 left-0 right-0 p-2 text-xs font-semibold text-white line-clamp-2 text-center">
+            {name}
+          </div>
+
+          {/* Action buttons */}
+          <TooltipProvider>
+            <div className={`absolute top-1 right-1 flex gap-1 transition-opacity ${hovered ? 'opacity-100' : 'opacity-0'}`}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button 
+                    className="p-1 bg-white/90 rounded-full hover:bg-white text-gray-800"
+                    onClick={handleEdit}
+                  >
+                    <Pencil size={14} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>ערוך אלבום</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button 
+                    className="p-1 bg-white/90 rounded-full hover:bg-white text-gray-800"
+                    onClick={handleDelete}
+                  >
+                    <Trash size={14} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>העבר לסל המיחזור</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
+        </div>
       </div>
-      
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent dir="rtl">
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>מחיקת אלבום</AlertDialogTitle>
+            <AlertDialogTitle>האם אתה בטוח שברצונך למחוק את האלבום?</AlertDialogTitle>
             <AlertDialogDescription>
-              האם אתה בטוח שברצונך למחוק את האלבום "{album.name}"?
-              האלבום וכל המדבקות שלו יועברו לסל המיחזור.
+              פעולה זו תעביר את האלבום "{name}" לסל המיחזור. תוכל לשחזר אותו מאוחר יותר.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex space-x-2 justify-end">
-            <AlertDialogCancel className="p-0 m-0">
-              <Button variant="outline" size="icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                  <path d="M18 6 6 18"></path>
-                  <path d="m6 6 12 12"></path>
-                </svg>
-              </Button>
-            </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDelete}
-              className="p-0 m-0"
-            >
-              <Button variant="destructive" size="icon">
-                <Trash2 className="h-5 w-5" />
-              </Button>
-            </AlertDialogAction>
+          <AlertDialogFooter className="flex flex-row-reverse justify-end gap-2">
+            <AlertDialogAction onClick={confirmDelete}>העבר לסל המיחזור</AlertDialogAction>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
