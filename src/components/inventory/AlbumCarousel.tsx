@@ -99,6 +99,7 @@ const AlbumCarousel = ({ albums, selectedAlbumId, onAlbumChange }: AlbumCarousel
     };
   }, [isRtl]);
 
+  // Render albums in Facebook stories style
   return (
     <div className="relative mt-2">
       <div 
@@ -111,8 +112,8 @@ const AlbumCarousel = ({ albums, selectedAlbumId, onAlbumChange }: AlbumCarousel
             key={album.id}
             data-album-id={album.id}
             className={cn(
-              "min-w-[90px] h-[160px] rounded-lg overflow-hidden relative cursor-pointer",
-              selectedAlbumId === album.id ? "border-2 border-blue-500" : "border border-gray-800"
+              "fb-story-item min-w-[90px] h-[160px]",
+              selectedAlbumId === album.id ? "border-2 border-blue-500" : ""
             )}
             onClick={() => onAlbumChange(album.id)}
           >

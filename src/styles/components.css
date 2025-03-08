@@ -28,7 +28,7 @@
 
 /* Facebook-style design elements */
 .fb-header {
-  @apply bg-black sticky top-0 left-0 right-0 h-14 shadow-sm flex items-center px-4 z-50;
+  @apply bg-black fixed top-0 left-0 right-0 h-14 shadow-sm flex items-center px-4 z-50;
 }
 
 .fb-nav-item {
@@ -48,7 +48,7 @@
 }
 
 .fb-story-item {
-  @apply min-w-[90px] h-[160px] rounded-lg overflow-hidden relative cursor-pointer border border-gray-800 transition-transform;
+  @apply aspect-auto rounded-lg overflow-hidden relative cursor-pointer border border-gray-800 transition-transform;
 }
 
 .fb-story-item:hover {
@@ -79,7 +79,7 @@
 
 /* Facebook-style bottom navigation */
 .fb-bottom-nav {
-  @apply fixed bottom-0 left-0 right-0 z-50 bg-black text-white border-t border-gray-800 py-1 px-2 transition-transform duration-300;
+  @apply fixed bottom-0 left-0 right-0 z-50 bg-black text-white border-t border-gray-800 py-1 px-2;
 }
 
 /* Create story button */
