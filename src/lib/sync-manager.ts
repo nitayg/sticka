@@ -6,7 +6,10 @@ import {
   fetchStickers, 
   fetchUsers, 
   fetchExchangeOffers,
-  saveBatch 
+  saveAlbumBatch,
+  saveStickerBatch,
+  saveUserBatch,
+  saveExchangeOfferBatch
 } from './supabase';
 
 // Event names for storage events
@@ -222,7 +225,7 @@ export const syncWithSupabase = async (isInitialSync = false) => {
       saveToStorage('albums', mergedAlbums, false);
     } else if (isInitialSync && localAlbums.length > 0) {
       console.log('Uploading local albums to Supabase');
-      await saveBatch('albums', localAlbums);
+      await saveAlbumBatch(localAlbums);
     }
 
     if (stickersData && stickersData.length > 0) {
@@ -230,7 +233,7 @@ export const syncWithSupabase = async (isInitialSync = false) => {
       saveToStorage('stickers', mergedStickers, false);
     } else if (isInitialSync && localStickers.length > 0) {
       console.log('Uploading local stickers to Supabase');
-      await saveBatch('stickers', localStickers);
+      await saveStickerBatch(localStickers);
     }
 
     if (usersData && usersData.length > 0) {
@@ -238,7 +241,7 @@ export const syncWithSupabase = async (isInitialSync = false) => {
       saveToStorage('users', mergedUsers, false);
     } else if (isInitialSync && localUsers.length > 0) {
       console.log('Uploading local users to Supabase');
-      await saveBatch('users', localUsers);
+      await saveUserBatch(localUsers);
     }
 
     if (exchangeOffersData && exchangeOffersData.length > 0) {
@@ -246,7 +249,7 @@ export const syncWithSupabase = async (isInitialSync = false) => {
       saveToStorage('exchangeOffers', mergedExchangeOffers, false);
     } else if (isInitialSync && localExchangeOffers.length > 0) {
       console.log('Uploading local exchange offers to Supabase');
-      await saveBatch('exchange_offers', localExchangeOffers);
+      await saveExchangeOfferBatch(localExchangeOffers);
     }
 
     // Update sync tracking
@@ -311,33 +314,29 @@ export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void
 // Sync data to Supabase
 const sendToSupabase = async <T>(key: string, data: T): Promise<void> => {
   if (Array.isArray(data)) {
-    // Determine the table name based on the key
-    let tableName = '';
-    switch (key) {
-      case 'albums':
-        tableName = 'albums';
-        break;
-      case 'stickers':
-        tableName = 'stickers';
-        break;
-      case 'users':
-        tableName = 'users';
-        break;
-      case 'exchangeOffers':
-        tableName = 'exchange_offers';
-        break;
-      default:
-        console.error(`Unknown key: ${key}`);
-        return;
-    }
+    console.log(`Sending ${data.length} items to Supabase for key: ${key}`);
     
-    console.log(`Sending ${data.length} items to Supabase table: ${tableName}`);
-    
-    // Save the data to Supabase
+    // Save the data to Supabase based on the key
     try {
-      await saveBatch(tableName, data);
+      switch (key) {
+        case 'albums':
+          await saveAlbumBatch(data as Album[]);
+          break;
+        case 'stickers':
+          await saveStickerBatch(data as Sticker[]);
+          break;
+        case 'users':
+          await saveUserBatch(data as User[]);
+          break;
+        case 'exchangeOffers':
+          await saveExchangeOfferBatch(data as ExchangeOffer[]);
+          break;
+        default:
+          console.error(`Unknown key: ${key}`);
+          return;
+      }
     } catch (error) {
-      console.error(`Error sending data to Supabase (${tableName}):`, error);
+      console.error(`Error sending data to Supabase (${key}):`, error);
     }
   }
 };
