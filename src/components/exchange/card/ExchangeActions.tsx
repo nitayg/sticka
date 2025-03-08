@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -40,22 +39,17 @@ const ExchangeActions = ({ exchange, onRefresh }: ExchangeActionsProps) => {
   };
 
   const confirmCancel = () => {
-    // Находим индекс обмена в массиве
     const exchangeIndex = exchangeOffers.findIndex(e => e.id === exchange.id);
     if (exchangeIndex !== -1) {
-      // Удаляем обмен из массива
       exchangeOffers.splice(exchangeIndex, 1);
       
-      // Показываем уведомление об успешной отмене
       toast({
         title: "עסקה בוטלה",
         description: `עסקת החלפה עם ${exchange.userName} בוטלה בהצלחה.`,
       });
       
-      // Обновляем экран
       onRefresh();
       
-      // Закрываем диалог
       setCancelDialogOpen(false);
     }
   };
@@ -133,7 +127,6 @@ const ExchangeActions = ({ exchange, onRefresh }: ExchangeActionsProps) => {
         </Tooltip>
       </TooltipProvider>
 
-      {/* Dialog for cancellation confirmation */}
       <Dialog open={isCancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -169,7 +162,6 @@ const ExchangeActions = ({ exchange, onRefresh }: ExchangeActionsProps) => {
         </DialogContent>
       </Dialog>
 
-      {/* Sticker Intake Form for completing the exchange */}
       <StickerIntakeForm
         isOpen={isIntakeFormOpen}
         onClose={() => setIntakeFormOpen(false)}
@@ -178,7 +170,6 @@ const ExchangeActions = ({ exchange, onRefresh }: ExchangeActionsProps) => {
         defaultExchangePartner={exchange.userName}
       />
 
-      {/* Update Exchange Dialog */}
       <UpdateExchangeDialog
         isOpen={isUpdateDialogOpen}
         onClose={() => setUpdateDialogOpen(false)}

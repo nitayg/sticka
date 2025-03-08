@@ -1,6 +1,4 @@
-
 import { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "./Header";
 import StickerIntakeForm from "./StickerIntakeForm";
