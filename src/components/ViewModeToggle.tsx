@@ -24,6 +24,39 @@ const ViewModeToggle = ({
   setShowImages,
   iconOnly = false
 }: ViewModeToggleProps) => {
+  const getIcon = () => {
+    switch (viewMode) {
+      case "grid":
+        return <LayoutGrid className="h-4 w-4 ml-2" />;
+      case "list":
+        return <List className="h-4 w-4 ml-2" />;
+      case "compact":
+        return <ImageIcon className="h-4 w-4 ml-2" />;
+    }
+  };
+
+  const getIconForMobile = () => {
+    switch (viewMode) {
+      case "grid":
+        return <LayoutGrid className="h-5 w-5" />;
+      case "list":
+        return <List className="h-5 w-5" />;
+      case "compact":
+        return <ImageIcon className="h-5 w-5" />;
+    }
+  };
+
+  const getNextMode = () => {
+    switch (viewMode) {
+      case "grid":
+        return "list";
+      case "list":
+        return "compact";
+      case "compact":
+        return "grid";
+    }
+  };
+
   return (
     <>
       {iconOnly ? (
@@ -34,13 +67,9 @@ const ViewModeToggle = ({
                 variant="ghost"
                 size="icon"
                 className="h-9 w-9 rounded-full"
-                onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+                onClick={() => setViewMode(getNextMode())}
               >
-                {viewMode === "grid" ? (
-                  <List className="h-5 w-5" />
-                ) : (
-                  <LayoutGrid className="h-5 w-5" />
-                )}
+                {getIconForMobile()}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -52,9 +81,7 @@ const ViewModeToggle = ({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="h-8">
-              {viewMode === "grid" && <LayoutGrid className="h-4 w-4 ml-2" />}
-              {viewMode === "list" && <List className="h-4 w-4 ml-2" />}
-              {viewMode === "compact" && <ImageIcon className="h-4 w-4 ml-2" />}
+              {getIcon()}
               <span>תצוגה</span>
             </Button>
           </DropdownMenuTrigger>

@@ -1,6 +1,4 @@
 
-// Modify the Add Album Form to support iconOnly mode
-
 import { useState, ReactNode } from "react";
 import { Plus } from "lucide-react";
 import { 
@@ -11,6 +9,7 @@ import {
   DialogTrigger 
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AlbumBasicInfo from "./AlbumBasicInfo";
 import CsvImportField from "./CsvImportField";
 import AlbumImageUploader from "./AlbumImageUploader";
@@ -36,6 +35,7 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
   const [totalStickers, setTotalStickers] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [csvContent, setCsvContent] = useState("");
+  const [activeTab, setActiveTab] = useState("details");
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -120,40 +120,53 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] text-right" dir="rtl">
         <DialogHeader>
           <DialogTitle>הוספת אלבום חדש</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <AlbumBasicInfo
-            name={name}
-            setName={setName}
-            description={description}
-            setDescription={setDescription}
-            year={year}
-            setYear={setYear}
-            totalStickers={totalStickers}
-            setTotalStickers={setTotalStickers}
-          />
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
+          <TabsList className="grid grid-cols-3 mb-4">
+            <TabsTrigger value="details">פרטי אלבום</TabsTrigger>
+            <TabsTrigger value="image">תמונה</TabsTrigger>
+            <TabsTrigger value="csv">ייבוא מדבקות</TabsTrigger>
+          </TabsList>
           
-          <AlbumImageUploader
-            imageUrl={imageUrl}
-            onImageChange={setImageUrl}
-          />
+          <TabsContent value="details" className="space-y-4 mt-2">
+            <AlbumBasicInfo
+              name={name}
+              setName={setName}
+              description={description}
+              setDescription={setDescription}
+              year={year}
+              setYear={setYear}
+              totalStickers={totalStickers}
+              setTotalStickers={setTotalStickers}
+            />
+          </TabsContent>
           
-          <CsvImportField
-            csvContent={csvContent}
-            setCsvContent={setCsvContent}
-          />
+          <TabsContent value="image" className="space-y-4 mt-2">
+            <AlbumImageUploader
+              imageUrl={imageUrl}
+              onImageChange={setImageUrl}
+            />
+          </TabsContent>
           
-          <Button 
-            onClick={handleSubmit} 
-            disabled={isSubmitting}
-            className="bg-interactive hover:bg-interactive-hover text-interactive-foreground"
-          >
-            {isSubmitting ? "מוסיף אלבום..." : "הוסף אלבום"}
-          </Button>
-        </div>
+          <TabsContent value="csv" className="space-y-4 mt-2">
+            <CsvImportField
+              csvContent={csvContent}
+              setCsvContent={setCsvContent}
+            />
+          </TabsContent>
+        </Tabs>
+        
+        <Button 
+          onClick={handleSubmit} 
+          disabled={isSubmitting}
+          className="w-full mt-4 bg-interactive hover:bg-interactive-hover text-interactive-foreground"
+        >
+          {isSubmitting ? "מוסיף אלבום..." : "הוסף אלבום"}
+        </Button>
       </DialogContent>
     </Dialog>
   );

@@ -43,12 +43,14 @@
   @apply text-gray-400;
 }
 
+/* Facebook-style stories container */
 .fb-stories-container {
-  @apply grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 pb-4;
+  @apply grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 pb-4;
 }
 
+/* Facebook-style story item */
 .fb-story-item {
-  @apply aspect-auto rounded-lg overflow-hidden relative cursor-pointer border border-gray-800 transition-transform;
+  @apply aspect-[9/16] rounded-lg overflow-hidden relative cursor-pointer border border-gray-800 transition-transform;
 }
 
 .fb-story-item:hover {
@@ -114,4 +116,21 @@
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Sticker shadow effect */
+.sticker-shadow {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* RTL fixes */
+[dir="rtl"] .space-x-reverse {
+  --tw-space-x-reverse: 1;
+}
+
+/* Fix for header to fill the screen to the top */
+.fixed.top-0 {
+  width: 100%;
+  left: 0;
+  right: 0;
 }

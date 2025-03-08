@@ -43,7 +43,7 @@ const AlbumImageUploader = ({
   return (
     <div className="space-y-2">
       <Label htmlFor="albumImage">תמונת אלבום</Label>
-      <div className="space-y-3">
+      <div className="space-y-2">
         <Input 
           id="albumImage" 
           type="file" 
@@ -56,7 +56,7 @@ const AlbumImageUploader = ({
         </p>
         
         {previewUrl && (
-          <div className="mt-4 relative w-full max-w-[300px] mx-auto aspect-square rounded-lg overflow-hidden border">
+          <div className="mt-2 relative w-20 h-20 mx-auto rounded-md overflow-hidden border">
             <img 
               src={previewUrl} 
               alt="Album preview" 

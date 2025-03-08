@@ -25,8 +25,8 @@ const AlbumBasicInfo = ({
   setTotalStickers
 }: AlbumBasicInfoProps) => {
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-4 items-center gap-4">
+    <div className="space-y-3 text-right">
+      <div className="grid grid-cols-4 items-center gap-2">
         <Label htmlFor="name" className="text-right">
           שם האלבום *
         </Label>
@@ -36,10 +36,11 @@ const AlbumBasicInfo = ({
           onChange={(e) => setName(e.target.value)}
           className="col-span-3"
           required
+          dir="rtl"
         />
       </div>
       
-      <div className="grid grid-cols-4 items-center gap-4">
+      <div className="grid grid-cols-4 items-center gap-2">
         <Label htmlFor="description" className="text-right">
           תיאור
         </Label>
@@ -48,10 +49,11 @@ const AlbumBasicInfo = ({
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           className="col-span-3"
+          dir="rtl"
         />
       </div>
       
-      <div className="grid grid-cols-4 items-center gap-4">
+      <div className="grid grid-cols-4 items-center gap-2">
         <Label htmlFor="year" className="text-right">
           שנה
         </Label>
@@ -60,10 +62,11 @@ const AlbumBasicInfo = ({
           value={year}
           onChange={(e) => setYear(e.target.value)}
           className="col-span-3"
+          dir="rtl"
         />
       </div>
       
-      <div className="grid grid-cols-4 items-center gap-4">
+      <div className="grid grid-cols-4 items-center gap-2">
         <Label htmlFor="totalStickers" className="text-right">
           כמות מדבקות *
         </Label>
@@ -74,6 +77,7 @@ const AlbumBasicInfo = ({
           onChange={(e) => setTotalStickers(e.target.value)}
           className="col-span-3"
           required
+          dir="rtl"
         />
       </div>
     </div>

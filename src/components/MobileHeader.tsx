@@ -5,6 +5,7 @@ import { useTheme } from "@/hooks/use-theme";
 import SettingsButton from "./settings/SettingsButton";
 import ViewModeToggle from "./ViewModeToggle";
 import { useAlbumStore } from "@/store/useAlbumStore";
+import SyncIndicator from "./SyncIndicator";
 
 interface MobileHeaderProps {
   isMenuOpen: boolean;
@@ -22,18 +23,20 @@ const MobileHeader = ({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) => {
   return (
     <div className="fixed top-0 inset-x-0 h-14 bg-background z-50 border-b border-gray-800">
       <div className="flex h-full items-center px-4 justify-between">
-        {/* Left side - Logo */}
-        <div className="flex items-center">
+        {/* Right side - Logo */}
+        <div className="flex items-center order-1">
           <img 
             src="/lovable-uploads/46e6bbf0-717d-461d-95e4-1584072c6ff0.png" 
             alt="STICKA Logo" 
             className="h-8" 
           />
-          <span className="text-xl font-bold ml-2 text-foreground hidden sm:block">STICKA</span>
+          <span className="text-xl font-bold mr-2 text-foreground hidden sm:block">STICKA</span>
         </div>
         
-        {/* Right side - Action buttons */}
-        <div className="flex items-center space-x-1 rtl:space-x-reverse">
+        {/* Left side - Action buttons */}
+        <div className="flex items-center space-x-1 rtl:space-x-reverse order-2">
+          <SyncIndicator headerPosition={true} />
+          
           <Button
             variant="ghost"
             size="icon"

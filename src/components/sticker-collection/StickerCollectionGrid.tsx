@@ -1,10 +1,6 @@
 
 import { ReactNode } from 'react';
-import { Sticker } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import StickerCard from '@/components/StickerCard';
-import CompactStickerItem from './CompactStickerItem';
-import StickerListItem from '@/components/StickerListItem';
 
 interface StickerCollectionGridProps {
   viewMode: 'grid' | 'list' | 'compact';

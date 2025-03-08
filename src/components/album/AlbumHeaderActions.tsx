@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Download, Upload, Trash2, Recycle, RefreshCw, Plus, FileSpreadsheet } from "lucide-react";
+import { Download, Upload, Trash2, Recycle, RefreshCw, Plus, FileSpreadsheet, Hash, Users, Album as AlbumIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import ViewModeToggle from "../ViewModeToggle";
 import AddAlbumForm from "../add-album-form";
@@ -78,122 +78,130 @@ const AlbumHeaderActions = ({
     }, 1000);
   };
   
-  // Facebook-style action buttons - icons only
-  return (
-    <div className="flex items-center justify-center py-2 gap-2 w-full">
+  // Action buttons
+  const actionButtons = (
+    <div className="flex gap-2">
       <TooltipProvider>
-        <div className="flex gap-2 justify-center w-full">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 rounded-full bg-gray-800"
-                onClick={handleSync}
-                disabled={isSyncing}
-              >
-                <RefreshCw className={`h-5 w-5 ${isSyncing ? 'animate-spin' : ''}`} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              סנכרן עכשיו
-            </TooltipContent>
-          </Tooltip>
-          
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <AddAlbumForm onAlbumAdded={onRefresh} iconOnly />
-            </TooltipTrigger>
-            <TooltipContent>
-              הוסף אלבום
-            </TooltipContent>
-          </Tooltip>
-          
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <ImportExcelDialog 
-                albums={albums} 
-                selectedAlbum={selectedAlbum} 
-                setSelectedAlbum={() => {}} 
-                onImportComplete={onImportComplete}
-                iconOnly
-              />
-            </TooltipTrigger>
-            <TooltipContent>
-              יבא מאקסל
-            </TooltipContent>
-          </Tooltip>
-          
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 rounded-full bg-gray-800"
-                onClick={() => setIsRecycleBinOpen(true)}
-              >
-                <Recycle className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              סל מיחזור
-            </TooltipContent>
-          </Tooltip>
-          
-          {selectedAlbum && (
-            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      variant="ghost"
-                      size="icon"
-                      className="h-10 w-10 rounded-full bg-gray-800"
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </Button>
-                  </AlertDialogTrigger>
-                </TooltipTrigger>
-                <TooltipContent>
-                  מחק אלבום
-                </TooltipContent>
-              </Tooltip>
-              <AlertDialogContent dir="rtl">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>מחיקת אלבום</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    האם אתה בטוח שברצונך למחוק את האלבום "{selectedAlbumData?.name}"?
-                    האלבום וכל המדבקות שלו יועברו לסל המיחזור.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="flex space-x-2 justify-end">
-                  <AlertDialogCancel className="p-0 m-0">
-                    <Button variant="outline" size="icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                        <path d="M18 6 6 18"></path>
-                        <path d="m6 6 12 12"></path>
-                      </svg>
-                    </Button>
-                  </AlertDialogCancel>
-                  <AlertDialogAction 
-                    onClick={handleDeleteAlbum}
-                    className="p-0 m-0"
-                  >
-                    <Button variant="destructive" size="icon">
-                      <Trash2 className="h-5 w-5" />
-                    </Button>
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-gray-800"
+              onClick={handleSync}
+              disabled={isSyncing}
+            >
+              <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            סנכרן עכשיו
+          </TooltipContent>
+        </Tooltip>
+        
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <AddAlbumForm onAlbumAdded={onRefresh} iconOnly />
+          </TooltipTrigger>
+          <TooltipContent>
+            הוסף אלבום
+          </TooltipContent>
+        </Tooltip>
+        
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <ImportExcelDialog 
+              albums={albums} 
+              selectedAlbum={selectedAlbum} 
+              setSelectedAlbum={() => {}} 
+              onImportComplete={onImportComplete}
+              iconOnly
+            />
+          </TooltipTrigger>
+          <TooltipContent>
+            יבא מאקסל
+          </TooltipContent>
+        </Tooltip>
+        
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-gray-800"
+              onClick={() => setIsRecycleBinOpen(true)}
+            >
+              <Recycle className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            סל מיחזור
+          </TooltipContent>
+        </Tooltip>
       </TooltipProvider>
       
       <RecycleBinDialog
         open={isRecycleBinOpen}
         onOpenChange={setIsRecycleBinOpen}
       />
+    </div>
+  );
+  
+  // Filter buttons
+  const filterButtons = (
+    <div className="flex gap-2">
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-gray-800"
+            >
+              <Hash className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            לפי מספר
+          </TooltipContent>
+        </Tooltip>
+        
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-gray-800"
+            >
+              <AlbumIcon className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            לפי אלבום
+          </TooltipContent>
+        </Tooltip>
+        
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-gray-800"
+            >
+              <Users className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            לפי קבוצה
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
+  );
+  
+  return (
+    <div className="flex gap-2 items-center">
+      {actionButtons}
     </div>
   );
 };

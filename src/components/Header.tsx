@@ -11,14 +11,14 @@ interface HeaderProps {
 const Header = ({ title, subtitle, action, className }: HeaderProps) => {
   return (
     <div className={cn(
-      "flex flex-col sm:flex-row sm:items-center justify-between space-y-1 sm:space-y-0 pb-3 sticky top-0 bg-background z-10",
+      "flex flex-row items-center justify-between space-y-1 sm:space-y-0 pb-3 sticky top-0 bg-background z-10",
       "animate-fade-up",
       className
     )}>
       <div>
-        <h1 className="text-xl font-bold tracking-tight">{title}</h1>
+        <h1 className="text-xl font-bold tracking-tight text-right">{title}</h1>
         {subtitle && (
-          <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
+          <p className="text-xs text-muted-foreground mt-0.5 text-right">{subtitle}</p>
         )}
       </div>
       {action && (

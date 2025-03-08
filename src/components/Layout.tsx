@@ -1,11 +1,11 @@
 
 import { ReactNode, useState, useEffect } from "react";
-import { Album, List, ArrowLeftRight, ShoppingBag, Bell, Home, Menu } from "lucide-react";
+import { Album, List, ArrowLeftRight, Home } from "lucide-react";
 import MobileHeader from "./MobileHeader";
 import MobileMenu from "./MobileMenu";
 import { NavigationItem } from "@/lib/types";
 import { useTheme } from "@/hooks/use-theme";
-import StatsPanel from "./StatsPanel";
+import { Link, useLocation } from "react-router-dom";
 
 interface LayoutProps {
   children: ReactNode;
@@ -14,7 +14,9 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentAlbumId, setCurrentAlbumId] = useState<string | undefined>(undefined);
+  const [isScrollingDown, setIsScrollingDown] = useState(false);
   const { theme } = useTheme();
+  const location = useLocation();
 
   // Listen for album changes from children components
   useEffect(() => {
@@ -32,17 +34,32 @@ const Layout = ({ children }: LayoutProps) => {
     };
   }, []);
 
+  // Handle scroll direction
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      setIsScrollingDown(currentScrollY > lastScrollY && currentScrollY > 10);
+      lastScrollY = currentScrollY;
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   const navigation: NavigationItem[] = [
     { name: "בית", href: "/", icon: Home },
     { name: "מלאי", href: "/inventory", icon: List },
     { name: "עסקאות", href: "/exchange", icon: ArrowLeftRight },
-    { name: "חנות", href: "/scan", icon: ShoppingBag },
-    { name: "התראות", href: "#", icon: Bell },
   ];
 
   return (
     <div className="min-h-screen bg-background flex flex-col w-full" dir="rtl">
-      {/* Mobile Header - Facebook style */}
+      {/* Mobile Header */}
       <MobileHeader isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
 
       {/* Mobile Menu */}
@@ -53,28 +70,28 @@ const Layout = ({ children }: LayoutProps) => {
       />
 
       <div className="flex flex-1">
-        {/* Main Content - with improved padding and scrolling */}
-        <main className="flex-1 pt-14 pb-24 overflow-y-auto overflow-x-hidden w-full">
+        {/* Main Content */}
+        <main className="flex-1 pt-14 pb-20 overflow-y-auto overflow-x-hidden w-full">
           <div className="max-w-4xl mx-auto px-1">
             {children}
           </div>
         </main>
       </div>
 
-      {/* Facebook-style footer navigation with more bottom padding */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-black text-white border-t border-gray-800">
+      {/* Footer navigation that hides when scrolling down */}
+      <div className={`fixed bottom-0 left-0 right-0 z-50 bg-black text-white border-t border-gray-800 transition-transform duration-300 ${isScrollingDown ? 'translate-y-full' : 'translate-y-0'}`}>
         <div className="w-full flex justify-between items-center px-2 pt-2 pb-8">
           {navigation.map((item, index) => (
-            <a
+            <Link
               key={index}
-              href={item.href}
+              to={item.href}
               className={`flex flex-col items-center justify-center p-1 ${
-                window.location.pathname === item.href ? "text-blue-500" : "text-gray-400"
+                location.pathname === item.href ? "text-blue-500" : "text-gray-400"
               }`}
             >
               <item.icon className="h-6 w-6" />
               <span className="text-xs mt-1">{item.name}</span>
-            </a>
+            </Link>
           ))}
         </div>
       </div>

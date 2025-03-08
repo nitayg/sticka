@@ -1,3 +1,4 @@
+
 import React from "react";
 import { History, FileMinus, Copy, ClipboardCopy, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -84,22 +85,42 @@ const InventoryHeaderActions = ({
 
   return (
     <div className="flex gap-2">
+      <Button 
+        onClick={onAddClick}
+        className="px-2 py-1.5 h-8 text-xs rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground font-medium transition-colors flex items-center gap-1"
+      >
+        <Plus className="h-3.5 w-3.5 ml-1" />
+        הוספה
+      </Button>
+
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button 
-              variant="outline"
-              size="sm"
-              asChild
-            >
-              <Link to="/inventory/history" className="flex items-center gap-1.5">
-                <History className="h-3.5 w-3.5" />
-                היסטוריה
-              </Link>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="flex gap-1.5"
+                >
+                  <Copy className="h-3.5 w-3.5 ml-1" />
+                  <span className="sr-only md:not-sr-only md:inline-block">דו״ח כפולים</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => { setReportFormat('numbers'); copyDuplicateStickers(); }}>
+                  <ClipboardCopy className="h-4 w-4 ml-2" />
+                  העתק מספרים (1, 2, 3)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setReportFormat('names'); copyDuplicateStickers(); }}>
+                  <Copy className="h-4 w-4 ml-2" />
+                  העתק מספרים ושמות
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </TooltipTrigger>
           <TooltipContent>
-            <p>היסטוריית קליטת מדבקות</p>
+            <p>הפקת דו״ח כפולים</p>
           </TooltipContent>
         </Tooltip>
         
@@ -112,7 +133,7 @@ const InventoryHeaderActions = ({
                   size="sm"
                   className="flex gap-1.5"
                 >
-                  <FileMinus className="h-3.5 w-3.5" />
+                  <FileMinus className="h-3.5 w-3.5 ml-1" />
                   <span className="sr-only md:not-sr-only md:inline-block">דו״ח חוסרים</span>
                 </Button>
               </DropdownMenuTrigger>
@@ -135,42 +156,22 @@ const InventoryHeaderActions = ({
         
         <Tooltip>
           <TooltipTrigger asChild>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="flex gap-1.5"
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                  <span className="sr-only md:not-sr-only md:inline-block">דו״ח כפולים</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => { setReportFormat('numbers'); copyDuplicateStickers(); }}>
-                  <ClipboardCopy className="h-4 w-4 ml-2" />
-                  העתק מספרים (1, 2, 3)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => { setReportFormat('names'); copyDuplicateStickers(); }}>
-                  <Copy className="h-4 w-4 ml-2" />
-                  העתק מספרים ושמות
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button 
+              variant="outline"
+              size="sm"
+              asChild
+            >
+              <Link to="/inventory/history" className="flex items-center gap-1.5">
+                <History className="h-3.5 w-3.5 ml-1" />
+                היסטוריה
+              </Link>
+            </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>הפקת דו״ח כפולים</p>
+            <p>היסטוריית קליטת מדבקות</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      
-      <Button 
-        onClick={onAddClick}
-        className="px-2 py-1.5 h-8 text-xs rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground font-medium transition-colors flex items-center gap-1"
-      >
-        <Plus className="h-3.5 w-3.5" />
-        הוספה
-      </Button>
     </div>
   );
 };

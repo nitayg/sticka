@@ -3,7 +3,11 @@ import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { isSyncInProgress, getLastSyncTime, StorageEvents } from '@/lib/sync';
 
-const SyncIndicator = () => {
+interface SyncIndicatorProps {
+  headerPosition?: boolean;
+}
+
+const SyncIndicator = ({ headerPosition = false }: SyncIndicatorProps) => {
   const [syncing, setSyncing] = useState(isSyncInProgress());
   
   useEffect(() => {
@@ -28,8 +32,16 @@ const SyncIndicator = () => {
     return null;
   }
   
+  if (headerPosition) {
+    return (
+      <div className="flex items-center justify-center h-8 w-8 mx-1">
+        <Loader2 className="animate-spin h-4 w-4 text-blue-500" />
+      </div>
+    );
+  }
+  
   return (
-    <div className="fixed top-16 left-4 p-2 flex items-center justify-center rounded-full bg-blue-500 h-8 w-8 z-50">
+    <div className="hidden">
       <Loader2 className="animate-spin h-4 w-4 text-white" />
     </div>
   );

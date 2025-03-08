@@ -32,7 +32,7 @@ const CsvImportField = ({ csvContent, setCsvContent }: CsvImportFieldProps) => {
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 text-right">
       <Label htmlFor="file">העלאת קובץ CSV</Label>
       <div className="space-y-1">
         <Input 
@@ -41,8 +41,9 @@ const CsvImportField = ({ csvContent, setCsvContent }: CsvImportFieldProps) => {
           accept=".csv,.txt" 
           onChange={handleFileUpload} 
           ref={fileInputRef}
+          dir="rtl"
         />
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground text-right">
           פורמט הקובץ: מספר, שם, קבוצה/סדרה בכל שורה. 
           המערכת תזהה באופן אוטומטי שורת כותרת אם קיימת.
         </p>

@@ -28,7 +28,7 @@ const AlbumHeader = ({
   
   return (
     <div className="pb-2 mb-1">
-      <div className="flex flex-col">
+      <div className="flex justify-between items-center py-2">
         <AlbumTitle selectedAlbumData={selectedAlbumData} />
         
         <AlbumHeaderActions

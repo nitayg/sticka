@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { getAllAlbums } from "@/lib/data";
 import ViewModeToggle from "../ViewModeToggle";
 import AlbumCarousel from "./AlbumCarousel";
@@ -30,7 +29,7 @@ const InventoryFilters = ({
         selectedAlbumId={selectedAlbumId}
         onAlbumChange={onAlbumChange}
       />
-      <div className="flex justify-end">
+      <div className="flex justify-start">
         <ViewModeToggle 
           viewMode={viewMode} 
           setViewMode={setViewMode}
