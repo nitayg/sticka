@@ -44,6 +44,7 @@ const queryClient = new QueryClient({
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
+  const [isAppReady, setIsAppReady] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   
   // Initialize Supabase and synchronize data
@@ -53,6 +54,7 @@ const App = () => {
         setIsSyncing(true);
         await initializeFromStorage();
         setIsSyncing(false);
+        setIsAppReady(true);
         
         // Listen for sync-complete events
         const handleSyncComplete = () => {
@@ -67,6 +69,7 @@ const App = () => {
       } catch (error) {
         console.error("Error initializing Supabase:", error);
         setIsSyncing(false);
+        setIsAppReady(true);
       }
     };
     
@@ -86,10 +89,11 @@ const App = () => {
     <ThemeProvider defaultTheme="light" storageKey="sticker-album-theme">
       <QueryClientProvider client={queryClient}>
         <TooltipProvider delayDuration={300}>
-          {showSplash && <SplashScreen onComplete={handleSplashComplete} minDisplayTime={2000} />}
+          {showSplash && <SplashScreen onComplete={handleSplashComplete} minDisplayTime={2500} />}
           <Toaster />
           <Sonner position="top-center" closeButton />
           <Suspense fallback={<LoadingFallback />}>
+            {/* Render the main app content even if we're showing the splash screen */}
             <Index />
           </Suspense>
         </TooltipProvider>
