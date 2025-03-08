@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo } from "react";
 import { Sticker } from "@/lib/types";
 import StickerCollection from "../StickerCollection";
@@ -31,6 +32,7 @@ const FilteredStickerContainer = ({
 }: FilteredStickerContainerProps) => {
   const { toast } = useToast();
   
+  // Fetch stickers if not provided in props
   useEffect(() => {
     if (selectedAlbumId && stickers.length === 0) {
       console.log("No stickers found for album", selectedAlbumId, "trying to fetch them directly");
@@ -43,7 +45,24 @@ const FilteredStickerContainer = ({
     }
   }, [selectedAlbumId, stickers.length, onRefresh]);
 
+  // Listen for forced refresh events
+  useEffect(() => {
+    const handleForceRefresh = () => {
+      console.log("Force refresh triggered in FilteredStickerContainer");
+      onRefresh();
+    };
+    
+    window.addEventListener('forceRefresh', handleForceRefresh);
+    window.addEventListener('stickerDataChanged', handleForceRefresh);
+    
+    return () => {
+      window.removeEventListener('forceRefresh', handleForceRefresh);
+      window.removeEventListener('stickerDataChanged', handleForceRefresh);
+    };
+  }, [onRefresh]);
+
   const filteredStickers = useMemo(() => {
+    // If no stickers in props, try to get them directly
     if (stickers.length === 0 && selectedAlbumId) {
       const directStickers = getStickersByAlbumId(selectedAlbumId);
       console.log("Direct stickers fetch returned", directStickers.length, "stickers");
@@ -51,12 +70,15 @@ const FilteredStickerContainer = ({
       if (directStickers.length > 0) {
         let filtered = directStickers;
         
+        // Apply number range filter
         if (activeTab === "number" && selectedRange) {
           const [rangeStart, rangeEnd] = selectedRange.split('-').map(Number);
           filtered = filtered.filter(sticker => 
             sticker.number >= rangeStart && sticker.number <= rangeEnd
           );
-        } else if ((activeTab === "team" || activeTab === "manage") && selectedTeam) {
+        } 
+        // Apply team filter
+        else if ((activeTab === "team" || activeTab === "manage") && selectedTeam) {
           filtered = filtered.filter(sticker => sticker.team === selectedTeam);
         }
         
@@ -64,14 +86,18 @@ const FilteredStickerContainer = ({
       }
     }
     
+    // Use stickers from props
     let filtered = stickers;
     
+    // Apply number range filter
     if (activeTab === "number" && selectedRange) {
       const [rangeStart, rangeEnd] = selectedRange.split('-').map(Number);
       filtered = filtered.filter(sticker => 
         sticker.number >= rangeStart && sticker.number <= rangeEnd
       );
-    } else if ((activeTab === "team" || activeTab === "manage") && selectedTeam) {
+    } 
+    // Apply team filter
+    else if ((activeTab === "team" || activeTab === "manage") && selectedTeam) {
       filtered = filtered.filter(sticker => sticker.team === selectedTeam);
     }
     

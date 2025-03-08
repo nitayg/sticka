@@ -55,6 +55,8 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
     
     try {
       const newAlbumId = generateId();
+      console.log("Creating new album with ID:", newAlbumId);
+      
       const newAlbum = {
         id: newAlbumId,
         name,
@@ -64,21 +66,23 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
         coverImage: imageUrl,
       };
       
+      // Add album to storage and Supabase
       await addAlbum(newAlbum);
       
+      // Process CSV data if provided
       if (csvContent) {
         try {
           const parsedData = parseCSV(csvContent);
           console.log("Parsed CSV data:", parsedData);
           
           if (parsedData && parsedData.length > 0) {
-            // פורמט המידע בצורת מערך תלת-איברי [מספר, שם, קבוצה]
+            // Format data as [number, name, team] triplets
             const importData: [number, string, string][] = [];
             
-            // עיבוד הנתונים מהפרסר - תומך גם במערך וגם באובייקט
+            // Process data from parser - supports both array and object formats
             parsedData.forEach(row => {
               if (Array.isArray(row) && row.length >= 3) {
-                // במקרה של מערך, הערכים כבר בסדר הנכון
+                // For array format, values are already in the right order
                 const number = parseInt(row[0].toString()) || 0;
                 const name = row[1]?.toString() || "";
                 const team = row[2]?.toString() || "";
@@ -87,7 +91,7 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
                   importData.push([number, name, team]);
                 }
               } else if (typeof row === 'object' && row !== null) {
-                // במקרה של אובייקט, צריך למפות את המפתחות
+                // For object format, map the keys
                 const numVal = row.number || row.Number || row.num || row.NUM || "0";
                 const number = parseInt(typeof numVal === 'string' ? numVal : String(numVal)) || 0;
                 
@@ -103,6 +107,7 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
               }
             });
             
+            // Only import if we have valid data
             if (importData.length > 0) {
               console.log("Importing stickers:", importData);
               const importedStickers = importStickersFromCSV(newAlbumId, importData);
@@ -110,6 +115,13 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
               toast({
                 title: "מדבקות יובאו בהצלחה",
                 description: `יובאו ${importedStickers.length} מדבקות לאלבום`,
+              });
+            } else {
+              console.warn("No valid sticker data found in CSV");
+              toast({
+                title: "אזהרה",
+                description: "לא נמצא מידע תקין על מדבקות בקובץ",
+                variant: "destructive",
               });
             }
           }
@@ -123,9 +135,10 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
         }
       }
       
-      // אחרי הוספת האלבום החדש, יש לבחור בו אוטומטית
+      // Select the new album automatically
       handleAlbumChange(newAlbumId);
       
+      // Close dialog and reset form
       setOpen(false);
       resetForm();
       
@@ -134,14 +147,19 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
         description: `האלבום "${name}" נוסף בהצלחה`,
       });
       
+      // Run the callback if provided
       if (onAlbumAdded) {
         onAlbumAdded();
       }
       
-      // אחרי שניה, נרענן שוב כדי לוודא שהמדבקות מוצגות
+      // Force refresh to ensure components get updated
+      window.dispatchEvent(new CustomEvent('albumDataChanged'));
+      
+      // Add a small delay and refresh again to ensure stickers are loaded
       setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('albumDataChanged'));
-      }, 1000);
+        window.dispatchEvent(new CustomEvent('forceRefresh'));
+        window.dispatchEvent(new CustomEvent('stickerDataChanged', { detail: { albumId: newAlbumId } }));
+      }, 500);
       
     } catch (error) {
       console.error("Error adding album:", error);
@@ -165,7 +183,7 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
     setActiveTab("details");
   };
   
-  // איפוס טופס בפתיחה מחדש
+  // Reset form when dialog opens
   useEffect(() => {
     if (open) {
       resetForm();

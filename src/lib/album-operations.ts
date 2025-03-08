@@ -1,101 +1,154 @@
 
 import { Album } from './types';
-import { albums as initialAlbums } from './initial-data';
-import { setStickerData, getStickerData } from './sticker-operations';
-import { saveToStorage, syncWithSupabase, getFromStorage } from './sync';
-import { markRelatedItemsAsDeleted } from './sync/merge-utils';
+import { v4 as uuidv4 } from 'uuid';
+import { saveToStorage, getFromStorage, StorageEvents } from './sync';
+import { toast } from '@/components/ui/use-toast';
+import { supabase } from './supabase';
+import { saveAlbum, deleteAlbumFromSupabase } from './supabase/albums';
+import { deleteStickersByAlbumId } from './sticker-operations';
 
-// Maintain data state
-let albumData = [...initialAlbums];
+// Storage for albums data
+let albumsData: Album[] = [];
 
-export const getAlbumData = () => albumData;
-export const setAlbumData = (data: Album[]) => {
-  albumData = data;
-  // Save to localStorage and Supabase whenever data changes
-  saveToStorage('albums', albumData);
+// Function to set album data (used when data is updated from another tab)
+export const setAlbumData = (albums: Album[]) => {
+  albumsData = albums;
+  saveToStorage('albums', albums);
   
-  // Notify components that album data has changed
-  window.dispatchEvent(new CustomEvent('albumDataChanged'));
+  // Dispatch the storage event for other tabs to pick up
+  const event = new CustomEvent(StorageEvents.ALBUMS, { detail: albums });
+  window.dispatchEvent(event);
 };
 
-export const getAllAlbums = () => {
-  // Filter out deleted albums
-  return albumData.filter(album => !album.isDeleted);
+// Function to get album data
+export const getAlbumData = () => {
+  if (albumsData.length === 0) {
+    albumsData = getFromStorage<Album[]>('albums', []);
+  }
+  return albumsData;
 };
 
-export const getAlbumById = (id: string) => {
-  return albumData.find(album => album.id === id && !album.isDeleted);
-};
-
-export const addAlbum = (album: Omit<Album, "id">) => {
-  // Generate a truly unique ID with a timestamp component
-  // Format: album_<timestamp>_<random string>
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 15);
-  const newAlbum = {
-    ...album,
-    id: `album_${timestamp}_${random}`,
-    lastModified: timestamp,
+// Function to add a new album
+export const addAlbum = async (albumData: Omit<Album, 'lastModified'>): Promise<Album> => {
+  const album: Album = {
+    ...albumData,
+    lastModified: Date.now(),
     isDeleted: false
   };
+
+  const albums = getAlbumData();
+  const updatedAlbums = [...albums, album];
+  setAlbumData(updatedAlbums);
   
-  setAlbumData([...albumData, newAlbum]);
+  try {
+    await saveAlbum(album);
+  } catch (error) {
+    console.error('Error saving album to Supabase:', error);
+  }
   
-  // Trigger a custom event to notify components that album data has changed
-  window.dispatchEvent(new CustomEvent('albumDataChanged'));
-  
-  // Force a sync with Supabase to ensure changes are saved
-  syncWithSupabase();
-  
-  return newAlbum;
+  return album;
 };
 
-export const updateAlbum = (id: string, data: Partial<Album>) => {
-  const timestamp = Date.now();
+// Function to update an existing album
+export const updateAlbum = (albumId: string, updates: Partial<Album>): Album | undefined => {
+  const albums = getAlbumData();
+  let updatedAlbum: Album | undefined;
   
-  setAlbumData(albumData.map(album => 
-    album.id === id ? { 
-      ...album, 
-      ...data,
-      lastModified: timestamp
-    } : album
-  ));
+  const updatedAlbums = albums.map(album => {
+    if (album.id === albumId) {
+      updatedAlbum = { ...album, ...updates, lastModified: Date.now() };
+      return updatedAlbum;
+    }
+    return album;
+  });
   
-  // Trigger a custom event to notify components that album data has changed
-  window.dispatchEvent(new CustomEvent('albumDataChanged'));
+  setAlbumData(updatedAlbums);
   
-  // Force a sync with Supabase to ensure changes are saved
-  syncWithSupabase();
+  // Save the updated album to Supabase
+  if (updatedAlbum) {
+    saveAlbum(updatedAlbum).catch(error => {
+      console.error('Error updating album in Supabase:', error);
+    });
+  }
   
-  return albumData.find(album => album.id === id);
+  return updatedAlbum;
 };
 
-export const deleteAlbum = (id: string) => {
-  const timestamp = Date.now();
+// Function to delete an album - completely rewritten to fix Supabase deletion issues
+export const deleteAlbum = async (albumId: string): Promise<void> => {
+  console.log('Deleting album with ID:', albumId);
   
-  // 1. Mark album as deleted
-  setAlbumData(albumData.map(album => 
-    album.id === id ? {
-      ...album,
-      isDeleted: true,
-      lastModified: timestamp
-    } : album
-  ));
+  try {
+    // 1. First mark as deleted in local storage
+    const albums = getAlbumData();
+    const album = albums.find(a => a.id === albumId);
+    
+    if (!album) {
+      console.error('Album not found for deletion:', albumId);
+      return;
+    }
+    
+    // 2. Delete stickers associated with this album
+    await deleteStickersByAlbumId(albumId);
+    
+    // 3. Delete from Supabase
+    const success = await deleteAlbumFromSupabase(albumId);
+    if (!success) {
+      console.error('Failed to delete album from Supabase');
+      toast({
+        title: "שגיאה במחיקת האלבום",
+        description: "אירעה שגיאה במחיקת האלבום מהשרת. נסה שוב מאוחר יותר.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // 4. Remove from local array only after Supabase deletion succeeded
+    const updatedAlbums = albums.filter(album => album.id !== albumId);
+    setAlbumData(updatedAlbums);
+    
+    console.log('Album deleted successfully from both local storage and Supabase');
+    
+    // 5. Dispatch an event to notify components about the deletion
+    window.dispatchEvent(new CustomEvent('albumDeleted', { detail: { albumId } }));
+    
+  } catch (error) {
+    console.error('Error deleting album:', error);
+    toast({
+      title: "שגיאה במחיקת האלבום",
+      description: "אירעה שגיאה במחיקת האלבום. נסה שוב מאוחר יותר.",
+      variant: "destructive",
+    });
+  }
+};
+
+// Function to get album by ID
+export const getAlbumById = (albumId: string): Album | undefined => {
+  const albums = getAlbumData();
+  return albums.find(album => album.id === albumId);
+};
+
+// Function to restore a deleted album
+export const restoreAlbum = (albumId: string): Album | undefined => {
+  const albums = getAlbumData();
+  let restoredAlbum: Album | undefined;
   
-  // 2. Mark all related stickers as deleted too
-  const stickers = getStickerData();
-  setStickerData(markRelatedItemsAsDeleted(stickers, id, timestamp));
+  const updatedAlbums = albums.map(album => {
+    if (album.id === albumId) {
+      restoredAlbum = { ...album, isDeleted: false, lastModified: Date.now() };
+      return restoredAlbum;
+    }
+    return album;
+  });
   
-  // 3. Get exchange offers (including deleted ones for sync purposes)
-  const exchangeOffers = getFromStorage('exchangeOffers', [], true);
+  setAlbumData(updatedAlbums);
   
-  // 4. Mark related exchange offers as deleted
-  const updatedExchangeOffers = markRelatedItemsAsDeleted(exchangeOffers, id, timestamp);
-  saveToStorage('exchangeOffers', updatedExchangeOffers);
+  // Save the restored album to Supabase
+  if (restoredAlbum) {
+    saveAlbum(restoredAlbum).catch(error => {
+      console.error('Error restoring album in Supabase:', error);
+    });
+  }
   
-  // Trigger a custom event to notify components that album data has changed
-  window.dispatchEvent(new CustomEvent('albumDataChanged'));
-  
-  // Force a sync with Supabase to ensure changes are saved
-  syncWithSupabase();
+  return restoredAlbum;
 };

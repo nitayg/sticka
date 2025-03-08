@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { saveToStorage, getFromStorage } from './sync';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from './supabase';
+import { saveStickerBatch, deleteStickerFromSupabase } from './supabase/stickers';
 
 // Storage for stickers data
 let stickersData: Sticker[] = [];
@@ -60,6 +61,36 @@ export const deleteSticker = (stickerId: string): void => {
   const stickers = getStickerData();
   const updatedStickers = stickers.filter(sticker => sticker.id !== stickerId);
   setStickerData(updatedStickers);
+  
+  // Delete from Supabase
+  deleteStickerFromSupabase(stickerId).catch(error => {
+    console.error('Error deleting sticker from Supabase:', error);
+  });
+};
+
+// Added function to delete all stickers by album ID
+export const deleteStickersByAlbumId = async (albumId: string): Promise<void> => {
+  console.log(`Deleting all stickers for album: ${albumId}`);
+  
+  const stickers = getStickerData();
+  const stickersToDelete = stickers.filter(sticker => sticker.albumId === albumId);
+  
+  // Remove from local storage first
+  const updatedStickers = stickers.filter(sticker => sticker.albumId !== albumId);
+  setStickerData(updatedStickers);
+  
+  // Delete from Supabase
+  try {
+    for (const sticker of stickersToDelete) {
+      await deleteStickerFromSupabase(sticker.id);
+    }
+    console.log(`Successfully deleted ${stickersToDelete.length} stickers for album ${albumId}`);
+  } catch (error) {
+    console.error('Error deleting stickers from Supabase:', error);
+  }
+  
+  // Dispatch event to notify components
+  window.dispatchEvent(new CustomEvent('stickersDeleted', { detail: { albumId } }));
 };
 
 // Function to toggle the 'owned' status of a sticker
@@ -88,12 +119,14 @@ export const toggleStickerDuplicate = (stickerId: string): Sticker | undefined =
   return updatedStickers.find(sticker => sticker.id === stickerId);
 };
 
-// Function to import stickers from a CSV file
+// Function to import stickers from a CSV file - completely rewritten for better typing
 export const importStickersFromCSV = (albumId: string, csvData: [number, string, string][]): Sticker[] => {
   const newStickers: Sticker[] = [];
   console.log(`Importing ${csvData.length} stickers for album ${albumId}`);
   
-  for (const [number, name, team] of csvData) {
+  for (const row of csvData) {
+    const [number, name, team] = row;
+    
     // Skip invalid entries
     if (!number || number <= 0) continue;
     
@@ -116,13 +149,19 @@ export const importStickersFromCSV = (albumId: string, csvData: [number, string,
     newStickers.push(newSticker);
   }
 
+  // Get current stickers and add the new ones
   const stickers = getStickerData();
   const updatedStickers = [...stickers, ...newStickers];
   setStickerData(updatedStickers);
   
   console.log(`Successfully imported ${newStickers.length} stickers for album ${albumId}`);
   
-  // מיד לאחר היבוא, מפעילים אירוע כדי להודיע לממשק על השינוי
+  // Save to Supabase in batches
+  saveStickerBatch(newStickers).catch(error => {
+    console.error('Error saving stickers to Supabase:', error);
+  });
+  
+  // Trigger event to notify UI components
   window.dispatchEvent(new CustomEvent('stickerDataChanged', { detail: { albumId } }));
   
   return newStickers;

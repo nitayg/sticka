@@ -106,11 +106,9 @@ export const parseCSV = (csvContent: string): Array<any> => {
   // Process as array of arrays if no header
   else {
     return lines.map(line => {
-      const values = parseLine(line).map(value => 
+      return parseLine(line).map(value => 
         value.replace(/['"]/g, '').trim()
       );
-      
-      return values;
     });
   }
 };
