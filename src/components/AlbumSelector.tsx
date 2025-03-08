@@ -1,13 +1,13 @@
 
 import React, { useState } from "react";
-import { Label } from "../ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getAllAlbums } from "@/lib/album-operations";
-import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
-import { Input } from "../ui/input";
-import { Textarea } from "../ui/textarea";
-import { useToast } from "../ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 import { generateId } from "@/lib/utils";
 import { addAlbum } from "@/lib/data";
 
@@ -37,10 +37,8 @@ const AlbumSelector = ({ albumId, setAlbumId }: AlbumSelectorProps) => {
     }
     
     try {
-      // Generate a new ID for the album
       const newAlbumId = generateId();
       
-      // Create and add the new album
       const album = await addAlbum({
         id: newAlbumId,
         name: newAlbumName,
@@ -55,17 +53,14 @@ const AlbumSelector = ({ albumId, setAlbumId }: AlbumSelectorProps) => {
         description: `האלבום "${album.name}" נוסף בהצלחה`,
       });
       
-      // Update the selected album to the newly added one
       setAlbumId(album.id);
       
-      // Close the dialog and reset form
       setIsAddAlbumOpen(false);
       setNewAlbumName("");
       setNewAlbumDescription("");
       setNewAlbumYear("");
       setNewAlbumTotalStickers("");
       
-      // Force refresh to ensure components get updated
       window.dispatchEvent(new CustomEvent('albumDataChanged'));
     } catch (error) {
       console.error("Error adding album:", error);
