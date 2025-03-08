@@ -59,35 +59,28 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
     <>
       <div
         className={cn(
-          "relative group h-full w-full rounded-xl overflow-hidden cursor-pointer transition-all border-2 hover:border-primary",
-          isSelected ? "border-primary ring-2 ring-primary ring-offset-2" : "border-border"
+          "h-full w-full rounded-lg overflow-hidden cursor-pointer transition-all border",
+          isSelected ? "border-2 border-blue-500" : "border-gray-800"
         )}
         onClick={onSelect}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-        <div className="w-full h-full bg-muted relative">
+        <div className="w-full h-full relative">
           {coverImage ? (
             <img 
               src={coverImage} 
               alt={name} 
-              className="object-cover w-full h-full"
+              className="h-full w-full object-cover"
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted-foreground/10 to-muted-foreground/30">
-              <span className="text-5xl font-bold text-foreground/30">
-                {name.substring(0, 1).toLocaleUpperCase()}
-              </span>
+            <div className="h-full w-full bg-gray-800 flex items-center justify-center">
+              <span className="text-3xl text-gray-500">?</span>
             </div>
           )}
 
           {/* Darkened overlay for text */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-
-          {/* Album name */}
-          <div className="absolute bottom-0 left-0 right-0 p-3 text-sm font-semibold text-white line-clamp-2 text-center">
-            {name}
-          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
           {/* Action buttons */}
           <TooltipProvider>
@@ -121,6 +114,11 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
               </Tooltip>
             </div>
           </TooltipProvider>
+
+          {/* Album name */}
+          <div className="absolute bottom-0 left-0 right-0 p-2 text-xs font-medium text-white truncate">
+            {name}
+          </div>
         </div>
       </div>
 
