@@ -1,8 +1,8 @@
-
 import { generateId } from './utils';
 import { stickers as stickersData } from './initial-data';
 import { Sticker } from './types';
 import { saveToStorage, getFromStorage } from './sync/storage-utils';
+import { deleteStickerFromSupabase } from './supabase/stickers';
 
 // Get all stickers data
 export const getStickerData = (): Sticker[] => {
@@ -84,29 +84,45 @@ export const updateSticker = (id: string, updates: Partial<Sticker>): Sticker | 
   return updatedSticker;
 };
 
-// Delete a sticker
-export const deleteSticker = (id: string): boolean => {
-  const stickers = getStickerData();
-  const stickerToDelete = stickers.find(sticker => sticker.id === id);
-  
-  if (!stickerToDelete) {
-    console.error(`Sticker with ID ${id} not found`);
+// Delete a sticker - עדכון לשימוש במחיקה מהשרת
+export const deleteSticker = async (id: string): Promise<boolean> => {
+  try {
+    const stickers = getStickerData();
+    const stickerToDelete = stickers.find(sticker => sticker.id === id);
+    
+    if (!stickerToDelete) {
+      console.error(`Sticker with ID ${id} not found`);
+      return false;
+    }
+    
+    const albumId = stickerToDelete.albumId;
+    
+    // מחיקה מהשרת תחילה
+    console.log(`Deleting sticker ${id} from server...`);
+    const success = await deleteStickerFromSupabase(id);
+    
+    if (!success) {
+      console.error(`Failed to delete sticker ${id} from server`);
+      return false;
+    }
+    
+    // לאחר מחיקה מוצלחת מהשרת, עדכון במצב המקומי
+    console.log(`Sticker ${id} deleted from server, updating local state`);
+    const updatedStickers = stickers.filter(sticker => sticker.id !== id);
+    setStickerData(updatedStickers);
+    
+    // Trigger stickerDataChanged event
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+        detail: { albumId, action: 'delete' } 
+      }));
+    }
+    
+    return true;
+  } catch (error) {
+    console.error(`Error deleting sticker ${id}:`, error);
     return false;
   }
-  
-  const albumId = stickerToDelete.albumId;
-  const updatedStickers = stickers.filter(sticker => sticker.id !== id);
-  
-  setStickerData(updatedStickers);
-  
-  // Trigger stickerDataChanged event
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-      detail: { albumId, action: 'delete' } 
-    }));
-  }
-  
-  return true;
 };
 
 // Toggle owned status
@@ -238,14 +254,26 @@ export const importStickersFromCSV = (albumId: string, data: [number, string, st
 export const deleteStickersByAlbumId = async (albumId: string): Promise<boolean> => {
   try {
     const allStickers = getStickerData();
-    const nonAlbumStickers = allStickers.filter(sticker => sticker.albumId !== albumId);
+    const stickersToDelete = allStickers.filter(sticker => sticker.albumId === albumId);
     
-    // If no stickers were removed, return early
-    if (nonAlbumStickers.length === allStickers.length) {
+    // אם אין מדבקות למחיקה, נחזיר הצלחה
+    if (stickersToDelete.length === 0) {
       return true;
     }
     
-    // Save the filtered stickers
+    console.log(`Deleting ${stickersToDelete.length} stickers for album ${albumId} from Supabase...`);
+    
+    // מחיקת כל המדבקות בשרת
+    for (const sticker of stickersToDelete) {
+      const success = await deleteStickerFromSupabase(sticker.id);
+      if (!success) {
+        console.error(`Failed to delete sticker ${sticker.id} from server`);
+        return false;
+      }
+    }
+    
+    // עדכון המצב המקומי לאחר מחיקה מוצלחת מהשרת
+    const nonAlbumStickers = allStickers.filter(sticker => sticker.albumId !== albumId);
     setStickerData(nonAlbumStickers);
     
     console.log(`Deleted all stickers for album ${albumId}`);

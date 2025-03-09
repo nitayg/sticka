@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "./ui/button";
 import { Sticker } from "@/lib/types";
 import { useToast } from "./ui/use-toast";
-import { toggleStickerOwned, toggleStickerDuplicate, updateSticker } from "@/lib/sticker-operations";
+import { toggleStickerOwned, toggleStickerDuplicate, updateSticker, deleteSticker } from "@/lib/sticker-operations";
 import { getAlbumById } from "@/lib/album-operations";
 import EditStickerForm from "./edit-sticker-form";
 import StickerInfo from "./sticker-details/StickerInfo";
@@ -26,10 +26,12 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
   const [showEditForm, setShowEditForm] = useState(false);
   const { transactionMap } = useInventoryStore();
   const [activeTab, setActiveTab] = useState<'info' | 'image'>('info');
+  const [isDeleting, setIsDeleting] = useState(false);
   
   useEffect(() => {
     if (sticker) {
       setShowEditForm(false);
+      setIsDeleting(false);
     }
   }, [sticker]);
   
@@ -71,6 +73,36 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
       description: `מדבקה ${sticker.number} - ${sticker.name} עודכנה בהצלחה`,
     });
     onUpdate();
+  };
+
+  const handleDelete = async () => {
+    if (isDeleting || !sticker) return;
+    
+    setIsDeleting(true);
+    
+    try {
+      const success = await deleteSticker(sticker.id);
+      
+      if (success) {
+        toast({
+          title: "מדבקה נמחקה",
+          description: `מדבקה ${sticker.number} - ${sticker.name} נמחקה בהצלחה`,
+        });
+        onUpdate();
+        onClose();
+      } else {
+        throw new Error("Failed to delete sticker");
+      }
+    } catch (error) {
+      console.error("Error deleting sticker:", error);
+      toast({
+        title: "שגיאה במחיקת המדבקה",
+        description: "אירעה שגיאה בעת מחיקת המדבקה",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleEditClick = () => {
@@ -130,6 +162,8 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
               onToggleOwned={handleToggleOwned}
               onToggleDuplicate={handleToggleDuplicate}
               onEdit={handleEditClick}
+              onDelete={handleDelete}
+              isDeleting={isDeleting}
             />
             
             {/* Image upload section (simplified) */}

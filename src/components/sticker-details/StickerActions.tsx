@@ -1,103 +1,95 @@
 
-import { Button } from "../ui/button";
-import { 
-  Check, 
-  Trash2, 
-  ArrowLeftRight, 
-  Edit, 
-  Copy, 
-  X,
-  CheckCircle
-} from "lucide-react";
+import React from 'react';
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash, CheckCircle, XCircle } from "lucide-react";
 import { Sticker } from "@/lib/types";
-import { useToast } from "../ui/use-toast";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 
 interface StickerActionsProps {
   sticker: Sticker;
   onToggleOwned: () => void;
   onToggleDuplicate: () => void;
   onEdit: () => void;
+  onDelete?: () => void;
+  isDeleting?: boolean;
 }
 
-const StickerActions = ({ sticker, onToggleOwned, onToggleDuplicate, onEdit }: StickerActionsProps) => {
-  const { toast } = useToast();
-  
-  const shareSticker = () => {
-    // בעתיד - כאן יהיה קוד להצעת החלפה
-    toast({
-      title: "הצעת החלפה",
-      description: "פונקציונליות זו תהיה זמינה בקרוב",
-    });
-  };
-
+const StickerActions = ({ 
+  sticker, 
+  onToggleOwned, 
+  onToggleDuplicate, 
+  onEdit,
+  onDelete,
+  isDeleting = false
+}: StickerActionsProps) => {
   return (
-    <div className="flex flex-wrap gap-2 justify-center">
-      <TooltipProvider delayDuration={0}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant={sticker.isOwned ? "destructive" : "default"} 
-              size="icon" 
-              onClick={onToggleOwned}
-              className="h-9 w-9"
-            >
-              {sticker.isOwned ? <Trash2 className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>{sticker.isOwned ? "הסר מהאוסף" : "הוסף לאוסף"}</p>
-          </TooltipContent>
-        </Tooltip>
-        
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={onToggleDuplicate}
-              disabled={!sticker.isOwned}
-              className="h-9 w-9"
-            >
-              {sticker.isDuplicate ? <X className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>{sticker.isDuplicate ? "הסר סימון כפול" : "סמן ככפולה"}</p>
-          </TooltipContent>
-        </Tooltip>
-        
+    <div className="flex flex-wrap gap-2 my-2">
+      <Button
+        variant={sticker.isOwned ? "destructive" : "default"}
+        size="sm"
+        onClick={onToggleOwned}
+        className="flex-1"
+      >
+        {sticker.isOwned ? (
+          <>
+            <XCircle className="h-4 w-4 mr-1" /> סמן כחסר
+          </>
+        ) : (
+          <>
+            <CheckCircle className="h-4 w-4 mr-1" /> סמן כנאסף
+          </>
+        )}
+      </Button>
+
+      {sticker.isOwned && (
+        <Button
+          variant={sticker.isDuplicate ? "outline" : "secondary"}
+          size="sm"
+          onClick={onToggleDuplicate}
+          className="flex-1"
+        >
+          {sticker.isDuplicate ? "סמן כיחיד" : "סמן ככפול"}
+        </Button>
+      )}
+
+      <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="secondary"
-              size="icon"
-              onClick={shareSticker}
-              className="h-9 w-9"
-            >
-              <ArrowLeftRight className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>הצע החלפה</p>
-          </TooltipContent>
-        </Tooltip>
-        
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="secondary"
+              variant="outline"
               size="icon"
               onClick={onEdit}
-              className="h-9 w-9"
             >
-              <Edit className="h-4 w-4" />
+              <Pencil className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">
+          <TooltipContent>
             <p>ערוך מדבקה</p>
           </TooltipContent>
         </Tooltip>
+
+        {onDelete && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="destructive"
+                size="icon"
+                onClick={onDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <span className="loading loading-spinner loading-xs"></span>
+                ) : (
+                  <Trash className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>מחק מדבקה</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
       </TooltipProvider>
     </div>
   );
