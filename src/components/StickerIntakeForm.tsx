@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Button } from "./ui/button";
@@ -44,7 +43,6 @@ const StickerIntakeForm = ({
       setAlbumId(albums[0].id);
     }
     
-    // Set default values when provided and form is opened
     if (isOpen) {
       if (defaultStickerNumbers) {
         setStickerNumbers(defaultStickerNumbers);
@@ -60,7 +58,6 @@ const StickerIntakeForm = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate input
     if (!stickerNumbers.trim()) {
       setValidationError("אנא הכנס מספרי מדבקות");
       return;
@@ -81,7 +78,6 @@ const StickerIntakeForm = ({
       return;
     }
 
-    // Parse sticker numbers
     const numbers = stickerNumbers
       .split(",")
       .map(num => num.trim())
@@ -93,7 +89,6 @@ const StickerIntakeForm = ({
       return;
     }
 
-    // Validate sticker numbers against album
     const albumStickers = getStickersByAlbumId(albumId);
     const albumStickerNumbers = new Set(albumStickers.map(sticker => sticker.number));
     const invalidNumbers = numbers
@@ -110,17 +105,14 @@ const StickerIntakeForm = ({
     setValidationError("");
     
     try {
-      // Call the addStickersToInventory function with albumId and numbers
-      const { newlyOwned, duplicatesUpdated, notFound } = await addStickersToInventory(albumId, numbers);
+      const { newlyOwned, duplicatesUpdated, notFound } = addStickersToInventory(albumId, numbers);
       
-      // Get source details for log
       const sourceText = source === "exchange" 
         ? `החלפה עם ${exchangePartner}` 
         : source === "other" 
           ? otherDetails 
           : "קנייה של חבילת מדבקות";
       
-      // Add entry to log
       const album = getAlbumById(albumId);
       addLogEntry({
         albumId,
@@ -132,17 +124,14 @@ const StickerIntakeForm = ({
         updatedDuplicates: duplicatesUpdated,
       });
       
-      // הצגת הודעה למשתמש
       const totalUpdated = newlyOwned.length + duplicatesUpdated.length;
       toast({
         title: `נוספו ${totalUpdated} מדבקות למלאי`,
         description: `נוספו ${newlyOwned.length} מדבקות חדשות ו-${duplicatesUpdated.length} כפולות לאלבום ${album?.name}`,
       });
       
-      // Call the onIntake callback
       onIntake(albumId, numbers);
       
-      // Reset form and close
       resetForm();
       onClose();
     } catch (error) {

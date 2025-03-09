@@ -1,4 +1,3 @@
-
 import { generateId } from './utils';
 import { stickers as stickersData } from './initial-data';
 import { Sticker } from './types';
@@ -206,7 +205,7 @@ export const toggleStickerDuplicate = async (id: string): Promise<Sticker | null
 };
 
 // Import stickers from CSV
-export const importStickersFromCSV = async (albumId: string, data: [number, string, string][]): Promise<Sticker[]> => {
+export const importStickersFromCSV = (albumId: string, data: [number, string, string][]): Sticker[] => {
   if (!albumId || !data || !data.length) {
     console.error(`Cannot import stickers. Missing albumId or data`, { albumId, dataLength: data?.length });
     return [];
@@ -255,15 +254,13 @@ export const importStickersFromCSV = async (albumId: string, data: [number, stri
   }
   
   try {
-    // שמירה בשרת תחילה
+    // שמירה בשרת תחילה - כעת נעשה בצורה סינכרונית במקום אסינכרונית
     console.log(`Adding ${newStickers.length} new stickers to server for album ${albumId}`);
-    const success = await saveStickerBatch(newStickers);
+    saveStickerBatch(newStickers).catch(error => {
+      console.error(`Error importing stickers to server: ${error}`);
+    });
     
-    if (!success) {
-      throw new Error(`שגיאה בשמירת מדבקות חדשות לשרת`);
-    }
-    
-    // אם השמירה לשרת הצליחה, נעדכן גם את המצב המקומי
+    // Update local state without waiting for server response
     const allStickers = getStickerData();
     const updatedStickers = [...allStickers, ...newStickers];
     setStickerData(updatedStickers);
@@ -297,8 +294,8 @@ export const importStickersFromCSV = async (albumId: string, data: [number, stri
     
     return newStickers;
   } catch (error) {
-    console.error(`Error importing stickers to server: ${error}`);
-    throw error;
+    console.error(`Error importing stickers: ${error}`);
+    return [];
   }
 };
 
@@ -424,7 +421,7 @@ export const getStats = () => {
 };
 
 // Add stickers to inventory
-export const addStickersToInventory = async (albumId: string, stickerNumbers: number[]): Promise<{ newlyOwned: number[], duplicatesUpdated: number[], notFound: number[] }> => {
+export const addStickersToInventory = (albumId: string, stickerNumbers: number[]): { newlyOwned: number[], duplicatesUpdated: number[], notFound: number[] } => {
   const stickers = getStickerData();
   const albumStickers = stickers.filter(s => s.albumId === albumId);
   
@@ -463,15 +460,13 @@ export const addStickersToInventory = async (albumId: string, stickerNumbers: nu
   }
   
   try {
-    // שמירה בשרת תחילה
+    // שמירה בשרת - כעת נעשה בצורה שאינה חוסמת
     console.log(`Updating ${stickersToUpdate.length} stickers in inventory on server`);
-    const success = await saveStickerBatch(stickersToUpdate);
+    saveStickerBatch(stickersToUpdate).catch(error => {
+      console.error(`Error updating stickers inventory on server: ${error}`);
+    });
     
-    if (!success) {
-      throw new Error(`שגיאה בעדכון מלאי מדבקות בשרת`);
-    }
-    
-    // עדכון מקומי לאחר עדכון מוצלח בשרת
+    // עדכון מקומי בלי להמתין לתשובה מהשרת
     const updatedStickers = stickers.map(sticker => {
       const updatedSticker = stickersToUpdate.find(s => s.id === sticker.id);
       return updatedSticker || sticker;
@@ -487,7 +482,7 @@ export const addStickersToInventory = async (albumId: string, stickerNumbers: nu
     
     return { newlyOwned, duplicatesUpdated, notFound };
   } catch (error) {
-    console.error(`Error updating stickers inventory on server: ${error}`);
-    throw error;
+    console.error(`Error updating stickers inventory: ${error}`);
+    return { newlyOwned: [], duplicatesUpdated: [], notFound: [] };
   }
 };

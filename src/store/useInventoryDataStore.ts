@@ -15,11 +15,11 @@ interface InventoryDataState {
   setSelectedAlbumId: (albumId: string) => void;
   handleRefresh: () => void;
   handleAlbumChange: (albumId: string) => void;
-  handleStickerIntake: (albumId: string, stickerNumbers: number[]) => Promise<{
+  handleStickerIntake: (albumId: string, stickerNumbers: number[]) => {
     newlyOwned: number[];
     duplicatesUpdated: number[];
     notFound: number[];
-  }>;
+  };
   updateTransactionMap: (albumId: string) => void;
 }
 
@@ -78,7 +78,7 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
     set({ transactionMap: newTransactionMap });
   },
   
-  handleStickerIntake: async (albumId, stickerNumbers) => {
+  handleStickerIntake: (albumId, stickerNumbers) => {
     const result = addStickersToInventory(albumId, stickerNumbers);
     get().handleRefresh();
     
@@ -121,10 +121,10 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
     window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
     
     // Return the information about which stickers were processed
-    return Promise.resolve({
+    return {
       newlyOwned: result.newlyOwned,
       duplicatesUpdated: result.duplicatesUpdated,
       notFound: result.notFound
-    });
+    };
   }
 }));
