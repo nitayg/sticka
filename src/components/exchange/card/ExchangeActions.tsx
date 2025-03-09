@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -55,21 +56,22 @@ const ExchangeActions = ({ exchange, onRefresh }: ExchangeActionsProps) => {
   };
 
   const handleStickerIntakeSubmit = (albumId: string, stickerNumbers: number[]) => {
-    handleStickerIntake(albumId, stickerNumbers)
-      .then((result) => {
-        toast({
-          title: "מדבקות נקלטו בהצלחה",
-          description: `נוספו ${result.newlyOwned.length} מדבקות חדשות ועודכנו ${result.duplicatesUpdated.length} כפולות`,
-        });
-        onRefresh();
-      })
-      .catch((error) => {
-        toast({
-          title: "שגיאה בקליטת מדבקות",
-          description: error.message,
-          variant: "destructive",
-        });
+    try {
+      const result = handleStickerIntake(albumId, stickerNumbers);
+      
+      toast({
+        title: "מדבקות נקלטו בהצלחה",
+        description: `נוספו ${result.newlyOwned.length} מדבקות חדשות ועודכנו ${result.duplicatesUpdated.length} כפולות`,
       });
+      
+      onRefresh();
+    } catch (error) {
+      toast({
+        title: "שגיאה בקליטת מדבקות",
+        description: error instanceof Error ? error.message : "שגיאה לא ידועה",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
