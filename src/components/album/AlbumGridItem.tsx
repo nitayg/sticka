@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Pencil, Trash } from "lucide-react";
@@ -6,6 +5,7 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/comp
 import { useToast } from "@/components/ui/use-toast";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { moveAlbumToRecycleBin } from "@/lib/recycle-bin";
+import { deleteAlbum } from "@/lib/album-operations";
 
 interface AlbumGridItemProps {
   id: string;
@@ -35,19 +35,23 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
 
   const confirmDelete = async () => {
     try {
-      await moveAlbumToRecycleBin(id);
-      toast({
-        title: "האלבום הועבר לסל המיחזור",
-        description: `האלבום "${name}" הועבר לסל המיחזור בהצלחה`,
-      });
+      const success = await deleteAlbum(id);
       
-      // Force refresh albums
-      window.dispatchEvent(new CustomEvent('albumDataChanged'));
+      if (success) {
+        toast({
+          title: "האלבום נמחק בהצלחה",
+          description: `האלבום "${name}" נמחק בהצלחה`,
+        });
+        
+        window.dispatchEvent(new CustomEvent('albumDataChanged'));
+      } else {
+        throw new Error("Failed to delete album");
+      }
     } catch (error) {
       console.error("Error deleting album:", error);
       toast({
         title: "שגיאה במחיקת האלבום",
-        description: "אירעה שגיאה בעת העברת האלבום לסל המיחזור",
+        description: "אירעה שגיאה בעת מחיקת האלבום",
         variant: "destructive",
       });
     } finally {
@@ -79,10 +83,8 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
             </div>
           )}
 
-          {/* Darkened overlay for text */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
-          {/* Action buttons */}
           <TooltipProvider>
             <div className={`absolute top-2 right-2 flex gap-1 transition-opacity ${hovered ? 'opacity-100' : 'opacity-0'}`}>
               <Tooltip>
@@ -109,13 +111,12 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>העבר לסל המיחזור</p>
+                  <p>מחק אלבום</p>
                 </TooltipContent>
               </Tooltip>
             </div>
           </TooltipProvider>
 
-          {/* Album name */}
           <div className="absolute bottom-0 left-0 right-0 p-2 text-xs font-medium text-white truncate">
             {name}
           </div>
@@ -127,11 +128,11 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
           <AlertDialogHeader>
             <AlertDialogTitle>האם אתה בטוח שברצונך למחוק את האלבום?</AlertDialogTitle>
             <AlertDialogDescription>
-              פעולה זו תעביר את האלבום "{name}" לסל המיחזור. תוכל לשחזר אותו מאוחר יותר.
+              פעולה זו תמחק את האלבום "{name}" והמדבקות שלו מהשרת. הפעולה אינה ניתנת לביטול.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-row-reverse justify-end gap-2">
-            <AlertDialogAction onClick={confirmDelete}>העבר לסל המיחזור</AlertDialogAction>
+            <AlertDialogAction onClick={confirmDelete}>מחק</AlertDialogAction>
             <AlertDialogCancel>ביטול</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
