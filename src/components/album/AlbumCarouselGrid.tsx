@@ -115,10 +115,10 @@ const AlbumCarouselGrid = ({
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {/* Add Album Button */}
-        <div className="relative min-w-[90px] h-[160px] flex-shrink-0 rounded-xl overflow-hidden border-2 border-dashed border-muted-foreground/30 flex items-center justify-center cursor-pointer group hover:border-primary/50 transition-colors">
+        <div className="relative min-w-[120px] h-[180px] flex-shrink-0 rounded-xl overflow-hidden border-2 border-dashed border-muted-foreground/30 flex items-center justify-center cursor-pointer group hover:border-primary/50 transition-colors">
           <AddAlbumForm iconOnly>
             <div className="flex flex-col items-center justify-center h-full w-full text-muted-foreground group-hover:text-primary transition-colors">
-              <PlusCircle className="h-12 w-12" />
+              <PlusCircle className="h-14 w-14" />
               <span className="text-sm mt-2">הוסף אלבום</span>
             </div>
           </AddAlbumForm>
@@ -129,7 +129,7 @@ const AlbumCarouselGrid = ({
           <div
             key={album.id}
             data-album-id={album.id}
-            className="fb-story-item min-w-[90px] h-[160px]"
+            className="fb-story-item min-w-[120px] h-[180px]"
           >
             <AlbumGridItem
               id={album.id}

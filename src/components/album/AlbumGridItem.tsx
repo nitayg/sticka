@@ -1,10 +1,10 @@
+
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Pencil, Trash } from "lucide-react";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
-import { moveAlbumToRecycleBin } from "@/lib/recycle-bin";
 import { deleteAlbum } from "@/lib/album-operations";
 
 interface AlbumGridItemProps {
