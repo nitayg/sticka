@@ -34,7 +34,7 @@ export {
   getStats,
   deleteStickersByAlbumId,
   updateTeamNameAcrossStickers
-} from './sticker-operations';
+} from './stickers';
 
 // Export recycle bin operations
 export {
