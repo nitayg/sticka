@@ -9,7 +9,7 @@ import SourceSelector from "./sticker-intake/SourceSelector";
 import ExchangePartnerSelector from "./sticker-intake/ExchangePartnerSelector";
 import OtherDetailsInput from "./sticker-intake/OtherDetailsInput";
 import ValidationError from "./sticker-intake/ValidationError";
-import { getStickersByAlbumId } from "@/lib/sticker-operations";
+import { getStickersByAlbumId, addStickersToInventory } from "@/lib/sticker-operations";
 import { getAllAlbums, getAlbumById } from "@/lib/data";
 import { useIntakeLogStore } from "@/store/useIntakeLogStore";
 
@@ -34,6 +34,7 @@ const StickerIntakeForm = ({
   const [otherDetails, setOtherDetails] = useState("");
   const [albumId, setAlbumId] = useState("");
   const [validationError, setValidationError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { addLogEntry } = useIntakeLogStore();
   const albums = getAllAlbums();
@@ -56,7 +57,7 @@ const StickerIntakeForm = ({
     }
   }, [isOpen, albums, albumId, defaultStickerNumbers, defaultExchangePartner]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate input
@@ -105,32 +106,56 @@ const StickerIntakeForm = ({
       return;
     }
 
-    // Call the onIntake function with albumId and numbers
-    // Also track the results to add to the log
-    onIntake(albumId, numbers);
+    setIsSubmitting(true);
+    setValidationError("");
     
-    // Get source details for log
-    const sourceText = source === "exchange" 
-      ? `החלפה עם ${exchangePartner}` 
-      : source === "other" 
-        ? otherDetails 
-        : "קנייה של חבילת מדבקות";
-    
-    // Add entry to log - we'll set the results later in the actual sticker intake function
-    const album = getAlbumById(albumId);
-    addLogEntry({
-      albumId,
-      albumName: album?.name || "אלבום לא ידוע",
-      source: sourceText,
-      sourceDetails: source === "other" ? otherDetails : undefined,
-      newStickers: [],
-      newDuplicates: [],
-      updatedDuplicates: [],
-    });
-    
-    // Reset form and close
-    resetForm();
-    onClose();
+    try {
+      // Call the addStickersToInventory function with albumId and numbers
+      const { newlyOwned, duplicatesUpdated, notFound } = await addStickersToInventory(albumId, numbers);
+      
+      // Get source details for log
+      const sourceText = source === "exchange" 
+        ? `החלפה עם ${exchangePartner}` 
+        : source === "other" 
+          ? otherDetails 
+          : "קנייה של חבילת מדבקות";
+      
+      // Add entry to log
+      const album = getAlbumById(albumId);
+      addLogEntry({
+        albumId,
+        albumName: album?.name || "אלבום לא ידוע",
+        source: sourceText,
+        sourceDetails: source === "other" ? otherDetails : undefined,
+        newStickers: newlyOwned,
+        newDuplicates: [],
+        updatedDuplicates: duplicatesUpdated,
+      });
+      
+      // הצגת הודעה למשתמש
+      const totalUpdated = newlyOwned.length + duplicatesUpdated.length;
+      toast({
+        title: `נוספו ${totalUpdated} מדבקות למלאי`,
+        description: `נוספו ${newlyOwned.length} מדבקות חדשות ו-${duplicatesUpdated.length} כפולות לאלבום ${album?.name}`,
+      });
+      
+      // Call the onIntake callback
+      onIntake(albumId, numbers);
+      
+      // Reset form and close
+      resetForm();
+      onClose();
+    } catch (error) {
+      console.error("Error updating inventory:", error);
+      toast({
+        title: "שגיאה בעדכון המלאי",
+        description: "אירעה שגיאה בעת עדכון מלאי המדבקות",
+        variant: "destructive",
+      });
+      setValidationError("אירעה שגיאה בעת עדכון מלאי המדבקות");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const resetForm = () => {
@@ -139,6 +164,7 @@ const StickerIntakeForm = ({
     setExchangePartner("");
     setOtherDetails("");
     setValidationError("");
+    setIsSubmitting(false);
   };
 
   return (
@@ -176,8 +202,14 @@ const StickerIntakeForm = ({
             <ValidationError error={validationError} />
           </div>
           <DialogFooter className="sm:justify-start">
-            <Button type="submit">הוסף מדבקות</Button>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <span className="loading loading-spinner loading-xs ml-1"></span>
+              ) : (
+                "הוסף מדבקות"
+              )}
+            </Button>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
               ביטול
             </Button>
           </DialogFooter>

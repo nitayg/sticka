@@ -20,6 +20,7 @@ export const useAddStickerForm = ({ defaultAlbumId, onStickerAdded }: UseAddStic
   const [albumId, setAlbumId] = useState(defaultAlbumId || "");
   const [isOwned, setIsOwned] = useState(true);
   const [isDuplicate, setIsDuplicate] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resetForm = () => {
     setName("");
@@ -29,9 +30,10 @@ export const useAddStickerForm = ({ defaultAlbumId, onStickerAdded }: UseAddStic
     setCategory("שחקנים");
     setIsOwned(true);
     setIsDuplicate(false);
+    setIsSubmitting(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!name || !number || !team || !albumId) {
@@ -53,28 +55,41 @@ export const useAddStickerForm = ({ defaultAlbumId, onStickerAdded }: UseAddStic
       return;
     }
 
-    const newSticker = addSticker({
-      name,
-      number: parseInt(number),
-      team,
-      teamLogo: teamLogo || undefined,
-      category,
-      albumId,
-      isOwned,
-      isDuplicate,
-      imageUrl: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=300&auto=format&fit=crop",
-    });
-
-    toast({
-      title: "מדבקה נוספה בהצלחה",
-      description: `מדבקה ${newSticker.number} (${newSticker.name}) נוספה לאלבום ${selectedAlbum.name}`,
-    });
-
-    resetForm();
-    setOpen(false);
+    setIsSubmitting(true);
     
-    if (onStickerAdded) {
-      onStickerAdded();
+    try {
+      const newSticker = await addSticker({
+        name,
+        number: parseInt(number),
+        team,
+        teamLogo: teamLogo || undefined,
+        category,
+        albumId,
+        isOwned,
+        isDuplicate,
+        imageUrl: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=300&auto=format&fit=crop",
+      });
+
+      toast({
+        title: "מדבקה נוספה בהצלחה",
+        description: `מדבקה ${newSticker.number} (${newSticker.name}) נוספה לאלבום ${selectedAlbum.name}`,
+      });
+
+      resetForm();
+      setOpen(false);
+      
+      if (onStickerAdded) {
+        onStickerAdded();
+      }
+    } catch (error) {
+      console.error("Error adding sticker:", error);
+      toast({
+        title: "שגיאה בהוספת מדבקה",
+        description: "אירעה שגיאה בעת הוספת המדבקה",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -97,6 +112,7 @@ export const useAddStickerForm = ({ defaultAlbumId, onStickerAdded }: UseAddStic
     setIsOwned,
     isDuplicate,
     setIsDuplicate,
+    isSubmitting,
     handleSubmit
   };
 };

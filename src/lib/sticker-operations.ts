@@ -1,8 +1,9 @@
+
 import { generateId } from './utils';
 import { stickers as stickersData } from './initial-data';
 import { Sticker } from './types';
 import { saveToStorage, getFromStorage } from './sync/storage-utils';
-import { deleteStickerFromSupabase } from './supabase/stickers';
+import { deleteStickerFromSupabase, saveSticker, saveStickerBatch } from './supabase/stickers';
 
 // Get all stickers data
 export const getStickerData = (): Sticker[] => {
@@ -29,7 +30,7 @@ export const getStickersByAlbumId = (albumId: string): Sticker[] => {
 };
 
 // Add a new sticker
-export const addSticker = (sticker: Omit<Sticker, 'id'>): Sticker => {
+export const addSticker = async (sticker: Omit<Sticker, 'id'>): Promise<Sticker> => {
   const newSticker: Sticker = {
     id: generateId(),
     ...sticker,
@@ -39,24 +40,36 @@ export const addSticker = (sticker: Omit<Sticker, 'id'>): Sticker => {
     lastModified: new Date().getTime(),
   };
   
-  const stickers = getStickerData();
-  const updatedStickers = [...stickers, newSticker];
-  
-  console.log(`Adding new sticker #${newSticker.number} to album ${newSticker.albumId}`);
-  setStickerData(updatedStickers);
-  
-  // Trigger stickerDataChanged event
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-      detail: { albumId: newSticker.albumId, action: 'add' } 
-    }));
+  try {
+    // שמירה לשרת תחילה
+    console.log(`Saving new sticker #${newSticker.number} to server for album ${newSticker.albumId}`);
+    const success = await saveSticker(newSticker);
+    
+    if (!success) {
+      throw new Error(`שגיאה בשמירת מדבקה חדשה לשרת: ${newSticker.number}`);
+    }
+    
+    // אם השמירה לשרת הצליחה, נעדכן גם את המצב המקומי
+    const stickers = getStickerData();
+    const updatedStickers = [...stickers, newSticker];
+    setStickerData(updatedStickers);
+    
+    // Trigger stickerDataChanged event
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+        detail: { albumId: newSticker.albumId, action: 'add' } 
+      }));
+    }
+    
+    return newSticker;
+  } catch (error) {
+    console.error(`Error adding sticker to server: ${error}`);
+    throw error;
   }
-  
-  return newSticker;
 };
 
 // Update a sticker
-export const updateSticker = (id: string, updates: Partial<Sticker>): Sticker | null => {
+export const updateSticker = async (id: string, updates: Partial<Sticker>): Promise<Sticker | null> => {
   const stickers = getStickerData();
   const stickerIndex = stickers.findIndex(sticker => sticker.id === id);
   
@@ -66,22 +79,37 @@ export const updateSticker = (id: string, updates: Partial<Sticker>): Sticker | 
   }
   
   const updatedSticker = { ...stickers[stickerIndex], ...updates };
-  const updatedStickers = [
-    ...stickers.slice(0, stickerIndex),
-    updatedSticker,
-    ...stickers.slice(stickerIndex + 1)
-  ];
   
-  setStickerData(updatedStickers);
-  
-  // Trigger stickerDataChanged event
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-      detail: { albumId: updatedSticker.albumId, action: 'update' } 
-    }));
+  try {
+    // שמירה לשרת תחילה
+    console.log(`Updating sticker ${id} on server`);
+    const success = await saveSticker(updatedSticker);
+    
+    if (!success) {
+      throw new Error(`שגיאה בעדכון מדבקה בשרת: ${id}`);
+    }
+    
+    // אם העדכון בשרת הצליח, נעדכן גם את המצב המקומי
+    const updatedStickers = [
+      ...stickers.slice(0, stickerIndex),
+      updatedSticker,
+      ...stickers.slice(stickerIndex + 1)
+    ];
+    
+    setStickerData(updatedStickers);
+    
+    // Trigger stickerDataChanged event
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+        detail: { albumId: updatedSticker.albumId, action: 'update' } 
+      }));
+    }
+    
+    return updatedSticker;
+  } catch (error) {
+    console.error(`Error updating sticker on server: ${error}`);
+    throw error;
   }
-  
-  return updatedSticker;
 };
 
 // Delete a sticker - עדכון לשימוש במחיקה מהשרת
@@ -126,47 +154,59 @@ export const deleteSticker = async (id: string): Promise<boolean> => {
 };
 
 // Toggle owned status
-export const toggleStickerOwned = (id: string): Sticker | null => {
-  const stickers = getStickerData();
-  const sticker = stickers.find(s => s.id === id);
-  
-  if (!sticker) {
-    console.error(`Sticker with ID ${id} not found`);
-    return null;
+export const toggleStickerOwned = async (id: string): Promise<Sticker | null> => {
+  try {
+    const stickers = getStickerData();
+    const sticker = stickers.find(s => s.id === id);
+    
+    if (!sticker) {
+      console.error(`Sticker with ID ${id} not found`);
+      return null;
+    }
+    
+    // שימוש בפונקציית העדכון המעודכנת שתעדכן גם בשרת
+    return await updateSticker(id, { isOwned: !sticker.isOwned });
+  } catch (error) {
+    console.error(`Error toggling sticker owned status: ${error}`);
+    throw error;
   }
-  
-  return updateSticker(id, { isOwned: !sticker.isOwned });
 };
 
 // Toggle duplicate status
-export const toggleStickerDuplicate = (id: string): Sticker | null => {
-  const stickers = getStickerData();
-  const sticker = stickers.find(s => s.id === id);
-  
-  if (!sticker) {
-    console.error(`Sticker with ID ${id} not found`);
-    return null;
+export const toggleStickerDuplicate = async (id: string): Promise<Sticker | null> => {
+  try {
+    const stickers = getStickerData();
+    const sticker = stickers.find(s => s.id === id);
+    
+    if (!sticker) {
+      console.error(`Sticker with ID ${id} not found`);
+      return null;
+    }
+    
+    if (!sticker.isOwned) {
+      console.error(`Cannot set as duplicate - sticker ${id} is not owned`);
+      return null;
+    }
+    
+    const duplicateCount = sticker.isDuplicate 
+      ? Math.max(0, (sticker.duplicateCount || 1) - 1) 
+      : 1;
+    
+    const isDuplicate = duplicateCount > 0;
+    
+    // שימוש בפונקציית העדכון המעודכנת שתעדכן גם בשרת
+    return await updateSticker(id, { 
+      isDuplicate, 
+      duplicateCount: isDuplicate ? duplicateCount : 0 
+    });
+  } catch (error) {
+    console.error(`Error toggling sticker duplicate status: ${error}`);
+    throw error;
   }
-  
-  if (!sticker.isOwned) {
-    console.error(`Cannot set as duplicate - sticker ${id} is not owned`);
-    return null;
-  }
-  
-  const duplicateCount = sticker.isDuplicate 
-    ? Math.max(0, (sticker.duplicateCount || 1) - 1) 
-    : 1;
-  
-  const isDuplicate = duplicateCount > 0;
-  
-  return updateSticker(id, { 
-    isDuplicate, 
-    duplicateCount: isDuplicate ? duplicateCount : 0 
-  });
 };
 
 // Import stickers from CSV
-export const importStickersFromCSV = (albumId: string, data: [number, string, string][]): Sticker[] => {
+export const importStickersFromCSV = async (albumId: string, data: [number, string, string][]): Promise<Sticker[]> => {
   if (!albumId || !data || !data.length) {
     console.error(`Cannot import stickers. Missing albumId or data`, { albumId, dataLength: data?.length });
     return [];
@@ -183,7 +223,6 @@ export const importStickersFromCSV = (albumId: string, data: [number, string, st
   
   // Create new stickers
   const newStickers: Sticker[] = [];
-  const allStickers = getStickerData();
   
   data.forEach(([number, name, team]) => {
     // Skip if the sticker already exists with this number in this album
@@ -215,39 +254,52 @@ export const importStickersFromCSV = (albumId: string, data: [number, string, st
     return [];
   }
   
-  // Save all stickers at once
-  console.log(`Adding ${newStickers.length} new stickers to album ${albumId}`);
-  const updatedStickers = [...allStickers, ...newStickers];
-  setStickerData(updatedStickers);
-  
-  // Trigger events with a slight delay to ensure data is saved
-  setTimeout(() => {
-    if (typeof window !== 'undefined') {
-      console.log(`Dispatching sticker data changed events for ${newStickers.length} new stickers`);
-      
-      // Dispatch the specific event
-      window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-        detail: { 
-          albumId, 
-          action: 'import',
-          count: newStickers.length 
-        } 
-      }));
-      
-      // Dispatch a general refresh event
-      window.dispatchEvent(new CustomEvent('forceRefresh'));
-      
-      // Additional event at a longer delay to catch components that might initialize later
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-          detail: { albumId, count: newStickers.length } 
-        }));
-        window.dispatchEvent(new CustomEvent('forceRefresh'));
-      }, 500);
+  try {
+    // שמירה בשרת תחילה
+    console.log(`Adding ${newStickers.length} new stickers to server for album ${albumId}`);
+    const success = await saveStickerBatch(newStickers);
+    
+    if (!success) {
+      throw new Error(`שגיאה בשמירת מדבקות חדשות לשרת`);
     }
-  }, 100);
-  
-  return newStickers;
+    
+    // אם השמירה לשרת הצליחה, נעדכן גם את המצב המקומי
+    const allStickers = getStickerData();
+    const updatedStickers = [...allStickers, ...newStickers];
+    setStickerData(updatedStickers);
+    
+    // Trigger events with a slight delay to ensure data is saved
+    setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        console.log(`Dispatching sticker data changed events for ${newStickers.length} new stickers`);
+        
+        // Dispatch the specific event
+        window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+          detail: { 
+            albumId, 
+            action: 'import',
+            count: newStickers.length 
+          } 
+        }));
+        
+        // Dispatch a general refresh event
+        window.dispatchEvent(new CustomEvent('forceRefresh'));
+        
+        // Additional event at a longer delay to catch components that might initialize later
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+            detail: { albumId, count: newStickers.length } 
+          }));
+          window.dispatchEvent(new CustomEvent('forceRefresh'));
+        }, 500);
+      }
+    }, 100);
+    
+    return newStickers;
+  } catch (error) {
+    console.error(`Error importing stickers to server: ${error}`);
+    throw error;
+  }
 };
 
 // Delete stickers by album ID (needed by album-operations.ts)
@@ -291,24 +343,43 @@ export const deleteStickersByAlbumId = async (albumId: string): Promise<boolean>
 };
 
 // Update team name across all stickers (needed by team management components)
-export const updateTeamNameAcrossStickers = (oldTeamName: string, newTeamName: string, newTeamLogo: string): number => {
+export const updateTeamNameAcrossStickers = async (oldTeamName: string, newTeamName: string, newTeamLogo: string): Promise<number> => {
   const allStickers = getStickerData();
   let updatedCount = 0;
+  let updatedStickers: Sticker[] = [];
   
-  const updatedStickers = allStickers.map(sticker => {
-    if (sticker.team === oldTeamName) {
-      updatedCount++;
-      return {
-        ...sticker,
-        team: newTeamName,
-        teamLogo: newTeamLogo || sticker.teamLogo,
-        lastModified: new Date().getTime()
-      };
+  try {
+    // Find stickers to update
+    const stickersToUpdate: Sticker[] = [];
+    
+    updatedStickers = allStickers.map(sticker => {
+      if (sticker.team === oldTeamName) {
+        updatedCount++;
+        const updatedSticker = {
+          ...sticker,
+          team: newTeamName,
+          teamLogo: newTeamLogo || sticker.teamLogo,
+          lastModified: new Date().getTime()
+        };
+        stickersToUpdate.push(updatedSticker);
+        return updatedSticker;
+      }
+      return sticker;
+    });
+    
+    if (updatedCount === 0) {
+      return 0; // No stickers to update
     }
-    return sticker;
-  });
-  
-  if (updatedCount > 0) {
+    
+    // עדכון בשרת תחילה
+    console.log(`Updating team name for ${updatedCount} stickers on server`);
+    const success = await saveStickerBatch(stickersToUpdate);
+    
+    if (!success) {
+      throw new Error(`שגיאה בעדכון שם קבוצה עבור ${updatedCount} מדבקות בשרת`);
+    }
+    
+    // עדכון מקומי לאחר עדכון מוצלח בשרת
     setStickerData(updatedStickers);
     
     // Trigger events
@@ -316,9 +387,12 @@ export const updateTeamNameAcrossStickers = (oldTeamName: string, newTeamName: s
       detail: { action: 'updateTeam', count: updatedCount } 
     }));
     window.dispatchEvent(new CustomEvent('forceRefresh'));
+    
+    return updatedCount;
+  } catch (error) {
+    console.error(`Error updating team name across stickers: ${error}`);
+    throw error;
   }
-  
-  return updatedCount;
 };
 
 // Get album statistics
@@ -350,13 +424,14 @@ export const getStats = () => {
 };
 
 // Add stickers to inventory
-export const addStickersToInventory = (albumId: string, stickerNumbers: number[]) => {
+export const addStickersToInventory = async (albumId: string, stickerNumbers: number[]): Promise<{ newlyOwned: number[], duplicatesUpdated: number[], notFound: number[] }> => {
   const stickers = getStickerData();
   const albumStickers = stickers.filter(s => s.albumId === albumId);
   
   const newlyOwned: number[] = [];
   const duplicatesUpdated: number[] = [];
   const notFound: number[] = [];
+  const stickersToUpdate: Sticker[] = [];
   
   stickerNumbers.forEach(number => {
     const sticker = albumStickers.find(s => s.number === number);
@@ -368,23 +443,51 @@ export const addStickersToInventory = (albumId: string, stickerNumbers: number[]
     
     if (!sticker.isOwned) {
       // Mark as owned for the first time
-      updateSticker(sticker.id, { isOwned: true });
+      const updatedSticker = { ...sticker, isOwned: true };
+      stickersToUpdate.push(updatedSticker);
       newlyOwned.push(number);
     } else {
       // Already owned, mark as duplicate
-      updateSticker(sticker.id, { 
-        isDuplicate: true, 
-        duplicateCount: (sticker.duplicateCount || 0) + 1 
-      });
+      const updatedSticker = {
+        ...sticker,
+        isDuplicate: true,
+        duplicateCount: (sticker.duplicateCount || 0) + 1
+      };
+      stickersToUpdate.push(updatedSticker);
       duplicatesUpdated.push(number);
     }
   });
   
-  // Trigger events
-  setTimeout(() => {
-    window.dispatchEvent(new CustomEvent('forceRefresh'));
-    window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
-  }, 100);
+  if (stickersToUpdate.length === 0) {
+    return { newlyOwned, duplicatesUpdated, notFound };
+  }
   
-  return { newlyOwned, duplicatesUpdated, notFound };
+  try {
+    // שמירה בשרת תחילה
+    console.log(`Updating ${stickersToUpdate.length} stickers in inventory on server`);
+    const success = await saveStickerBatch(stickersToUpdate);
+    
+    if (!success) {
+      throw new Error(`שגיאה בעדכון מלאי מדבקות בשרת`);
+    }
+    
+    // עדכון מקומי לאחר עדכון מוצלח בשרת
+    const updatedStickers = stickers.map(sticker => {
+      const updatedSticker = stickersToUpdate.find(s => s.id === sticker.id);
+      return updatedSticker || sticker;
+    });
+    
+    setStickerData(updatedStickers);
+    
+    // Trigger events
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('forceRefresh'));
+      window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
+    }, 100);
+    
+    return { newlyOwned, duplicatesUpdated, notFound };
+  } catch (error) {
+    console.error(`Error updating stickers inventory on server: ${error}`);
+    throw error;
+  }
 };

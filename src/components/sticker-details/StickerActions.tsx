@@ -13,6 +13,7 @@ interface StickerActionsProps {
   onEdit: () => void;
   onDelete?: () => void;
   isDeleting?: boolean;
+  isLoading?: boolean;
 }
 
 const StickerActions = ({ 
@@ -21,7 +22,8 @@ const StickerActions = ({
   onToggleDuplicate, 
   onEdit,
   onDelete,
-  isDeleting = false
+  isDeleting = false,
+  isLoading = false
 }: StickerActionsProps) => {
   return (
     <div className="flex flex-wrap gap-2 my-2">
@@ -30,8 +32,11 @@ const StickerActions = ({
         size="sm"
         onClick={onToggleOwned}
         className="flex-1"
+        disabled={isLoading}
       >
-        {sticker.isOwned ? (
+        {isLoading ? (
+          <span className="loading loading-spinner loading-xs"></span>
+        ) : sticker.isOwned ? (
           <>
             <XCircle className="h-4 w-4 mr-1" /> סמן כחסר
           </>
@@ -48,8 +53,15 @@ const StickerActions = ({
           size="sm"
           onClick={onToggleDuplicate}
           className="flex-1"
+          disabled={isLoading}
         >
-          {sticker.isDuplicate ? "סמן כיחיד" : "סמן ככפול"}
+          {isLoading ? (
+            <span className="loading loading-spinner loading-xs"></span>
+          ) : sticker.isDuplicate ? (
+            "סמן כיחיד"
+          ) : (
+            "סמן ככפול"
+          )}
         </Button>
       )}
 
@@ -60,6 +72,7 @@ const StickerActions = ({
               variant="outline"
               size="icon"
               onClick={onEdit}
+              disabled={isLoading}
             >
               <Pencil className="h-4 w-4" />
             </Button>
@@ -76,7 +89,7 @@ const StickerActions = ({
                 variant="destructive"
                 size="icon"
                 onClick={onDelete}
-                disabled={isDeleting}
+                disabled={isDeleting || isLoading}
               >
                 {isDeleting ? (
                   <span className="loading loading-spinner loading-xs"></span>

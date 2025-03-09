@@ -27,11 +27,13 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
   const { transactionMap } = useInventoryStore();
   const [activeTab, setActiveTab] = useState<'info' | 'image'>('info');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   useEffect(() => {
     if (sticker) {
       setShowEditForm(false);
       setIsDeleting(false);
+      setIsLoading(false);
     }
   }, [sticker]);
   
@@ -43,36 +45,72 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
   // Check if this sticker is part of a transaction
   const transaction = sticker ? transactionMap[sticker.id] : undefined;
   
-  const handleImageUrlUpdate = (imageUrl: string) => {
-    updateSticker(sticker.id, { imageUrl });
-    toast({
-      title: "תמונה עודכנה",
-      description: "תמונת המדבקה עודכנה בהצלחה",
-    });
-    onUpdate();
-  };
-  
-  const handleToggleOwned = () => {
-    toggleStickerOwned(sticker.id);
-    toast({
-      title: sticker.isOwned ? "מדבקה סומנה כחסרה" : "מדבקה סומנה כנאספה",
-      description: `מדבקה ${sticker.number} - ${sticker.name} עודכנה בהצלחה`,
-    });
-    onUpdate();
-    
-    // אם מסירים מהאוסף, סוגרים את החלון
-    if (sticker.isOwned) {
-      onClose();
+  const handleImageUrlUpdate = async (imageUrl: string) => {
+    setIsLoading(true);
+    try {
+      await updateSticker(sticker.id, { imageUrl });
+      toast({
+        title: "תמונה עודכנה",
+        description: "תמונת המדבקה עודכנה בהצלחה",
+      });
+      onUpdate();
+    } catch (error) {
+      console.error("Error updating image:", error);
+      toast({
+        title: "שגיאה בעדכון התמונה",
+        description: "אירעה שגיאה בעת עדכון תמונת המדבקה",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
   
-  const handleToggleDuplicate = () => {
-    toggleStickerDuplicate(sticker.id);
-    toast({
-      title: sticker.isDuplicate ? "מדבקה סומנה כיחידה" : "מדבקה סומנה ככפולה",
-      description: `מדבקה ${sticker.number} - ${sticker.name} עודכנה בהצלחה`,
-    });
-    onUpdate();
+  const handleToggleOwned = async () => {
+    setIsLoading(true);
+    try {
+      await toggleStickerOwned(sticker.id);
+      toast({
+        title: sticker.isOwned ? "מדבקה סומנה כחסרה" : "מדבקה סומנה כנאספה",
+        description: `מדבקה ${sticker.number} - ${sticker.name} עודכנה בהצלחה`,
+      });
+      onUpdate();
+      
+      // אם מסירים מהאוסף, סוגרים את החלון
+      if (sticker.isOwned) {
+        onClose();
+      }
+    } catch (error) {
+      console.error("Error toggling owned status:", error);
+      toast({
+        title: "שגיאה בעדכון הסטטוס",
+        description: "אירעה שגיאה בעת עדכון סטטוס המדבקה",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleToggleDuplicate = async () => {
+    setIsLoading(true);
+    try {
+      await toggleStickerDuplicate(sticker.id);
+      toast({
+        title: sticker.isDuplicate ? "מדבקה סומנה כיחידה" : "מדבקה סומנה ככפולה",
+        description: `מדבקה ${sticker.number} - ${sticker.name} עודכנה בהצלחה`,
+      });
+      onUpdate();
+    } catch (error) {
+      console.error("Error toggling duplicate status:", error);
+      toast({
+        title: "שגיאה בעדכון הסטטוס",
+        description: "אירעה שגיאה בעת עדכון סטטוס הכפילות",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -164,6 +202,7 @@ const StickerDetailsDialog = ({ sticker, isOpen, onClose, onUpdate }: StickerDet
               onEdit={handleEditClick}
               onDelete={handleDelete}
               isDeleting={isDeleting}
+              isLoading={isLoading}
             />
             
             {/* Image upload section (simplified) */}

@@ -32,6 +32,7 @@ const AddStickerForm = ({ onStickerAdded, defaultAlbumId }: AddStickerFormProps)
     setIsOwned,
     isDuplicate,
     setIsDuplicate,
+    isSubmitting,
     handleSubmit
   } = useAddStickerForm({ defaultAlbumId, onStickerAdded });
 
@@ -69,7 +70,14 @@ const AddStickerForm = ({ onStickerAdded, defaultAlbumId }: AddStickerFormProps)
         />
         
         <DialogFooter>
-          <Button type="submit">הוסף מדבקה</Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <span className="loading loading-spinner loading-xs ml-1"></span>
+            ) : (
+              <Plus className="h-4 w-4 ml-1" />
+            )}
+            הוסף מדבקה
+          </Button>
         </DialogFooter>
       </form>
     </StickerFormDialog>
