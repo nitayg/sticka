@@ -1,122 +1,116 @@
 
-import { useEffect } from "react";
-import { useAlbumStore } from "@/store/useAlbumStore";
+import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import AlbumHeader from "./album/AlbumHeader";
-import FilterControls from "./album/FilterControls";
+import { useInventoryUIStore } from "@/store/useInventoryUIStore";
+import TabsContainer from "./album/TabsContainer";
+import AlbumTitle from "./album/AlbumTitle";
 import FilteredStickerContainer from "./album/FilteredStickerContainer";
-import AlbumEventHandler from "./album/AlbumEventHandler";
 import { useAlbumData } from "@/hooks/useAlbumData";
+import { Album } from "@/lib/types";
+import { REFRESH_INTERVAL } from "@/lib/sync/constants";
+import AlbumEventHandler from "./album/AlbumEventHandler";
 import EmptyState from "./EmptyState";
-import { Album } from "lucide-react";
-import AddAlbumForm from "./add-album-form";
+import FilterControls from "./album/FilterControls";
 
-const AlbumView = () => {
-  const {
-    viewMode,
-    setViewMode,
-    showImages,
-    setShowImages,
+interface AlbumViewProps {
+  selectedAlbumId: string;
+  albums: Album[];
+  handleAlbumChange: (albumId: string) => void;
+  showAllAlbumStickers?: boolean;
+}
+
+const AlbumView = ({
+  selectedAlbumId,
+  albums,
+  handleAlbumChange,
+  showAllAlbumStickers = false,
+}: AlbumViewProps) => {
+  const queryClient = useQueryClient();
+  const [refreshKey, setRefreshKey] = useState(0);
+  const viewMode = useInventoryUIStore((state) => state.viewMode);
+  const setViewMode = useInventoryUIStore((state) => state.setViewMode);
+  const showImages = useInventoryUIStore((state) => state.showImages);
+  const setShowImages = useInventoryUIStore((state) => state.setShowImages);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Fix: Add activeTab with a default value of "stickers"
+  const { stickers, album, categories, teams, isLoading } = useAlbumData({
     selectedAlbumId,
-    showAllAlbumStickers,
     refreshKey,
-    handleRefresh,
-    handleAlbumChange,
-  } = useAlbumStore();
-  
-  // Use the custom hook to fetch and compute album-related data
-  const { 
-    albums, 
-    stickers, 
-    transactionMap, 
-    isLoading
-  } = useAlbumData({ 
-    selectedAlbumId, 
-    refreshKey, 
-    showAllAlbumStickers
+    showAllAlbumStickers,
+    activeTab: "stickers" // Added the missing required prop
   });
-  
-  // Get the selected album data for the AlbumEventHandler
-  const selectedAlbumData = albums.find(album => album.id === selectedAlbumId);
-  
-  // Set selected album from local storage if available
+
+  const handleRefresh = () => {
+    setRefreshKey((prev) => prev + 1);
+    queryClient.invalidateQueries({ queryKey: ["stickers"] });
+    queryClient.invalidateQueries({ queryKey: ["albums"] });
+    queryClient.invalidateQueries({ queryKey: ["teams"] });
+  };
+
   useEffect(() => {
-    if (albums.length > 0 && !selectedAlbumId) {
-      // Try to get last selected album from localStorage
-      const lastSelectedAlbum = localStorage.getItem('lastSelectedAlbumId');
-      if (lastSelectedAlbum && albums.some(album => album.id === lastSelectedAlbum)) {
-        handleAlbumChange(lastSelectedAlbum);
-      } else {
-        handleAlbumChange(albums[0].id);
-      }
-    }
-  }, [albums, selectedAlbumId, handleAlbumChange]);
-  
-  // Store selected album ID when it changes
-  useEffect(() => {
-    if (selectedAlbumId) {
-      localStorage.setItem('lastSelectedAlbumId', selectedAlbumId);
-    }
-  }, [selectedAlbumId]);
-  
-  if (isLoading) {
+    // Set up auto-refresh
+    const refreshInterval = setInterval(() => {
+      handleRefresh();
+    }, REFRESH_INTERVAL);
+
+    return () => {
+      clearInterval(refreshInterval);
+    };
+  }, []);
+
+  if (!selectedAlbumId || albums.length === 0) {
     return (
-      <div className="space-y-4 animate-fade-in">
-        <div className="flex items-center justify-center p-12">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-        </div>
-      </div>
+      <EmptyState
+        title="אין אלבומים זמינים"
+        description="הוסף אלבום חדש כדי להתחיל"
+        icon="album"
+      />
     );
   }
-  
-  if (albums.length === 0) {
-    return (
-      <div className="space-y-4 animate-fade-in p-4">
-        <EmptyState
-          icon={<Album className="h-12 w-12" />}
-          title="אין אלבומים פעילים"
-          description="הוסף אלבום חדש כדי להתחיל"
-          action={
-            <AddAlbumForm onAlbumAdded={handleRefresh} />
-          }
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      <AlbumEventHandler onRefresh={handleRefresh} />
+
+      <div className="px-4 pt-2 pb-2">
+        <AlbumHeader
+          album={album}
+          stickers={stickers}
+          selectedAlbum={selectedAlbumId}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          showImages={showImages}
+          setShowImages={setShowImages}
+          onRefresh={handleRefresh}
+          albums={albums}
+        />
+
+        <AlbumTitle
+          album={album}
+          stickers={stickers}
+          onSearch={setSearchQuery}
+        />
+
+        <FilterControls
+          albums={albums}
+          selectedAlbum={selectedAlbumId}
+          handleAlbumChange={handleAlbumChange}
+          // Fix: Remove the onTeamsManage prop as it's no longer needed
         />
       </div>
-    );
-  }
-  
-  return (
-    <div className="space-y-4 animate-fade-in">
-      {/* Event handling component - only render if an album is selected */}
-      {selectedAlbumData && <AlbumEventHandler album={selectedAlbumData} />}
-      
-      {/* Album selection grid (Facebook Stories style) */}
-      <FilterControls
-        albums={albums}
-        selectedAlbum={selectedAlbumId}
-        handleAlbumChange={handleAlbumChange}
-      />
-      
-      {/* Album header with title and actions - now BELOW the grid */}
-      <AlbumHeader 
-        albums={albums}
-        selectedAlbum={selectedAlbumId}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        showImages={showImages}
-        setShowImages={setShowImages}
-        onRefresh={handleRefresh}
-        onImportComplete={handleRefresh}
-      />
-      
-      {/* Filtered sticker collection - directly show stickers without tabs */}
-      <FilteredStickerContainer
-        stickers={stickers}
-        selectedAlbumId={selectedAlbumId}
-        showAllAlbumStickers={showAllAlbumStickers}
-        viewMode={viewMode}
-        showImages={showImages}
-        onRefresh={handleRefresh}
-        transactionMap={transactionMap}
-      />
+
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
+        <FilteredStickerContainer
+          stickers={stickers}
+          viewMode={viewMode}
+          searchQuery={searchQuery}
+          isLoading={isLoading}
+          showImages={showImages}
+          selectedAlbumId={selectedAlbumId}
+        />
+      </div>
     </div>
   );
 };

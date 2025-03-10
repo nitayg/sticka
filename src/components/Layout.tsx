@@ -1,5 +1,6 @@
+
 import { ReactNode } from "react";
-import { Header } from "./Header";
+import Header from "./Header"; // Changed from import { Header } to import Header
 import Footer from "./Footer";
 
 // Add a CSS class to the Layout component to prevent content from appearing above the header on mobile
