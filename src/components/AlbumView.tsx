@@ -3,13 +3,12 @@ import { useEffect } from "react";
 import { useAlbumStore } from "@/store/useAlbumStore";
 import AlbumHeader from "./album/AlbumHeader";
 import FilterControls from "./album/FilterControls";
-import TabsContainer from "./album/TabsContainer";
-import FilteredStickerContainer from "./album/FilteredStickerContainer";
 import AlbumEventHandler from "./album/AlbumEventHandler";
 import { useAlbumData } from "@/hooks/useAlbumData";
 import EmptyState from "./EmptyState";
 import { Album } from "lucide-react";
 import AddAlbumForm from "./add-album-form";
+import FilteredStickerContainer from "./album/FilteredStickerContainer";
 
 const AlbumView = () => {
   const {
@@ -17,18 +16,10 @@ const AlbumView = () => {
     setViewMode,
     showImages,
     setShowImages,
-    activeTab,
-    setActiveTab,
     selectedAlbumId,
-    selectedRange,
-    selectedTeam,
-    showAllAlbumStickers,
     refreshKey,
     handleRefresh,
     handleAlbumChange,
-    handleRangeSelect,
-    handleTeamSelect,
-    handleTeamsManagement
   } = useAlbumStore();
   
   // Use the custom hook to fetch and compute album-related data
@@ -36,15 +27,10 @@ const AlbumView = () => {
     albums, 
     stickers, 
     transactionMap, 
-    teams, 
-    numberRanges, 
-    teamLogos,
     isLoading
   } = useAlbumData({ 
     selectedAlbumId, 
-    refreshKey, 
-    activeTab, 
-    showAllAlbumStickers 
+    refreshKey
   });
   
   // Get the selected album data for the AlbumEventHandler
@@ -105,44 +91,12 @@ const AlbumView = () => {
         albums={albums}
         selectedAlbum={selectedAlbumId}
         handleAlbumChange={handleAlbumChange}
-        onTeamsManage={handleTeamsManagement}
       />
       
-      {/* Album header with title and actions - now BELOW the grid */}
-      <AlbumHeader 
-        albums={albums}
-        selectedAlbum={selectedAlbumId}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        showImages={showImages}
-        setShowImages={setShowImages}
-        onRefresh={handleRefresh}
-        onImportComplete={handleRefresh}
-      />
-      
-      {/* Tab navigation and range/team selection */}
-      <TabsContainer
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        numberRanges={numberRanges}
-        selectedRange={selectedRange}
-        handleRangeSelect={handleRangeSelect}
-        teams={teams}
-        selectedTeam={selectedTeam}
-        handleTeamSelect={handleTeamSelect}
-        teamLogos={teamLogos}
-        onTeamsUpdate={handleRefresh}
-        showAllAlbums={showAllAlbumStickers}
-      />
-      
-      {/* Filtered sticker collection */}
+      {/* Filtered sticker collection - tabs and their content have been removed */}
       <FilteredStickerContainer
         stickers={stickers}
         selectedAlbumId={selectedAlbumId}
-        activeTab={activeTab}
-        selectedRange={selectedRange}
-        selectedTeam={selectedTeam}
-        showAllAlbumStickers={showAllAlbumStickers}
         viewMode={viewMode}
         showImages={showImages}
         onRefresh={handleRefresh}
