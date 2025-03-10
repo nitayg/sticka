@@ -13,6 +13,7 @@ interface FilteredStickerContainerProps {
   showImages: boolean;
   onRefresh: () => void;
   transactionMap: Record<string, { person: string, color: string }>;
+  isLoading: boolean;
 }
 
 const FilteredStickerContainer = ({
@@ -22,7 +23,8 @@ const FilteredStickerContainer = ({
   viewMode,
   showImages,
   onRefresh,
-  transactionMap
+  transactionMap,
+  isLoading
 }: FilteredStickerContainerProps) => {
   const { toast } = useToast();
   const [localDirectFetch, setLocalDirectFetch] = useState<boolean>(false);

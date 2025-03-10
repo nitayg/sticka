@@ -1,7 +1,7 @@
 
 import { ReactNode } from "react";
-import Header from "./Header"; // Changed from import { Header } to import Header
-import Footer from "./Footer";
+import Header from "./Header";
+import Footer from "./Footer"; 
 
 // Add a CSS class to the Layout component to prevent content from appearing above the header on mobile
 import styles from '@/styles/layout.module.css';
@@ -14,7 +14,7 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <div className={styles.pageContainer}>
       <header className={`border-b border-border ${styles.headerFixed}`}>
-        <Header />
+        <Header title="אלבום מדבקות" />
       </header>
       <main className={styles.mainContent}>
         {children}

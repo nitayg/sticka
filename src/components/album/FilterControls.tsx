@@ -7,7 +7,6 @@ export interface FilterControlsProps {
   albums: Album[];
   selectedAlbum: string;
   handleAlbumChange: (albumId: string) => void;
-  // Removed onTeamsManage prop as it's no longer needed
 }
 
 const FilterControls: React.FC<FilterControlsProps> = ({

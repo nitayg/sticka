@@ -3,15 +3,13 @@ import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import AlbumHeader from "./album/AlbumHeader";
 import { useInventoryUIStore } from "@/store/useInventoryUIStore";
-import TabsContainer from "./album/TabsContainer";
-import AlbumTitle from "./album/AlbumTitle";
 import FilteredStickerContainer from "./album/FilteredStickerContainer";
 import { useAlbumData } from "@/hooks/useAlbumData";
 import { Album } from "@/lib/types";
 import { REFRESH_INTERVAL } from "@/lib/sync/constants";
-import AlbumEventHandler from "./album/AlbumEventHandler";
 import EmptyState from "./EmptyState";
 import FilterControls from "./album/FilterControls";
+import { getAllAlbums } from "@/lib/album-operations";
 
 interface AlbumViewProps {
   selectedAlbumId: string;
@@ -34,12 +32,12 @@ const AlbumView = ({
   const setShowImages = useInventoryUIStore((state) => state.setShowImages);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fix: Add activeTab with a default value of "stickers"
-  const { stickers, album, categories, teams, isLoading } = useAlbumData({
+  // Fix: Change the activeTab value from "stickers" to "number" to match the expected type
+  const { stickers, transactionMap, isLoading } = useAlbumData({
     selectedAlbumId,
     refreshKey,
     showAllAlbumStickers,
-    activeTab: "stickers" // Added the missing required prop
+    activeTab: "number" // Changed from "stickers" to "number"
   });
 
   const handleRefresh = () => {
@@ -69,35 +67,32 @@ const AlbumView = ({
       />
     );
   }
+  
+  // Find the selected album
+  const selectedAlbumData = albums.find(a => a.id === selectedAlbumId);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <AlbumEventHandler onRefresh={handleRefresh} />
-
       <div className="px-4 pt-2 pb-2">
         <AlbumHeader
-          album={album}
-          stickers={stickers}
+          albums={albums}
           selectedAlbum={selectedAlbumId}
           viewMode={viewMode}
           setViewMode={setViewMode}
           showImages={showImages}
           setShowImages={setShowImages}
           onRefresh={handleRefresh}
-          albums={albums}
+          onImportComplete={handleRefresh}
         />
 
         <AlbumTitle
-          album={album}
-          stickers={stickers}
-          onSearch={setSearchQuery}
+          selectedAlbumData={selectedAlbumData}
         />
 
         <FilterControls
           albums={albums}
           selectedAlbum={selectedAlbumId}
           handleAlbumChange={handleAlbumChange}
-          // Fix: Remove the onTeamsManage prop as it's no longer needed
         />
       </div>
 
@@ -105,14 +100,52 @@ const AlbumView = ({
         <FilteredStickerContainer
           stickers={stickers}
           viewMode={viewMode}
-          searchQuery={searchQuery}
-          isLoading={isLoading}
           showImages={showImages}
+          isLoading={isLoading}
           selectedAlbumId={selectedAlbumId}
+          showAllAlbumStickers={showAllAlbumStickers}
+          onRefresh={handleRefresh}
+          transactionMap={transactionMap || {}}
         />
       </div>
     </div>
   );
 };
 
-export default AlbumView;
+// For standalone use when no props are provided (like in Index.tsx)
+const AlbumViewWithState = (props: Partial<AlbumViewProps>) => {
+  const [selectedAlbumId, setSelectedAlbumId] = useState<string>(() => {
+    // Try to get the last selected album from localStorage
+    const stored = localStorage.getItem('selectedAlbumId');
+    return stored || "";
+  });
+  const albums = getAllAlbums();
+  
+  const handleAlbumChange = (albumId: string) => {
+    setSelectedAlbumId(albumId);
+    localStorage.setItem('selectedAlbumId', albumId);
+  };
+  
+  // If no albums are available but we have a selected ID, reset it
+  useEffect(() => {
+    if (selectedAlbumId && albums.length > 0 && !albums.some(a => a.id === selectedAlbumId)) {
+      handleAlbumChange(albums[0]?.id || "");
+    }
+    
+    // If we have albums but no selection, select the first one
+    if (!selectedAlbumId && albums.length > 0) {
+      handleAlbumChange(albums[0].id);
+    }
+  }, [albums, selectedAlbumId]);
+  
+  return (
+    <AlbumView
+      selectedAlbumId={props.selectedAlbumId || selectedAlbumId}
+      albums={props.albums || albums}
+      handleAlbumChange={props.handleAlbumChange || handleAlbumChange}
+      showAllAlbumStickers={props.showAllAlbumStickers}
+    />
+  );
+};
+
+export default AlbumViewWithState;

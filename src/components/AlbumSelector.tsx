@@ -10,15 +10,33 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { generateId } from "@/lib/utils";
 import { addAlbum } from "@/lib/data";
+import { Album } from "@/lib/types";
 
 interface AlbumSelectorProps {
-  albumId: string;
-  setAlbumId: (value: string) => void;
+  selectedAlbumId?: string;
+  albumId?: string;
+  setAlbumId?: (value: string) => void;
+  onAlbumChange?: (value: string) => void;
+  albums?: Album[];
 }
 
-const AlbumSelector = ({ albumId, setAlbumId }: AlbumSelectorProps) => {
-  const albums = getAllAlbums();
+const AlbumSelector = ({
+  albumId,
+  setAlbumId,
+  selectedAlbumId,
+  onAlbumChange,
+  albums: providedAlbums
+}: AlbumSelectorProps) => {
+  // Use provided albums or fetch them if not provided
+  const albums = providedAlbums || getAllAlbums();
   const { toast } = useToast();
+  
+  // Determine which value and change handler to use
+  const value = selectedAlbumId || albumId || "";
+  const handleChange = (newValue: string) => {
+    if (onAlbumChange) onAlbumChange(newValue);
+    if (setAlbumId) setAlbumId(newValue);
+  };
   
   const [isAddAlbumOpen, setIsAddAlbumOpen] = useState(false);
   const [newAlbumName, setNewAlbumName] = useState("");
@@ -53,7 +71,7 @@ const AlbumSelector = ({ albumId, setAlbumId }: AlbumSelectorProps) => {
         description: `האלבום "${album.name}" נוסף בהצלחה`,
       });
       
-      setAlbumId(album.id);
+      handleChange(album.id);
       
       setIsAddAlbumOpen(false);
       setNewAlbumName("");
@@ -79,8 +97,8 @@ const AlbumSelector = ({ albumId, setAlbumId }: AlbumSelectorProps) => {
       </Label>
       <div className="col-span-3 flex gap-2">
         <Select
-          value={albumId}
-          onValueChange={setAlbumId}
+          value={value}
+          onValueChange={handleChange}
           required
         >
           <SelectTrigger className="flex-grow">
