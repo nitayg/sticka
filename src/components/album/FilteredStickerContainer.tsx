@@ -16,8 +16,6 @@ interface FilteredStickerContainerProps {
   showImages: boolean;
   onRefresh: () => void;
   transactionMap: Record<string, { person: string, color: string }>;
-  searchQuery?: string;
-  useHorizontalScroll?: boolean;
 }
 
 const FilteredStickerContainer = ({
@@ -30,9 +28,7 @@ const FilteredStickerContainer = ({
   viewMode,
   showImages,
   onRefresh,
-  transactionMap,
-  searchQuery = "",
-  useHorizontalScroll = false
+  transactionMap
 }: FilteredStickerContainerProps) => {
   const { toast } = useToast();
   const [localDirectFetch, setLocalDirectFetch] = useState<boolean>(false);
@@ -136,18 +132,11 @@ const FilteredStickerContainer = ({
       return [];
     }
     
+    // Apply filters based on the active tab
     let filtered = sourceStickers;
     
-    // Filter by search query if provided
-    if (searchQuery.trim()) {
-      const query = searchQuery.trim().toLowerCase();
-      filtered = filtered.filter(sticker => 
-        (sticker.name && sticker.name.toLowerCase().includes(query)) ||
-        (sticker.team && sticker.team.toLowerCase().includes(query))
-      );
-    }
-    // Apply filters based on the active tab (only if not searching)
-    else if (activeTab === "number" && selectedRange) {
+    // Filter by number range
+    if (activeTab === "number" && selectedRange) {
       const [rangeStart, rangeEnd] = selectedRange.split('-').map(Number);
       filtered = filtered.filter(sticker => 
         sticker.number >= rangeStart && sticker.number <= rangeEnd
@@ -159,7 +148,7 @@ const FilteredStickerContainer = ({
     }
     
     return filtered;
-  }, [stickers, directStickers, localDirectFetch, activeTab, selectedRange, selectedTeam, searchQuery]);
+  }, [stickers, directStickers, localDirectFetch, activeTab, selectedRange, selectedTeam]);
 
   return (
     <StickerCollection 
@@ -168,10 +157,9 @@ const FilteredStickerContainer = ({
       showImages={showImages}
       selectedAlbum={selectedAlbumId}
       onRefresh={onRefresh}
-      activeFilter={searchQuery ? "search" : (activeTab === "number" ? selectedRange : selectedTeam)}
+      activeFilter={activeTab === "number" ? selectedRange : selectedTeam}
       showMultipleAlbums={showAllAlbumStickers || (activeTab === "manage" && selectedTeam !== null)}
       transactionMap={transactionMap}
-      useHorizontalScroll={useHorizontalScroll}
     />
   );
 };
