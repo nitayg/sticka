@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import AlbumHeader from "./album/AlbumHeader";
@@ -10,6 +9,7 @@ import { REFRESH_INTERVAL } from "@/lib/sync/constants";
 import EmptyState from "./EmptyState";
 import FilterControls from "./album/FilterControls";
 import { getAllAlbums } from "@/lib/album-operations";
+import AlbumTitle from "./album/AlbumTitle";
 
 interface AlbumViewProps {
   selectedAlbumId: string;
@@ -32,12 +32,11 @@ const AlbumView = ({
   const setShowImages = useInventoryUIStore((state) => state.setShowImages);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fix: Change the activeTab value from "stickers" to "number" to match the expected type
   const { stickers, transactionMap, isLoading } = useAlbumData({
     selectedAlbumId,
     refreshKey,
     showAllAlbumStickers,
-    activeTab: "number" // Changed from "stickers" to "number"
+    activeTab: "number"
   });
 
   const handleRefresh = () => {
@@ -48,7 +47,6 @@ const AlbumView = ({
   };
 
   useEffect(() => {
-    // Set up auto-refresh
     const refreshInterval = setInterval(() => {
       handleRefresh();
     }, REFRESH_INTERVAL);
@@ -68,7 +66,6 @@ const AlbumView = ({
     );
   }
   
-  // Find the selected album
   const selectedAlbumData = albums.find(a => a.id === selectedAlbumId);
 
   return (
@@ -112,10 +109,8 @@ const AlbumView = ({
   );
 };
 
-// For standalone use when no props are provided (like in Index.tsx)
 const AlbumViewWithState = (props: Partial<AlbumViewProps>) => {
   const [selectedAlbumId, setSelectedAlbumId] = useState<string>(() => {
-    // Try to get the last selected album from localStorage
     const stored = localStorage.getItem('selectedAlbumId');
     return stored || "";
   });
@@ -126,13 +121,11 @@ const AlbumViewWithState = (props: Partial<AlbumViewProps>) => {
     localStorage.setItem('selectedAlbumId', albumId);
   };
   
-  // If no albums are available but we have a selected ID, reset it
   useEffect(() => {
     if (selectedAlbumId && albums.length > 0 && !albums.some(a => a.id === selectedAlbumId)) {
       handleAlbumChange(albums[0]?.id || "");
     }
     
-    // If we have albums but no selection, select the first one
     if (!selectedAlbumId && albums.length > 0) {
       handleAlbumChange(albums[0].id);
     }
