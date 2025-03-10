@@ -1,4 +1,3 @@
-
 import { getAllAlbums } from "@/lib/data";
 import ViewModeToggle from "../ViewModeToggle";
 import AlbumCarousel from "./AlbumCarousel";
