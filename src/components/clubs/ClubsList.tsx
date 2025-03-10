@@ -1,8 +1,8 @@
 
 import { useState, useMemo } from "react";
 import { Star, StarOff, Shield, Pencil } from "lucide-react";
-import TeamEditDialog from "../team-management/TeamEditForm";
 import { cn } from "@/lib/utils";
+import TeamEditForm from "../team-management/TeamEditForm";
 
 interface TeamData {
   name: string;
@@ -20,6 +20,7 @@ interface ClubsListProps {
 const ClubsList = ({ teams, searchQuery, onSelectClub, onRefresh }: ClubsListProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
+  const [selectedTeamLogo, setSelectedTeamLogo] = useState<string>("");
   
   // Filter and sort teams
   const filteredAndSortedTeams = useMemo(() => {
@@ -55,9 +56,10 @@ const ClubsList = ({ teams, searchQuery, onSelectClub, onRefresh }: ClubsListPro
     onRefresh();
   };
   
-  const handleEditClick = (teamName: string, e: React.MouseEvent) => {
+  const handleEditClick = (teamName: string, teamLogo: string | undefined, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent selecting the team
     setSelectedTeam(teamName);
+    setSelectedTeamLogo(teamLogo || "");
     setIsEditDialogOpen(true);
   };
   
@@ -92,7 +94,7 @@ const ClubsList = ({ teams, searchQuery, onSelectClub, onRefresh }: ClubsListPro
           {/* Edit button */}
           <button 
             className="absolute top-2 left-2 text-muted-foreground hover:text-foreground transition-colors"
-            onClick={(e) => handleEditClick(team.name, e)}
+            onClick={(e) => handleEditClick(team.name, team.logo, e)}
           >
             <Pencil className="h-4 w-4" />
           </button>
@@ -118,14 +120,14 @@ const ClubsList = ({ teams, searchQuery, onSelectClub, onRefresh }: ClubsListPro
       ))}
       
       {/* Edit dialog */}
-      {selectedTeam && (
-        <TeamEditDialog
-          teamName={selectedTeam}
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          onComplete={() => {
+      {selectedTeam && isEditDialogOpen && (
+        <TeamEditForm
+          team={selectedTeam}
+          teamLogo={selectedTeamLogo}
+          onCancel={() => setIsEditDialogOpen(false)}
+          onTeamsUpdate={() => {
             onRefresh();
-            setSelectedTeam(null);
+            setIsEditDialogOpen(false);
           }}
         />
       )}
