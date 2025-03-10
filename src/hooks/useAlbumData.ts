@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { fetchAllAlbums } from "@/lib/queries";
