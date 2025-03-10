@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Download, Upload, Trash2, Recycle, RefreshCw, Plus, FileSpreadsheet, Hash, Users, Album as AlbumIcon } from "lucide-react";
+import { Download, Upload, Trash2, Recycle, RefreshCw, Plus, FileSpreadsheet } from "lucide-react";
 import { Button } from "../ui/button";
 import ViewModeToggle from "../ViewModeToggle";
 import AddAlbumForm from "../add-album-form";
@@ -147,60 +147,14 @@ const AlbumHeaderActions = ({
     </div>
   );
   
-  // Filter buttons
-  const filterButtons = (
-    <div className="flex gap-2">
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full bg-gray-800"
-            >
-              <Hash className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            לפי מספר
-          </TooltipContent>
-        </Tooltip>
-        
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full bg-gray-800"
-            >
-              <AlbumIcon className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            לפי אלבום
-          </TooltipContent>
-        </Tooltip>
-        
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full bg-gray-800"
-            >
-              <Users className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            לפי קבוצה
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    </div>
-  );
-  
   return (
     <div className="flex gap-2 items-center">
+      <ViewModeToggle 
+        viewMode={viewMode} 
+        setViewMode={setViewMode}
+        showImages={showImages}
+        setShowImages={setShowImages}
+      />
       {actionButtons}
     </div>
   );

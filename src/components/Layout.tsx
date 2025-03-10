@@ -1,6 +1,6 @@
 
 import { ReactNode, useState, useEffect } from "react";
-import { Album, List, ArrowLeftRight, Home } from "lucide-react";
+import { Album, List, ArrowLeftRight, Home, Shield } from "lucide-react";
 import MobileHeader from "./MobileHeader";
 import MobileMenu from "./MobileMenu";
 import { NavigationItem } from "@/lib/types";
@@ -55,6 +55,7 @@ const Layout = ({ children }: LayoutProps) => {
     { name: "בית", href: "/", icon: Home },
     { name: "מלאי", href: "/inventory", icon: List },
     { name: "עסקאות", href: "/exchange", icon: ArrowLeftRight },
+    { name: "מועדונים", href: "/clubs", icon: Shield },
   ];
 
   return (

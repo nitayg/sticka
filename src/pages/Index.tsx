@@ -9,6 +9,7 @@ const InventoryView = lazy(() => import("@/components/InventoryView"));
 const ExchangeView = lazy(() => import("@/components/ExchangeView"));
 const ScanView = lazy(() => import("@/components/ScanView"));
 const IntakeHistoryView = lazy(() => import("@/components/inventory/IntakeHistoryView"));
+const ClubsPage = lazy(() => import("@/pages/ClubsPage"));
 
 // Loading fallback for route components
 const PageLoadingFallback = () => (
@@ -44,6 +45,7 @@ const Index = () => {
             <Route path="/inventory/history" element={<IntakeHistoryView />} />
             <Route path="/exchange" element={<ExchangeView />} />
             <Route path="/scan" element={<ScanView />} />
+            <Route path="/clubs" element={<ClubsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
