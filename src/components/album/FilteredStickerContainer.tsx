@@ -8,23 +8,27 @@ import { getStickersByAlbumId } from "@/lib/sticker-operations";
 interface FilteredStickerContainerProps {
   stickers: Sticker[];
   selectedAlbumId: string;
+  activeTab: "number" | "team" | "manage";
+  selectedRange: string | null;
+  selectedTeam: string | null;
   showAllAlbumStickers: boolean;
   viewMode: "grid" | "list" | "compact";
   showImages: boolean;
   onRefresh: () => void;
   transactionMap: Record<string, { person: string, color: string }>;
-  isLoading: boolean;
 }
 
 const FilteredStickerContainer = ({
   stickers,
   selectedAlbumId,
+  activeTab,
+  selectedRange,
+  selectedTeam,
   showAllAlbumStickers,
   viewMode,
   showImages,
   onRefresh,
-  transactionMap,
-  isLoading
+  transactionMap
 }: FilteredStickerContainerProps) => {
   const { toast } = useToast();
   const [localDirectFetch, setLocalDirectFetch] = useState<boolean>(false);
@@ -117,9 +121,9 @@ const FilteredStickerContainer = ({
     };
   }, [selectedAlbumId, onRefresh, stickers.length]);
 
-  // Sort stickers by number regardless of the source
-  const sortedStickers = useMemo(() => {
-    // Choose the source (direct stickers or props)
+  // Decide which stickers to use and apply filters
+  const filteredStickers = useMemo(() => {
+    // If we should use direct stickers (when props are empty but direct fetch found stickers)
     const sourceStickers = (localDirectFetch && directStickers.length > 0) 
                           ? directStickers
                           : stickers;
@@ -128,18 +132,33 @@ const FilteredStickerContainer = ({
       return [];
     }
     
-    // Always sort by number
-    return [...sourceStickers].sort((a, b) => a.number - b.number);
-  }, [stickers, directStickers, localDirectFetch]);
+    // Apply filters based on the active tab
+    let filtered = sourceStickers;
+    
+    // Filter by number range
+    if (activeTab === "number" && selectedRange) {
+      const [rangeStart, rangeEnd] = selectedRange.split('-').map(Number);
+      filtered = filtered.filter(sticker => 
+        sticker.number >= rangeStart && sticker.number <= rangeEnd
+      );
+    } 
+    // Filter by team
+    else if ((activeTab === "team" || activeTab === "manage") && selectedTeam) {
+      filtered = filtered.filter(sticker => sticker.team === selectedTeam);
+    }
+    
+    return filtered;
+  }, [stickers, directStickers, localDirectFetch, activeTab, selectedRange, selectedTeam]);
 
   return (
     <StickerCollection 
-      stickers={sortedStickers}
+      stickers={filteredStickers}
       viewMode={viewMode}
       showImages={showImages}
       selectedAlbum={selectedAlbumId}
       onRefresh={onRefresh}
-      showMultipleAlbums={showAllAlbumStickers}
+      activeFilter={activeTab === "number" ? selectedRange : selectedTeam}
+      showMultipleAlbums={showAllAlbumStickers || (activeTab === "manage" && selectedTeam !== null)}
       transactionMap={transactionMap}
     />
   );

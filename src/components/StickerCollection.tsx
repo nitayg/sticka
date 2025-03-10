@@ -35,9 +35,6 @@ const StickerCollection = ({
   const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
-  // Sort stickers by number
-  const sortedStickers = [...stickers].sort((a, b) => a.number - b.number);
-  
   const handleStickerClick = (sticker: Sticker) => {
     setSelectedSticker(sticker);
     setIsDialogOpen(true);
@@ -48,7 +45,7 @@ const StickerCollection = ({
     setSelectedSticker(null);
   };
 
-  if (sortedStickers.length === 0) {
+  if (stickers.length === 0) {
     return (
       <EmptyState
         icon={<Image className="h-12 w-12" />}
@@ -70,7 +67,7 @@ const StickerCollection = ({
         viewMode={viewMode} 
         activeFilter={activeFilter}
       >
-        {sortedStickers.map(sticker => {
+        {stickers.map(sticker => {
           const transaction = transactionMap[sticker.id];
           const recentlyAdded = isRecentlyAdded(sticker);
           

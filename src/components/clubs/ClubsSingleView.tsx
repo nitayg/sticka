@@ -47,7 +47,6 @@ const ClubsSingleView = ({ clubName, onRefresh }: ClubsSingleViewProps) => {
         groupedStickers.push({
           albumId,
           albumName: album.name,
-          // Sort stickers by number within each album
           stickers: stickers.sort((a, b) => a.number - b.number)
         });
       }

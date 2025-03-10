@@ -9,6 +9,3 @@ export const StorageEvents = {
   SYNC_START: 'sync-start',
   SYNC_ERROR: 'sync-error'
 };
-
-// Time intervals for syncing operations (in milliseconds)
-export const REFRESH_INTERVAL = 60000; // 60 seconds
