@@ -20,6 +20,7 @@ interface StickerCollectionProps {
   activeFilter?: string | null;
   showMultipleAlbums?: boolean;
   transactionMap?: Record<string, { person: string, color: string }>;
+  useHorizontalScroll?: boolean;
 }
 
 const StickerCollection = ({ 
@@ -30,7 +31,8 @@ const StickerCollection = ({
   onRefresh,
   activeFilter,
   showMultipleAlbums = false,
-  transactionMap = {}
+  transactionMap = {},
+  useHorizontalScroll = false
 }: StickerCollectionProps) => {
   const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -66,6 +68,7 @@ const StickerCollection = ({
       <StickerCollectionGrid 
         viewMode={viewMode} 
         activeFilter={activeFilter}
+        useHorizontalScroll={useHorizontalScroll}
       >
         {stickers.map(sticker => {
           const transaction = transactionMap[sticker.id];

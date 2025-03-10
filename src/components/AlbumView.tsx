@@ -1,9 +1,8 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAlbumStore } from "@/store/useAlbumStore";
 import AlbumHeader from "./album/AlbumHeader";
 import FilterControls from "./album/FilterControls";
-import TabsContainer from "./album/TabsContainer";
 import FilteredStickerContainer from "./album/FilteredStickerContainer";
 import AlbumEventHandler from "./album/AlbumEventHandler";
 import { useAlbumData } from "@/hooks/useAlbumData";
@@ -30,6 +29,8 @@ const AlbumView = () => {
     handleTeamSelect,
     handleTeamsManagement
   } = useAlbumStore();
+  
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Use the custom hook to fetch and compute album-related data
   const { 
@@ -70,6 +71,11 @@ const AlbumView = () => {
     }
   }, [selectedAlbumId]);
   
+  // Handle search query change
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+  
   if (isLoading) {
     return (
       <div className="space-y-4 animate-fade-in">
@@ -108,7 +114,7 @@ const AlbumView = () => {
         onTeamsManage={handleTeamsManagement}
       />
       
-      {/* Album header with title and actions - now BELOW the grid */}
+      {/* Album header with title, search and actions */}
       <AlbumHeader 
         albums={albums}
         selectedAlbum={selectedAlbumId}
@@ -118,24 +124,10 @@ const AlbumView = () => {
         setShowImages={setShowImages}
         onRefresh={handleRefresh}
         onImportComplete={handleRefresh}
+        onSearch={handleSearch}
       />
       
-      {/* Tab navigation and range/team selection */}
-      <TabsContainer
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        numberRanges={numberRanges}
-        selectedRange={selectedRange}
-        handleRangeSelect={handleRangeSelect}
-        teams={teams}
-        selectedTeam={selectedTeam}
-        handleTeamSelect={handleTeamSelect}
-        teamLogos={teamLogos}
-        onTeamsUpdate={handleRefresh}
-        showAllAlbums={showAllAlbumStickers}
-      />
-      
-      {/* Filtered sticker collection */}
+      {/* Filtered sticker collection with horizontal scrolling */}
       <FilteredStickerContainer
         stickers={stickers}
         selectedAlbumId={selectedAlbumId}
@@ -147,6 +139,8 @@ const AlbumView = () => {
         showImages={showImages}
         onRefresh={handleRefresh}
         transactionMap={transactionMap}
+        searchQuery={searchQuery}
+        useHorizontalScroll={true}
       />
     </div>
   );

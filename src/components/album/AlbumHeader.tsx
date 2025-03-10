@@ -2,6 +2,7 @@
 import { Album } from "@/lib/types";
 import AlbumTitle from "./AlbumTitle";
 import AlbumHeaderActions from "./AlbumHeaderActions";
+import AlbumSearch from "./AlbumSearch";
 
 interface AlbumHeaderProps {
   albums: Album[];
@@ -12,6 +13,7 @@ interface AlbumHeaderProps {
   setShowImages: (show: boolean) => void;
   onRefresh: () => void;
   onImportComplete: () => void;
+  onSearch: (query: string) => void;
 }
 
 const AlbumHeader = ({
@@ -22,14 +24,18 @@ const AlbumHeader = ({
   showImages,
   setShowImages,
   onRefresh,
-  onImportComplete
+  onImportComplete,
+  onSearch
 }: AlbumHeaderProps) => {
   const selectedAlbumData = albums.find(album => album.id === selectedAlbum);
   
   return (
     <div className="pb-2 mb-1">
       <div className="flex justify-between items-center py-2">
-        <AlbumTitle selectedAlbumData={selectedAlbumData} />
+        <div className="flex items-center">
+          <AlbumTitle selectedAlbumData={selectedAlbumData} />
+          <AlbumSearch onSearch={onSearch} className="mr-2" />
+        </div>
         
         <AlbumHeaderActions
           albums={albums}
