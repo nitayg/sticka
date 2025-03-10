@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ArrowRight, Search, RefreshCw } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import { Button } from "../ui/button";
 import { 
   Popover,
@@ -18,16 +18,6 @@ interface ClubsHeaderProps {
 
 const ClubsHeader = ({ title, onSearch, onBack, onRefresh }: ClubsHeaderProps) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    onRefresh();
-    // Simulate refresh delay
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 500);
-  };
 
   return (
     <div className="flex justify-between items-center py-2">
@@ -67,16 +57,6 @@ const ClubsHeader = ({ title, onSearch, onBack, onRefresh }: ClubsHeaderProps) =
             </PopoverContent>
           </Popover>
         )}
-        
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 rounded-full bg-gray-800"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-        >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-        </Button>
       </div>
     </div>
   );

@@ -45,6 +45,9 @@ export const setupRealtimeSubscriptions = () => {
   }, (payload) => {
     console.log('Real-time update for exchange offers:', payload);
     window.dispatchEvent(new CustomEvent(StorageEvents.EXCHANGE_OFFERS, { detail: payload }));
+    
+    // Trigger refresh of exchange data to ensure UI updates
+    window.dispatchEvent(new CustomEvent('exchangeDataChanged', { detail: payload }));
   });
   
   // Add system level event handler for reconnection events

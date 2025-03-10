@@ -31,6 +31,20 @@ const ExchangeView = () => {
     }
   }, [albums]);
   
+  // Listen for exchange data changes
+  useEffect(() => {
+    const handleExchangeDataChanged = () => {
+      console.log("Exchange data changed event received, refreshing view");
+      setRefreshKey(prev => prev + 1);
+    };
+    
+    window.addEventListener('exchangeDataChanged', handleExchangeDataChanged);
+    
+    return () => {
+      window.removeEventListener('exchangeDataChanged', handleExchangeDataChanged);
+    };
+  }, []);
+  
   // Filter exchanges by selected album
   const filteredExchanges = selectedAlbumId 
     ? exchangeOffers.filter(exchange => exchange.albumId === selectedAlbumId)
@@ -47,6 +61,7 @@ const ExchangeView = () => {
     // Force update album view and inventory view by dispatching custom events
     window.dispatchEvent(new CustomEvent('albumDataChanged'));
     window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
+    window.dispatchEvent(new CustomEvent('exchangeDataChanged'));
   };
 
   return (

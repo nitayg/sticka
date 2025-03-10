@@ -1,0 +1,50 @@
+
+/* Fix for mobile header display */
+.pageContainer {
+  position: relative;
+  overflow-x: hidden;
+  padding-top: env(safe-area-inset-top, 0);
+  max-height: 100vh;
+  height: 100%;
+}
+
+.mainContent {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  height: calc(100% - var(--header-height, 60px) - var(--footer-height, 60px));
+  overflow-y: auto;
+  padding-top: var(--header-height, 60px);
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.headerFixed {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 50;
+  backdrop-filter: blur(8px);
+  background-color: rgba(var(--background-rgb), 0.8);
+  height: var(--header-height, 60px);
+}
+
+.footerFixed {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  z-index: 50;
+  backdrop-filter: blur(8px);
+  background-color: rgba(var(--background-rgb), 0.8);
+  height: var(--footer-height, 60px);
+}
+
+:root {
+  --background-rgb: 255,255,255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-rgb: 0,0,0;
+  }
+}
