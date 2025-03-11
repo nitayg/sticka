@@ -1,5 +1,5 @@
 
-import { LayoutGrid, LayoutList, List, Image } from "lucide-react";
+import { LayoutList, Image, Grid2X2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 
@@ -49,7 +49,7 @@ const ViewModeToggle = ({
         ) : viewMode === "list" ? (
           <LayoutList className="h-5 w-5" />
         ) : (
-          <List className="h-5 w-5" />
+          <Grid2X2 className="h-5 w-5" />
         )}
       </Button>
     </div>
