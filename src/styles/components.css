@@ -168,3 +168,18 @@
   background: linear-gradient(to bottom, rgba(250, 204, 21, 0.05), transparent);
 }
 
+/* Horizontal scrolling grid */
+.horizontal-scroll-grid {
+  display: grid;
+  grid-auto-flow: column;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 1rem;
+  gap: 0.5rem;
+  scroll-snap-type: x mandatory;
+  max-height: calc(100vh - 3.5rem);
+}
+
+.horizontal-scroll-grid > * {
+  scroll-snap-align: start;
+}

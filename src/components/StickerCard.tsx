@@ -46,7 +46,7 @@ const StickerCard = ({
           "relative overflow-hidden rounded-xl aspect-[3/4] cursor-pointer",
           "card-hover sticker-shadow",
           "transition-all duration-300 ease-out",
-          "w-full max-w-[160px]",
+          "w-full h-full min-w-[120px] max-w-[160px]",
           isRecentlyAdded && "border-yellow-400",
           transaction && transaction.color,
           className

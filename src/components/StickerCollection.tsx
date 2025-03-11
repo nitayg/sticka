@@ -62,8 +62,7 @@ const StickerCollection = ({
   }
 
   // We don't need to sort here since the stickers should already be sorted by the parent component
-  // This preserves the sort order passed in from the parent
-
+  
   return (
     <>
       <StickerCollectionGrid 

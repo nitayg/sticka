@@ -42,6 +42,7 @@ const StickerListItem = ({
       className={cn(
         "flex items-center space-x-4 p-3 rounded-xl bg-white border border-border",
         "transition-all duration-300 ease-out hover:shadow-md dark:bg-card",
+        "min-w-[240px] max-w-[300px] h-[96px]", // Fixed height for list items
         (onClick || onSelect) && "cursor-pointer",
         isRecentlyAdded && "border-yellow-400 animate-pulse-brief",
         isSelected && "ring-2 ring-blue-500",
