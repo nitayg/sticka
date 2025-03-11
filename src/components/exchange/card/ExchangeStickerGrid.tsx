@@ -35,7 +35,11 @@ const ExchangeStickerGrid = ({
   handleCloseDialog
 }: ExchangeStickerGridProps) => {
   const albumStickers = getStickersByAlbumId(albumId);
-  const stickerNumbers = stickerIds.map(id => parseInt(id));
+  
+  // Convert string IDs to numbers and sort them numerically
+  const stickerNumbers = stickerIds
+    .map(id => parseInt(id))
+    .sort((a, b) => a - b);
   
   // Find actual sticker objects by number
   const getActualStickerByNumber = (number: number) => {

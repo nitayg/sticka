@@ -27,11 +27,14 @@ const InventoryContent = ({
   transactionMap,
   setIsIntakeFormOpen
 }: InventoryContentProps) => {
+  // Sort stickers by number
+  const sortedStickers = [...filteredStickers].sort((a, b) => a.number - b.number);
+
   return (
     <>
-      {filteredStickers.length > 0 ? (
+      {sortedStickers.length > 0 ? (
         <StickerCollection 
-          stickers={filteredStickers}
+          stickers={sortedStickers}
           viewMode={viewMode}
           showImages={showImages}
           selectedAlbum={selectedAlbumId}

@@ -147,6 +147,9 @@ const FilteredStickerContainer = ({
       filtered = filtered.filter(sticker => sticker.team === selectedTeam);
     }
     
+    // Sort stickers by number
+    filtered = [...filtered].sort((a, b) => a.number - b.number);
+    
     return filtered;
   }, [stickers, directStickers, localDirectFetch, activeTab, selectedRange, selectedTeam]);
 

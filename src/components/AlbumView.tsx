@@ -30,11 +30,10 @@ const AlbumView = () => {
     isLoading
   } = useAlbumData({ 
     selectedAlbumId, 
-    refreshKey
+    refreshKey,
+    activeTab: "number", // Default to number tab
+    showAllAlbumStickers: false // Default not showing all album stickers
   });
-  
-  // Get the selected album data for the AlbumEventHandler
-  const selectedAlbumData = albums.find(album => album.id === selectedAlbumId);
   
   // Set selected album from local storage if available
   useEffect(() => {
@@ -84,16 +83,17 @@ const AlbumView = () => {
   return (
     <div className="space-y-4 animate-fade-in">
       {/* Event handling component - only render if an album is selected */}
-      {selectedAlbumData && <AlbumEventHandler album={selectedAlbumData} />}
+      {selectedAlbumId && <AlbumEventHandler album={albums.find(a => a.id === selectedAlbumId)} />}
       
-      {/* Album selection grid (Facebook Stories style) */}
+      {/* Album selection */}
       <FilterControls
         albums={albums}
         selectedAlbum={selectedAlbumId}
         handleAlbumChange={handleAlbumChange}
+        onTeamsManage={() => {}} // Empty function since we're removing tabs
       />
       
-      {/* Filtered sticker collection - tabs and their content have been removed */}
+      {/* Filtered sticker collection */}
       <FilteredStickerContainer
         stickers={stickers}
         selectedAlbumId={selectedAlbumId}
@@ -101,6 +101,10 @@ const AlbumView = () => {
         showImages={showImages}
         onRefresh={handleRefresh}
         transactionMap={transactionMap}
+        activeTab="number" // Default to number tab
+        selectedRange={null}
+        selectedTeam={null}
+        showAllAlbumStickers={false}
       />
     </div>
   );

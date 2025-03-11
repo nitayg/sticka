@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { fetchAllAlbums } from "@/lib/queries";
@@ -34,7 +35,8 @@ export const useAlbumData = ({
       const albumStickers = getStickersByAlbumId(selectedAlbumId);
       console.log(`Hook found ${albumStickers.length} stickers for album ${selectedAlbumId}`);
       
-      return albumStickers;
+      // Sort stickers by number before returning
+      return [...albumStickers].sort((a, b) => a.number - b.number);
     },
     enabled: !!selectedAlbumId
   });
