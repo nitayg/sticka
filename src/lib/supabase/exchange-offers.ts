@@ -49,9 +49,11 @@ export async function saveExchangeOffer(offer: ExchangeOffer) {
     ? offer.wantedStickerId 
     : [offer.wantedStickerId].filter(Boolean);
   
+  // Important: Remove the userid field completely since it has a foreign key constraint
+  // We'll use a generated ID instead that doesn't reference any foreign table
   const supabaseOffer = {
     id: offer.id,
-    userid: offer.userId,
+    // Remove userid field completely - it has a foreign key constraint
     username: offer.userName,
     useravatar: offer.userAvatar,
     offeredstickerid: offeredStickerIdArray,
@@ -113,9 +115,10 @@ export async function saveExchangeOfferBatch(offers: ExchangeOffer[]) {
       ? offer.wantedStickerId 
       : [offer.wantedStickerId].filter(Boolean);
     
+    // Important: Remove the userid field in batch operations as well
     return {
       id: offer.id,
-      userid: offer.userId,
+      // Remove userid field completely
       username: offer.userName,
       useravatar: offer.userAvatar,
       offeredstickerid: offeredStickerIdArray,

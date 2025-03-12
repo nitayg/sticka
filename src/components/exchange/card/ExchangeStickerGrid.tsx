@@ -53,7 +53,7 @@ const ExchangeStickerGrid = ({
         <h3 className="text-sm font-medium">{title}</h3>
         <Badge variant="outline" className="text-xs">{stickerNumbers.length}</Badge>
       </div>
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-2">
         {matchedStickers.map(({ number, isOwned, isDuplicate }) => (
           <div 
             key={number}

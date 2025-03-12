@@ -28,7 +28,7 @@ const CompactStickerItem = ({
         "w-14 h-14 flex flex-col items-center justify-center rounded-md cursor-pointer",
         "border border-border transition-all duration-200 hover:shadow-sm",
         "relative overflow-hidden",
-        "min-w-[56px] min-h-[56px] mb-1", // Added margin-bottom for increased spacing
+        "min-w-[56px] min-h-[56px] mb-2", // Increased margin-bottom from 1 to 2 (from 0.25rem to 0.5rem)
         transaction ? transaction.color : "bg-card",
         isRecentlyAdded && "border-yellow-400"
       )}

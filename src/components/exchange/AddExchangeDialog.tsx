@@ -73,15 +73,15 @@ const AddExchangeDialog = ({ onClose, selectedAlbumId, onExchangeAdded }: AddExc
       // Get a random color for this exchange person
       const randomColor = exchangeColors[Math.floor(Math.random() * exchangeColors.length)];
       
-      // Create new exchange offer
+      // Create new exchange offer - important: remove userId field that has foreign key constraint
       const newExchange: ExchangeOffer = {
         id: `e${Date.now()}`, // Use timestamp to ensure unique ID
-        userId: "u1", // Current user ID (in a real app, this would be dynamic)
-        userName: personName,
+        // Don't include userId field at all to avoid foreign key constraint
+        userName: personName, 
         offeredStickerId: stickersToGiveArray,
-        offeredStickerName: stickersToGive, // Using the raw input as name for simplicity
+        offeredStickerName: stickersToGive,
         wantedStickerId: stickersToReceiveArray,
-        wantedStickerName: stickersToReceive, // Using the raw input as name for simplicity
+        wantedStickerName: stickersToReceive,
         status: "pending",
         exchangeMethod: exchangeMethod,
         location: location,
