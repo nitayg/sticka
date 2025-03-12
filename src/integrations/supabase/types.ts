@@ -64,7 +64,7 @@ export type Database = {
           status: string
           updatedat: string | null
           useravatar: string | null
-          userid: string
+          userid: string | null
           username: string
           wantedstickerid: string[]
           wantedstickername: string
@@ -84,7 +84,7 @@ export type Database = {
           status?: string
           updatedat?: string | null
           useravatar?: string | null
-          userid: string
+          userid?: string | null
           username: string
           wantedstickerid: string[]
           wantedstickername: string
@@ -104,7 +104,7 @@ export type Database = {
           status?: string
           updatedat?: string | null
           useravatar?: string | null
-          userid?: string
+          userid?: string | null
           username?: string
           wantedstickerid?: string[]
           wantedstickername?: string
@@ -115,13 +115,6 @@ export type Database = {
             columns: ["albumid"]
             isOneToOne: false
             referencedRelation: "albums"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "exchange_offers_userid_fkey"
-            columns: ["userid"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
