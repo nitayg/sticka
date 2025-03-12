@@ -72,6 +72,15 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
     setSelectedSticker(null);
   };
 
+  // Ensure wantedStickerId and offeredStickerId are arrays
+  const wantedStickerIds = Array.isArray(exchange.wantedStickerId) 
+    ? exchange.wantedStickerId 
+    : [exchange.wantedStickerId].filter(Boolean);
+    
+  const offeredStickerIds = Array.isArray(exchange.offeredStickerId) 
+    ? exchange.offeredStickerId 
+    : [exchange.offeredStickerId].filter(Boolean);
+
   return (
     <div 
       className={cn(
@@ -91,7 +100,7 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
         <div className="space-y-4 pt-2 border-t border-border/40 mt-3">
           <ExchangeStickerGrid
             albumId={exchange.albumId}
-            stickerIds={exchange.wantedStickerId}
+            stickerIds={wantedStickerIds}
             title="מקבל"
             exchangeColor={exchange.color}
             exchangeUserName={exchange.userName}
@@ -104,7 +113,7 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
           
           <ExchangeStickerGrid
             albumId={exchange.albumId}
-            stickerIds={exchange.offeredStickerId}
+            stickerIds={offeredStickerIds}
             title="נותן"
             exchangeColor={exchange.color}
             exchangeUserName={exchange.userName}

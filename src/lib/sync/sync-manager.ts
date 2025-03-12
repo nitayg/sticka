@@ -111,6 +111,8 @@ export const syncWithSupabase = async (isInitialSync = false) => {
       setMemoryStorage('exchangeOffers', exchangeOffersData);
       // Dispatch event to notify components
       window.dispatchEvent(new CustomEvent(StorageEvents.EXCHANGE_OFFERS, { detail: exchangeOffersData }));
+      // Also dispatch a custom event for exchange offers
+      window.dispatchEvent(new CustomEvent('exchangeOffersDataChanged', { detail: exchangeOffersData }));
     }
 
     // Update sync tracking

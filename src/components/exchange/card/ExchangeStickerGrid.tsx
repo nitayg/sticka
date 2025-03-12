@@ -1,20 +1,14 @@
 
-import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import StickerImage from "../../sticker-details/StickerImage";
 import { getStickersByAlbumId } from "@/lib/sticker-operations";
-
-// Helper function to get first name only
-const getFirstName = (fullName: string): string => {
-  if (!fullName) return '';
-  return fullName.split(' ')[0];
-};
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 interface ExchangeStickerGridProps {
   albumId: string;
   stickerIds: string[];
   title: string;
-  exchangeColor: string | undefined;
-  exchangeUserName: string;
+  exchangeColor?: string;
+  exchangeUserName?: string;
   onStickerClick: (number: number) => void;
   onStickerDetails: (number: number) => void;
   selectedStickerId: string | null;
@@ -29,60 +23,56 @@ const ExchangeStickerGrid = ({
   exchangeColor,
   exchangeUserName,
   onStickerClick,
-  onStickerDetails,
-  selectedStickerId,
-  isDialogOpen,
-  handleCloseDialog
+  onStickerDetails
 }: ExchangeStickerGridProps) => {
-  const albumStickers = getStickersByAlbumId(albumId);
-  
-  // Convert string IDs to numbers and sort them numerically
+  // Convert sticker IDs to numbers and ensure they're valid
   const stickerNumbers = stickerIds
     .map(id => parseInt(id))
-    .sort((a, b) => a - b);
+    .filter(number => !isNaN(number));
   
-  // Find actual sticker objects by number
-  const getActualStickerByNumber = (number: number) => {
-    return albumStickers.find(sticker => sticker.number === number);
-  };
-
+  // Get stickers from the album
+  const albumStickers = getStickersByAlbumId(albumId);
+  
+  // Find stickers that match the given numbers
+  const matchedStickers = stickerNumbers.map(number => {
+    const sticker = albumStickers.find(s => s.number === number);
+    return {
+      number,
+      isOwned: sticker?.isOwned || false,
+      isDuplicate: sticker?.isDuplicate || false
+    };
+  });
+  
+  if (stickerNumbers.length === 0) {
+    return null;
+  }
+  
   return (
-    <div>
-      <h4 className="text-sm font-medium mb-2">{title}</h4>
-      <div className="grid grid-cols-8 gap-2">
-        {stickerNumbers.map(stickerId => {
-          const actualSticker = getActualStickerByNumber(stickerId);
-          return (
-            <Dialog 
-              key={`${title}-${stickerId}`} 
-              open={isDialogOpen && selectedStickerId === actualSticker?.id} 
-              onOpenChange={(open) => !open && handleCloseDialog()}
-            >
-              <DialogTrigger asChild>
-                <div 
-                  onClick={() => onStickerDetails(stickerId)}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    onStickerClick(stickerId);
-                  }}
-                  className="cursor-pointer"
-                >
-                  <StickerImage
-                    alt={`מדבקה ${stickerId}`}
-                    stickerNumber={stickerId}
-                    compactView={true}
-                    inTransaction={true}
-                    transactionColor={exchangeColor}
-                    transactionPerson={getFirstName(exchangeUserName)}
-                    isOwned={actualSticker?.isOwned}
-                    isDuplicate={actualSticker?.isDuplicate}
-                    duplicateCount={actualSticker?.duplicateCount}
-                  />
-                </div>
-              </DialogTrigger>
-            </Dialog>
-          );
-        })}
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium">{title}</h3>
+        <Badge variant="outline" className="text-xs">{stickerNumbers.length}</Badge>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {matchedStickers.map(({ number, isOwned, isDuplicate }) => (
+          <div 
+            key={number}
+            className={cn(
+              "w-9 h-9 flex items-center justify-center text-sm font-medium rounded-md cursor-pointer border",
+              isOwned 
+                ? "bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700 text-green-800 dark:text-green-300" 
+                : "bg-card border-border",
+              isDuplicate && isOwned && "ring-2 ring-yellow-400"
+            )}
+            onClick={() => onStickerClick(number)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              onStickerDetails(number);
+            }}
+          >
+            {number}
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { useToast } from "../ui/use-toast";
 import { ExchangeOffer } from "@/lib/types";
-import { exchangeOffers } from "@/lib/data";
+import { saveExchangeOffer } from "@/lib/supabase/exchange-offers";
 
 interface AddExchangeDialogProps {
   onClose: () => void;
@@ -47,10 +47,11 @@ const AddExchangeDialog = ({ onClose, selectedAlbumId, onExchangeAdded }: AddExc
   const [exchangeMethod, setExchangeMethod] = useState<ExchangeMethod>("pickup");
   const [stickersToReceive, setStickersToReceive] = useState("");
   const [stickersToGive, setStickersToGive] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { toast } = useToast();
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!personName || !phone || !location || !stickersToReceive || !stickersToGive || !selectedAlbumId) {
@@ -62,44 +63,69 @@ const AddExchangeDialog = ({ onClose, selectedAlbumId, onExchangeAdded }: AddExc
       return;
     }
     
-    // Parse sticker IDs from comma-separated strings
-    const stickersToReceiveArray = stickersToReceive.split(',').map(s => s.trim());
-    const stickersToGiveArray = stickersToGive.split(',').map(s => s.trim());
+    setIsSubmitting(true);
     
-    // Get a random color for this exchange person
-    const randomColor = exchangeColors[Math.floor(Math.random() * exchangeColors.length)];
-    
-    // Create new exchange offer
-    const newExchange: ExchangeOffer = {
-      id: `e${Date.now()}`, // Use timestamp to ensure unique ID
-      userId: "u1", // Current user ID (in a real app, this would be dynamic)
-      userName: personName,
-      offeredStickerId: stickersToGiveArray,
-      offeredStickerName: stickersToGive, // Using the raw input as name for simplicity
-      wantedStickerId: stickersToReceiveArray,
-      wantedStickerName: stickersToReceive, // Using the raw input as name for simplicity
-      status: "pending",
-      exchangeMethod: exchangeMethod,
-      location: location,
-      phone: phone,
-      color: randomColor,
-      albumId: selectedAlbumId
-    };
-    
-    // Add to exchanges (in a real app, this would send to an API)
-    exchangeOffers.push(newExchange);
-    
-    // Notify success
-    toast({
-      title: "הצלחה",
-      description: "עסקת ההחלפה נוצרה בהצלחה",
-    });
-    
-    // Trigger refresh in parent component
-    onExchangeAdded();
-    
-    // Close dialog
-    onClose();
+    try {
+      // Parse sticker IDs from comma-separated strings
+      const stickersToReceiveArray = stickersToReceive.split(',').map(s => s.trim());
+      const stickersToGiveArray = stickersToGive.split(',').map(s => s.trim());
+      
+      // Get a random color for this exchange person
+      const randomColor = exchangeColors[Math.floor(Math.random() * exchangeColors.length)];
+      
+      // Create new exchange offer
+      const newExchange: ExchangeOffer = {
+        id: `e${Date.now()}`, // Use timestamp to ensure unique ID
+        userId: "u1", // Current user ID (in a real app, this would be dynamic)
+        userName: personName,
+        offeredStickerId: stickersToGiveArray,
+        offeredStickerName: stickersToGive, // Using the raw input as name for simplicity
+        wantedStickerId: stickersToReceiveArray,
+        wantedStickerName: stickersToReceive, // Using the raw input as name for simplicity
+        status: "pending",
+        exchangeMethod: exchangeMethod,
+        location: location,
+        phone: phone,
+        color: randomColor,
+        albumId: selectedAlbumId,
+        lastModified: Date.now()
+      };
+      
+      console.log('Saving new exchange offer:', newExchange);
+      
+      // Save to Supabase
+      const success = await saveExchangeOffer(newExchange);
+      
+      if (success) {
+        // Notify success
+        toast({
+          title: "הצלחה",
+          description: "עסקת ההחלפה נוצרה בהצלחה",
+        });
+        
+        // Trigger refresh in parent component
+        onExchangeAdded();
+        
+        // Trigger data change events
+        window.dispatchEvent(new CustomEvent('exchangeOffersDataChanged'));
+        window.dispatchEvent(new CustomEvent('albumDataChanged'));
+        window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
+        
+        // Close dialog
+        onClose();
+      } else {
+        throw new Error('Failed to save exchange offer');
+      }
+    } catch (error) {
+      console.error('Error creating exchange offer:', error);
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בעת יצירת עסקת ההחלפה",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -194,11 +220,11 @@ const AddExchangeDialog = ({ onClose, selectedAlbumId, onExchangeAdded }: AddExc
         </div>
         
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
             ביטול
           </Button>
-          <Button type="submit">
-            צור עסקה
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'שומר...' : 'צור עסקה'}
           </Button>
         </DialogFooter>
       </form>

@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { fetchAllAlbums } from "@/lib/queries";
 import { getStickersByAlbumId, getStickerData } from "@/lib/sticker-operations";
-import { exchangeOffers } from "@/lib/data";
-import { Sticker } from "@/lib/types";
+import { fetchExchangeOffers } from "@/lib/supabase";
+import { Sticker, ExchangeOffer } from "@/lib/types";
 
 interface UseAlbumDataProps {
   selectedAlbumId: string;
@@ -40,9 +40,18 @@ export const useAlbumData = ({
     },
     enabled: !!selectedAlbumId
   });
+  
+  // Fetch exchange offers
+  const { data: exchangeOffers = [], isLoading: isExchangesLoading } = useQuery({
+    queryKey: ['exchangeOffers', refreshKey],
+    queryFn: async () => {
+      const offers = await fetchExchangeOffers() || [];
+      return offers.filter(offer => !offer.isDeleted);
+    }
+  });
 
   // Is loading any data
-  const isLoading = isAlbumsLoading || (selectedAlbumId && isStickersLoading);
+  const isLoading = isAlbumsLoading || (selectedAlbumId && isStickersLoading) || isExchangesLoading;
 
   // Create transaction map from exchange offers
   const transactionMap = useMemo(() => {
@@ -58,9 +67,13 @@ export const useAlbumData = ({
     // Map stickers to their transactions
     relevantExchanges.forEach(exchange => {
       // Find stickers that the user will receive
-      const stickerNumbers = exchange.wantedStickerId.map(id => parseInt(id));
+      const stickerNumbers = Array.isArray(exchange.wantedStickerId)
+        ? exchange.wantedStickerId.map(id => parseInt(id))
+        : [];
       
       stickerNumbers.forEach(number => {
+        if (isNaN(number)) return;
+        
         const sticker = stickers.find(s => s.number === number);
         if (sticker) {
           map[sticker.id] = {
@@ -72,7 +85,7 @@ export const useAlbumData = ({
     });
     
     return map;
-  }, [selectedAlbumId, stickers, refreshKey]);
+  }, [selectedAlbumId, stickers, exchangeOffers, refreshKey]);
 
   // Generate team list from stickers
   const teams = useMemo(() => {

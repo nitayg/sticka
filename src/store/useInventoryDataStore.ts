@@ -1,6 +1,6 @@
 
 import { create } from 'zustand';
-import { exchangeOffers } from '@/lib/initial-data';
+import { fetchExchangeOffers } from '@/lib/supabase';
 import { getStickersByAlbumId, addStickersToInventory } from '@/lib/sticker-operations';
 import { useIntakeLogStore } from './useIntakeLogStore';
 import { getAlbumById } from '@/lib/data';
@@ -48,34 +48,58 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
     get().updateTransactionMap(albumId);
   },
   
-  updateTransactionMap: (albumId) => {
+  updateTransactionMap: async (albumId) => {
     if (!albumId) return;
     
     const newTransactionMap: Record<string, { person: string, color: string }> = {};
     
-    // Get relevant exchanges for this album
-    const relevantExchanges = exchangeOffers.filter(exchange => exchange.albumId === albumId);
-    
-    // Map stickers to their transactions
-    relevantExchanges.forEach(exchange => {
-      // Find stickers that the user will receive
-      const stickerNumbers = exchange.wantedStickerId.map(id => parseInt(id));
+    try {
+      // Get exchange offers from Supabase instead of local state
+      const exchangeOffers = await fetchExchangeOffers() || [];
+      console.log('Retrieved exchange offers for transaction map:', exchangeOffers);
       
-      // Get actual stickers
-      const albumStickers = getStickersByAlbumId(albumId);
+      // Get relevant exchanges for this album
+      const relevantExchanges = exchangeOffers.filter(exchange => 
+        exchange.albumId === albumId && !exchange.isDeleted
+      );
       
-      stickerNumbers.forEach(number => {
-        const sticker = albumStickers.find(s => s.number === number);
-        if (sticker) {
-          newTransactionMap[sticker.id] = {
-            person: exchange.userName,
-            color: exchange.color || "bg-secondary"
-          };
-        }
+      console.log(`Found ${relevantExchanges.length} relevant exchanges for album ${albumId}`);
+      
+      // Map stickers to their transactions
+      relevantExchanges.forEach(exchange => {
+        // Find stickers that the user will receive
+        const stickerNumbers = Array.isArray(exchange.wantedStickerId) 
+          ? exchange.wantedStickerId.map(id => parseInt(id)) 
+          : [];
+        
+        console.log(`Processing exchange ${exchange.id} with sticker numbers:`, stickerNumbers);
+        
+        // Get actual stickers
+        const albumStickers = getStickersByAlbumId(albumId);
+        
+        stickerNumbers.forEach(number => {
+          if (isNaN(number)) {
+            console.warn(`Invalid sticker number in exchange ${exchange.id}:`, number);
+            return;
+          }
+          
+          const sticker = albumStickers.find(s => s.number === number);
+          if (sticker) {
+            newTransactionMap[sticker.id] = {
+              person: exchange.userName,
+              color: exchange.color || "bg-secondary"
+            };
+          } else {
+            console.warn(`Sticker #${number} not found in album ${albumId}`);
+          }
+        });
       });
-    });
-    
-    set({ transactionMap: newTransactionMap });
+      
+      console.log('Updated transaction map:', newTransactionMap);
+      set({ transactionMap: newTransactionMap });
+    } catch (error) {
+      console.error('Error updating transaction map:', error);
+    }
   },
   
   handleStickerIntake: (albumId, stickerNumbers) => {

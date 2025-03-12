@@ -32,11 +32,17 @@ const StickerCollectionGrid = ({
       }
       
       // Calculate max rows that fit in available height with gap
-      const gapSize = 8; // 0.5rem = 8px
+      const gapSize = viewMode === 'compact' ? 10 : 8; // Increased gap for compact view
       const maxRows = Math.floor(availableHeight / (itemHeight + gapSize));
       
-      // Ensure at least 1 row, maximum 6 rows
-      return Math.max(1, Math.min(maxRows, 6));
+      // For compact view, we want to add more rows
+      const adjustedMaxRows = viewMode === 'compact' 
+        ? Math.max(4, maxRows) // Ensure at least 4 rows for compact view
+        : maxRows;
+      
+      // Ensure at least 1 row, maximum 6 rows (or 8 for compact view)
+      const maxAllowedRows = viewMode === 'compact' ? 8 : 6;
+      return Math.max(1, Math.min(adjustedMaxRows, maxAllowedRows));
     };
 
     // Set initial row count
@@ -59,7 +65,7 @@ const StickerCollectionGrid = ({
       <div className={cn(
         "transition-all duration-200 ease-in-out",
         viewMode === 'list' && "grid grid-flow-col auto-cols-max gap-x-4",
-        viewMode === 'compact' && "grid grid-flow-col gap-x-4",
+        viewMode === 'compact' && "grid grid-flow-col gap-x-4 gap-y-2", // Increased y-gap for compact view
         viewMode === 'grid' && "grid grid-flow-col gap-x-4",
         `grid-rows-${rowCount}`
       )}
