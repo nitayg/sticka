@@ -46,7 +46,7 @@ export interface User {
 
 export interface ExchangeOffer {
   id: string;
-  userId: string;
+  userId?: string; // Changed to optional to match our implementation
   userName: string;
   userAvatar?: string;
   offeredStickerId: string[];

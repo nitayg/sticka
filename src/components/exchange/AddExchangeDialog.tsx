@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   DialogContent, 
@@ -73,10 +72,9 @@ const AddExchangeDialog = ({ onClose, selectedAlbumId, onExchangeAdded }: AddExc
       // Get a random color for this exchange person
       const randomColor = exchangeColors[Math.floor(Math.random() * exchangeColors.length)];
       
-      // Create new exchange offer - important: remove userId field that has foreign key constraint
+      // Create new exchange offer without userId field to avoid foreign key constraint
       const newExchange: ExchangeOffer = {
         id: `e${Date.now()}`, // Use timestamp to ensure unique ID
-        // Don't include userId field at all to avoid foreign key constraint
         userName: personName, 
         offeredStickerId: stickersToGiveArray,
         offeredStickerName: stickersToGive,
