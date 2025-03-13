@@ -1,5 +1,5 @@
 
-import { ReactNode, useEffect, useState, useRef, Children, isValidElement, cloneElement } from 'react';
+import { ReactNode, useLayoutEffect, useState, useRef, Children, isValidElement } from 'react';
 import { cn } from '@/lib/utils';
 
 interface StickerCollectionGridProps {
@@ -16,8 +16,9 @@ const StickerCollectionGrid = ({
   const [rowCount, setRowCount] = useState(3);
   const itemRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const calculateRowCount = () => {
       const headerHeight = 56; // 3.5rem = MobileHeader height
       const paddingBottom = 16; // pb-4
@@ -51,8 +52,15 @@ const StickerCollectionGrid = ({
       // Calculate max rows that can fit in the available height
       const maxRows = Math.floor(availableHeight / (itemHeight + gapSize));
       
-      // Ensure at least 1 row, but no upper limit to prevent vertical scrolling
-      return Math.max(1, maxRows);
+      // Verify the calculation and reduce by 1 if needed to absolutely prevent overflow
+      const calculatedRows = Math.max(1, maxRows);
+      const totalHeight = calculatedRows * itemHeight + (calculatedRows - 1) * gapSize;
+      
+      if (totalHeight > availableHeight) {
+        return Math.max(1, calculatedRows - 1);
+      }
+      
+      return calculatedRows;
     };
 
     // Initial calculation with a small delay to ensure rendering
@@ -92,21 +100,24 @@ const StickerCollectionGrid = ({
   }
 
   return (
-    <div className={cn(
-      "max-h-[calc(100vh-3.5rem)] overflow-x-auto overflow-y-hidden pb-4 px-2",
-      activeFilter && "pt-2"
-    )}>
+    <div 
+      ref={containerRef}
+      className={cn(
+        "max-h-[calc(100vh-3.5rem)] overflow-x-auto overflow-y-hidden pb-4 px-2",
+        activeFilter && "pt-2"
+      )}
+    >
       <div 
         ref={gridRef}
         className={cn(
           "transition-all duration-200 ease-in-out",
           viewMode === 'list' && "grid grid-flow-col auto-cols-max gap-x-4",
           viewMode === 'compact' && "grid grid-flow-col gap-x-4 gap-y-2", 
-          viewMode === 'grid' && "grid grid-flow-col gap-x-4",
-          `grid-rows-${rowCount}`
+          viewMode === 'grid' && "grid grid-flow-col gap-x-4"
         )}
         style={{
-          gridTemplateRows: `repeat(${rowCount}, auto)`
+          gridTemplateRows: `repeat(${rowCount}, minmax(0, 1fr))`,
+          maxHeight: `calc(100vh - 3.5rem - ${paddingBottom:16px} - ${activeFilter ? '8px' : '0px'})`
         }}
       >
         {modifiedChildren}
