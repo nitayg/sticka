@@ -117,7 +117,7 @@ const StickerCollectionGrid = ({
         )}
         style={{
           gridTemplateRows: `repeat(${rowCount}, minmax(0, 1fr))`,
-          maxHeight: `calc(100vh - 3.5rem - ${paddingBottom:16px} - ${activeFilter ? '8px' : '0px'})`
+          maxHeight: `calc(100vh - 3.5rem - ${16}px - ${activeFilter ? '8px' : '0px'})`
         }}
       >
         {modifiedChildren}
