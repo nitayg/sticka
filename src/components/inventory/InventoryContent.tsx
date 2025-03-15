@@ -1,12 +1,10 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { List } from "lucide-react";
 import { Button } from "../ui/button";
 import EmptyState from "../EmptyState";
 import StickerCollection from "../StickerCollection";
-import InventoryTable from "./InventoryTable";
 import { Plus } from "lucide-react";
-import { useLocalStorage } from "@/hooks/use-local-storage";
 
 interface InventoryContentProps {
   filteredStickers: any[];
@@ -29,49 +27,22 @@ const InventoryContent = ({
   transactionMap,
   setIsIntakeFormOpen
 }: InventoryContentProps) => {
-  // Store the view preference in local storage
-  const [useTableView, setUseTableView] = useLocalStorage("inventoryTableView", true);
-  
   // Sort stickers by number
   const sortedStickers = [...filteredStickers].sort((a, b) => a.number - b.number);
 
-  // Toggle between table and grid view
-  const toggleView = () => {
-    setUseTableView(!useTableView);
-  };
-
   return (
     <>
-      <div className="mb-4 flex justify-end">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={toggleView}
-          className="text-xs"
-        >
-          {useTableView ? "תצוגת גריד" : "תצוגת טבלה"}
-        </Button>
-      </div>
-      
       {sortedStickers.length > 0 ? (
-        useTableView ? (
-          <InventoryTable 
-            stickers={sortedStickers}
-            onRefresh={handleRefresh}
-            activeTab={activeTab}
-          />
-        ) : (
-          <StickerCollection 
-            stickers={sortedStickers}
-            viewMode={viewMode}
-            showImages={showImages}
-            selectedAlbum={selectedAlbumId}
-            onRefresh={handleRefresh}
-            activeFilter={activeTab === "all" ? null : activeTab}
-            showMultipleAlbums={false}
-            transactionMap={transactionMap}
-          />
-        )
+        <StickerCollection 
+          stickers={sortedStickers}
+          viewMode={viewMode}
+          showImages={showImages}
+          selectedAlbum={selectedAlbumId}
+          onRefresh={handleRefresh}
+          activeFilter={activeTab === "all" ? null : activeTab}
+          showMultipleAlbums={false}
+          transactionMap={transactionMap}
+        />
       ) : (
         <EmptyState
           icon={<List className="h-10 w-10" />}
