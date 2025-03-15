@@ -18,7 +18,7 @@ const StickerCollectionGrid = ({
   // Calculate optimal row count based on available height and view mode
   useEffect(() => {
     const calculateRowCount = () => {
-      const headerHeight = 56; // 3.5rem = 56px
+      const headerHeight = 180; // Adjust based on your total header height including filters, stats, etc.
       const availableHeight = window.innerHeight - headerHeight;
       
       // Estimate item height based on view mode
@@ -32,17 +32,12 @@ const StickerCollectionGrid = ({
       }
       
       // Calculate max rows that fit in available height with gap
-      const gapSize = viewMode === 'compact' ? 10 : 8; // Increased gap for compact view
+      const gapSize = viewMode === 'compact' ? 10 : 16; // Gap between rows
       const maxRows = Math.floor(availableHeight / (itemHeight + gapSize));
       
-      // For compact view, we want to add more rows
-      const adjustedMaxRows = viewMode === 'compact' 
-        ? Math.max(4, maxRows) // Ensure at least 4 rows for compact view
-        : maxRows;
-      
-      // Ensure at least 1 row, maximum 6 rows (or 8 for compact view)
-      const maxAllowedRows = viewMode === 'compact' ? 8 : 6;
-      return Math.max(1, Math.min(adjustedMaxRows, maxAllowedRows));
+      // Ensure at least 1 row, maximum 8 rows (or 10 for compact view)
+      const maxAllowedRows = viewMode === 'compact' ? 10 : 8;
+      return Math.max(1, Math.min(maxRows, maxAllowedRows));
     };
 
     // Set initial row count
