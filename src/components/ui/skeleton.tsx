@@ -9,12 +9,13 @@ function Skeleton({
     <div
       className={cn(
         "animate-pulse rounded-md bg-muted/60 relative overflow-hidden", 
+        "backdrop-blur-sm",
         className
       )}
       {...props}
     >
-      {/* Add shine effect */}
-      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+      {/* Enhanced shine effect */}
+      <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
     </div>
   )
 }

@@ -1,6 +1,8 @@
 
 import { ReactNode, useEffect, useState, useRef, Children, isValidElement } from 'react';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface StickerCollectionGridProps {
   viewMode: 'grid' | 'list' | 'compact';
@@ -17,43 +19,72 @@ const StickerCollectionGrid = ({
   const itemRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   // Calculate optimal row count based on available height and view mode
   useEffect(() => {
     const calculateRowCount = () => {
-      const headerHeight = 180; // Adjust based on your total header height including filters, stats, etc.
-      const availableHeight = window.innerHeight - headerHeight;
+      // Adjust based on device and layout
+      const headerHeight = isMobile ? 160 : 180; 
+      const navHeight = 60; // Bottom navigation
+      const topOffset = isMobile ? 10 : 20; // Extra space at top
+      const bottomPadding = isMobile ? 90 : 100; // Extra padding at bottom for mobile navigation
+
+      const availableHeight = window.innerHeight - headerHeight - navHeight - topOffset - bottomPadding;
       
-      // Estimate item height based on view mode
-      let itemHeight;
-      if (viewMode === 'grid') {
-        itemHeight = 200; // Card view height estimate
-      } else if (viewMode === 'list') {
-        itemHeight = 96; // List view height estimate
+      // Get item height estimate based on view mode
+      let itemHeight = 0;
+      
+      if (itemRef.current) {
+        // Use actual height if available
+        itemHeight = itemRef.current.offsetHeight;
       } else {
-        itemHeight = 60; // Compact view height estimate
+        // Fallback to estimates based on view mode
+        if (viewMode === 'grid') {
+          itemHeight = isMobile ? 170 : 190;
+        } else if (viewMode === 'list') {
+          itemHeight = isMobile ? 85 : 96;
+        } else {
+          itemHeight = isMobile ? 50 : 60;
+        }
       }
       
-      // Calculate max rows that fit in available height with gap
-      const gapSize = viewMode === 'compact' ? 10 : 16; // Gap between rows
+      // Calculate gap size based on view mode
+      const gapSize = viewMode === 'compact' ? 8 : 14;
+      
+      // Calculate max visible rows that fit in available height with gap
       const maxRows = Math.floor(availableHeight / (itemHeight + gapSize));
       
-      // Ensure at least 1 row, maximum 8 rows (or 10 for compact view)
-      const maxAllowedRows = viewMode === 'compact' ? 10 : 8;
+      // Ensure at least 1 row, with higher maximums for compact modes
+      const maxAllowedRows = viewMode === 'compact' ? 
+                            (isMobile ? 12 : 10) : 
+                            (isMobile ? 8 : 6);
+      
       return Math.max(1, Math.min(maxRows, maxAllowedRows));
     };
 
-    // Set initial row count
+    // Initial calculation
     setRowCount(calculateRowCount());
 
-    // Update row count on window resize
+    // Recalculate on resize
     const handleResize = () => {
       setRowCount(calculateRowCount());
     };
 
+    // Recalculate when view mode changes
+    const updateGridOnViewModeChange = () => {
+      setTimeout(() => {
+        setRowCount(calculateRowCount());
+      }, 50);
+    };
+    
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [viewMode]);
+    updateGridOnViewModeChange();
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [viewMode, isMobile]);
 
   // Wrap first child with ref
   let modifiedChildren = children;
@@ -74,33 +105,39 @@ const StickerCollectionGrid = ({
   }
 
   return (
-    <div 
-      ref={containerRef}
+    <ScrollArea
       className={cn(
-        "max-h-[calc(100vh-3.5rem)] overflow-x-auto overflow-y-hidden pb-4 px-2",
-        "scrollbar-hide transition-all duration-300 backdrop-blur-sm",
+        "max-h-[calc(100vh-3.5rem)]",
+        "transition-all duration-300 backdrop-blur-sm",
         activeFilter && "pt-2"
       )}
     >
       <div 
-        ref={gridRef}
+        ref={containerRef}
         className={cn(
-          "transition-all duration-300 ease-in-out",
-          viewMode === 'list' && "grid grid-flow-col auto-cols-max gap-x-4 animate-stagger-fade",
-          viewMode === 'compact' && "grid grid-flow-col gap-x-4 gap-y-2 animate-stagger-fade", 
-          viewMode === 'grid' && "grid grid-flow-col gap-x-4 animate-stagger-fade",
-          `grid-rows-${rowCount}`
+          "overflow-x-auto overflow-y-hidden pb-4 px-2 scrollbar-hide"
         )}
-        style={{
-          // Using inline style for dynamic grid-template-rows
-          gridTemplateRows: `repeat(${rowCount}, auto)`,
-          // Add smooth scroll behavior
-          scrollBehavior: 'smooth'
-        }}
       >
-        {modifiedChildren}
+        <div 
+          ref={gridRef}
+          className={cn(
+            "transition-all duration-300 ease-in-out",
+            viewMode === 'list' && "grid grid-flow-col auto-cols-max gap-x-4 animate-stagger-fade",
+            viewMode === 'compact' && "grid grid-flow-col gap-x-3 gap-y-2 animate-stagger-fade", 
+            viewMode === 'grid' && "grid grid-flow-col gap-x-4 animate-stagger-fade",
+            `grid-rows-${rowCount}`
+          )}
+          style={{
+            // Using inline style for dynamic grid-template-rows
+            gridTemplateRows: `repeat(${rowCount}, auto)`,
+            // Add smooth scroll behavior
+            scrollBehavior: 'smooth'
+          }}
+        >
+          {modifiedChildren}
+        </div>
       </div>
-    </div>
+    </ScrollArea>
   );
 };
 
