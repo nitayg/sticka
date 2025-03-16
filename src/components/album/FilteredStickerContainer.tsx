@@ -4,6 +4,7 @@ import { Sticker } from "@/lib/types";
 import StickerCollection from "../StickerCollection";
 import { useToast } from "@/components/ui/use-toast";
 import { getStickersByAlbumId } from "@/lib/sticker-operations";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface FilteredStickerContainerProps {
   stickers: Sticker[];
@@ -33,6 +34,7 @@ const FilteredStickerContainer = ({
   const { toast } = useToast();
   const [localDirectFetch, setLocalDirectFetch] = useState<boolean>(false);
   const [directStickers, setDirectStickers] = useState<Sticker[]>([]);
+  const isMobile = useIsMobile();
   
   // Fetch stickers directly if not provided in props
   useEffect(() => {

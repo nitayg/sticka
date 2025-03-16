@@ -7,6 +7,8 @@ import StickerCollection from "../StickerCollection";
 import InventoryTable from "./InventoryTable";
 import { Plus } from "lucide-react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface InventoryContentProps {
   filteredStickers: any[];
@@ -31,6 +33,7 @@ const InventoryContent = ({
 }: InventoryContentProps) => {
   // Store the view preference in local storage
   const [useTableView, setUseTableView] = useLocalStorage("inventoryTableView", true);
+  const isMobile = useIsMobile();
   
   // Sort stickers by number
   const sortedStickers = [...filteredStickers].sort((a, b) => a.number - b.number);
@@ -42,12 +45,18 @@ const InventoryContent = ({
 
   return (
     <div className="animate-fade-in">
-      <div className="mb-4 flex justify-end">
+      <div className={cn(
+        "flex justify-end",
+        isMobile ? "mb-2" : "mb-4"
+      )}>
         <Button 
           variant="outline" 
-          size="sm" 
+          size={isMobile ? "sm" : "sm"} 
           onClick={toggleView}
-          className="text-xs hover-lift glass-effect"
+          className={cn(
+            "hover-lift glass-effect",
+            isMobile ? "text-[10px] py-1 px-2" : "text-xs"
+          )}
         >
           {useTableView ? "תצוגת גריד" : "תצוגת טבלה"}
         </Button>
@@ -85,9 +94,12 @@ const InventoryContent = ({
             action={
               <Button 
                 onClick={() => setIsIntakeFormOpen(true)}
-                className="px-3 py-1.5 rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground text-xs font-medium transition-colors flex items-center gap-1 hover-lift"
+                className={cn(
+                  "rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground font-medium transition-colors flex items-center gap-1 hover-lift",
+                  isMobile ? "px-2 py-1 text-[10px]" : "px-3 py-1.5 text-xs"
+                )}
               >
-                <Plus className="h-3.5 w-3.5" />
+                <Plus className={isMobile ? "h-3 w-3" : "h-3.5 w-3.5"} />
                 הוספת מדבקה
               </Button>
             }
