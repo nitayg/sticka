@@ -40,9 +40,9 @@ const StickerListItem = ({
     <div 
       onClick={handleClick}
       className={cn(
-        "flex items-center space-x-3 sm:space-x-4 p-2 sm:p-3 rounded-xl border",
+        "flex items-center space-x-4 p-3 rounded-xl border",
         "transition-all duration-300 hover:shadow-xl dark:bg-card backdrop-blur-sm",
-        "min-w-[200px] sm:min-w-[240px] max-w-[300px] h-[80px] sm:h-[96px] relative hover-lift glass-effect", 
+        "min-w-[240px] max-w-[300px] h-[96px] relative hover-lift glass-effect", 
         (onClick || onSelect) && "cursor-pointer",
         isRecentlyAdded && "border-yellow-400 animate-pulse-brief",
         isSelected && "ring-2 ring-blue-500 shadow-lg shadow-blue-500/20",
@@ -54,7 +54,7 @@ const StickerListItem = ({
       )}
       
       <div className={cn(
-        "h-14 w-14 sm:h-16 sm:w-16 rounded-md overflow-hidden flex-shrink-0 relative",
+        "h-16 w-16 rounded-md overflow-hidden flex-shrink-0 relative",
         transaction ? transaction.color : "bg-secondary"
       )}>
         {showImages ? (
@@ -90,34 +90,34 @@ const StickerListItem = ({
         "flex-1 min-w-0",
         isRecentlyAdded && "animate-fade-up"
       )}>
-        <div className="flex items-center gap-1 text-xs sm:text-sm font-medium text-muted-foreground">
+        <div className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
           <span>#{sticker.number}</span>
           <span className="mx-1">•</span>
           {sticker.teamLogo ? (
-            <img src={sticker.teamLogo} alt={sticker.team} className="w-3 h-3 sm:w-4 sm:h-4 object-contain ml-1" />
+            <img src={sticker.teamLogo} alt={sticker.team} className="w-4 h-4 object-contain ml-1" />
           ) : (
             <Shield className="w-3 h-3 opacity-50 ml-1" />
           )}
           <span>{sticker.team}</span>
         </div>
-        <h3 className="text-sm sm:text-base font-semibold text-foreground truncate gradient-text">{sticker.name}</h3>
-        <p className="text-xs sm:text-sm text-muted-foreground">{sticker.category}</p>
+        <h3 className="text-base font-semibold text-foreground truncate gradient-text">{sticker.name}</h3>
+        <p className="text-sm text-muted-foreground">{sticker.category}</p>
       </div>
       <div className="flex-shrink-0 flex space-x-2">
         {transaction && (
-          <div className="rounded-full bg-secondary/80 backdrop-blur-sm px-2 py-0.5 text-xs font-medium shine-effect">
+          <div className="rounded-full bg-secondary/80 backdrop-blur-sm px-2.5 py-0.5 text-xs font-medium shine-effect">
             {getFirstName(transaction.person)}
           </div>
         )}
         
         {sticker.isDuplicate && sticker.isOwned && (
-          <div className="rounded-full bg-secondary/80 backdrop-blur-sm px-2 py-0.5 text-xs font-medium shine-effect">
+          <div className="rounded-full bg-secondary/80 backdrop-blur-sm px-2.5 py-0.5 text-xs font-medium shine-effect">
             כפול {sticker.duplicateCount && sticker.duplicateCount > 0 ? `(${sticker.duplicateCount + 1})` : ''}
           </div>
         )}
         
         {!sticker.isOwned && !transaction && (
-          <div className="rounded-full bg-secondary/80 backdrop-blur-sm px-2 py-0.5 text-xs font-medium shine-effect">
+          <div className="rounded-full bg-secondary/80 backdrop-blur-sm px-2.5 py-0.5 text-xs font-medium shine-effect">
             חסר
           </div>
         )}
