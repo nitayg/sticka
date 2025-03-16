@@ -19,16 +19,33 @@ const InventoryCard = ({
   return (
     <div
       className={cn(
-        "bg-card rounded-lg p-2 text-center cursor-pointer transition-all border",
+        "relative bg-card rounded-lg p-2 text-center cursor-pointer transition-all duration-300 overflow-hidden",
+        "hover-lift backdrop-blur-sm border",
         active
-          ? "border-interactive bg-interactive/10 shadow-sm"
-          : "border-border hover:border-interactive/40",
+          ? "border-interactive/50 shadow-[0_0_15px_rgba(59,130,246,0.15)] bg-interactive/5"
+          : "border-border hover:border-interactive/30 group",
         className
       )}
       onClick={onClick}
     >
-      <p className="text-lg font-bold">{value}</p>
-      <h3 className="text-xs text-muted-foreground mt-1">{title}</h3>
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"/>
+      
+      {/* Glow effect for active card */}
+      {active && (
+        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600/40 to-blue-400/40 blur-sm opacity-50"/>
+      )}
+
+      <div className="relative z-10">
+        <p className={cn(
+          "text-lg font-bold transition-all duration-300",
+          active ? "text-interactive" : "group-hover:text-interactive"
+        )}>{value}</p>
+        <h3 className="text-xs text-muted-foreground mt-1">{title}</h3>
+      </div>
+      
+      {/* Subtle shine effect on hover */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 shine-effect" />
     </div>
   );
 };

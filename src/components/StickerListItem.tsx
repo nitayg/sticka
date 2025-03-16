@@ -40,12 +40,12 @@ const StickerListItem = ({
     <div 
       onClick={handleClick}
       className={cn(
-        "flex items-center space-x-4 p-3 rounded-xl bg-white border border-border",
-        "transition-all duration-300 ease-out hover:shadow-md dark:bg-card",
-        "min-w-[240px] max-w-[300px] h-[96px]", // Fixed height for list items
+        "flex items-center space-x-4 p-3 rounded-xl border",
+        "transition-all duration-300 hover:shadow-xl dark:bg-card backdrop-blur-sm",
+        "min-w-[240px] max-w-[300px] h-[96px] relative hover-lift glass-effect", 
         (onClick || onSelect) && "cursor-pointer",
         isRecentlyAdded && "border-yellow-400 animate-pulse-brief",
-        isSelected && "ring-2 ring-blue-500",
+        isSelected && "ring-2 ring-blue-500 shadow-lg shadow-blue-500/20",
         transaction && transaction.color
       )}
     >
@@ -100,28 +100,31 @@ const StickerListItem = ({
           )}
           <span>{sticker.team}</span>
         </div>
-        <h3 className="text-base font-semibold text-foreground truncate">{sticker.name}</h3>
+        <h3 className="text-base font-semibold text-foreground truncate gradient-text">{sticker.name}</h3>
         <p className="text-sm text-muted-foreground">{sticker.category}</p>
       </div>
       <div className="flex-shrink-0 flex space-x-2">
         {transaction && (
-          <div className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium">
+          <div className="rounded-full bg-secondary/80 backdrop-blur-sm px-2.5 py-0.5 text-xs font-medium shine-effect">
             {getFirstName(transaction.person)}
           </div>
         )}
         
         {sticker.isDuplicate && sticker.isOwned && (
-          <div className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium">
+          <div className="rounded-full bg-secondary/80 backdrop-blur-sm px-2.5 py-0.5 text-xs font-medium shine-effect">
             כפול {sticker.duplicateCount && sticker.duplicateCount > 0 ? `(${sticker.duplicateCount + 1})` : ''}
           </div>
         )}
         
         {!sticker.isOwned && !transaction && (
-          <div className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium">
+          <div className="rounded-full bg-secondary/80 backdrop-blur-sm px-2.5 py-0.5 text-xs font-medium shine-effect">
             חסר
           </div>
         )}
       </div>
+      
+      {/* Shine effect */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-500" />
     </div>
   );
 };

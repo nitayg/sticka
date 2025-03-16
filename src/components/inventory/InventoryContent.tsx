@@ -41,13 +41,13 @@ const InventoryContent = ({
   };
 
   return (
-    <>
+    <div className="animate-fade-in">
       <div className="mb-4 flex justify-end">
         <Button 
           variant="outline" 
           size="sm" 
           onClick={toggleView}
-          className="text-xs"
+          className="text-xs hover-lift glass-effect"
         >
           {useTableView ? "תצוגת גריד" : "תצוגת טבלה"}
         </Button>
@@ -55,40 +55,46 @@ const InventoryContent = ({
       
       {sortedStickers.length > 0 ? (
         useTableView ? (
-          <InventoryTable 
-            stickers={sortedStickers}
-            onRefresh={handleRefresh}
-            activeTab={activeTab}
-          />
+          <div className="animate-fade-in">
+            <InventoryTable 
+              stickers={sortedStickers}
+              onRefresh={handleRefresh}
+              activeTab={activeTab}
+            />
+          </div>
         ) : (
-          <StickerCollection 
-            stickers={sortedStickers}
-            viewMode={viewMode}
-            showImages={showImages}
-            selectedAlbum={selectedAlbumId}
-            onRefresh={handleRefresh}
-            activeFilter={activeTab === "all" ? null : activeTab}
-            showMultipleAlbums={false}
-            transactionMap={transactionMap}
-          />
+          <div className="animate-fade-in">
+            <StickerCollection 
+              stickers={sortedStickers}
+              viewMode={viewMode}
+              showImages={showImages}
+              selectedAlbum={selectedAlbumId}
+              onRefresh={handleRefresh}
+              activeFilter={activeTab === "all" ? null : activeTab}
+              showMultipleAlbums={false}
+              transactionMap={transactionMap}
+            />
+          </div>
         )
       ) : (
-        <EmptyState
-          icon={<List className="h-10 w-10" />}
-          title="לא נמצאו מדבקות"
-          description={`אין מדבקות בקטגוריה "${activeTab}".`}
-          action={
-            <Button 
-              onClick={() => setIsIntakeFormOpen(true)}
-              className="px-3 py-1.5 rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground text-xs font-medium transition-colors flex items-center gap-1"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              הוספת מדבקה
-            </Button>
-          }
-        />
+        <div className="animate-fade-in">
+          <EmptyState
+            icon={<List className="h-10 w-10" />}
+            title="לא נמצאו מדבקות"
+            description={`אין מדבקות בקטגוריה "${activeTab}".`}
+            action={
+              <Button 
+                onClick={() => setIsIntakeFormOpen(true)}
+                className="px-3 py-1.5 rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground text-xs font-medium transition-colors flex items-center gap-1 hover-lift"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                הוספת מדבקה
+              </Button>
+            }
+          />
+        </div>
       )}
-    </>
+    </div>
   );
 };
 

@@ -99,12 +99,13 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
   return (
     <div 
       className={cn(
-        "p-4 rounded-xl border border-border hover:shadow-md transition-shadow",
+        "p-4 rounded-xl border hover:shadow-xl transition-all duration-300 hover-lift backdrop-blur-sm",
+        "glass-effect animate-fade-in",
         exchange.color || "bg-card"
       )}
     >
       <div className="flex items-center space-x-3 mb-4">
-        <div className="h-10 w-10 rounded-full overflow-hidden bg-secondary order-2">
+        <div className="h-10 w-10 rounded-full overflow-hidden bg-secondary order-2 ring-2 ring-white/10">
           <img 
             src={exchange.userAvatar || '/placeholder.svg'} 
             alt={exchange.userName} 
@@ -121,7 +122,7 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
         <div className="ml-auto order-1">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1 rounded-full hover:bg-secondary/50"
+            className="p-1 rounded-full hover:bg-secondary/50 transition-transform duration-300"
           >
             {isExpanded ? (
               <ChevronUp className="h-5 w-5" />
@@ -134,21 +135,21 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
       
       <div className="flex flex-wrap gap-3 mb-4">
         {exchange.location && (
-          <div className="flex items-center text-sm">
+          <div className="flex items-center text-sm bg-secondary/50 rounded-full px-2 py-1">
             <MapPin className="h-4 w-4 ml-1" />
             <span>{exchange.location}</span>
           </div>
         )}
         
         {exchange.phone && (
-          <div className="flex items-center text-sm">
+          <div className="flex items-center text-sm bg-secondary/50 rounded-full px-2 py-1">
             <Phone className="h-4 w-4 ml-1" />
             <span>{exchange.phone}</span>
           </div>
         )}
         
         {exchange.exchangeMethod && (
-          <div className="flex items-center text-sm">
+          <div className="flex items-center text-sm bg-secondary/50 rounded-full px-2 py-1">
             {getExchangeMethodIcon()}
             <span className="mr-1">{getExchangeMethodText()}</span>
           </div>
@@ -156,10 +157,13 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
       </div>
       
       {isExpanded && (
-        <div className="space-y-4 pt-2 border-t border-border">
+        <div className="space-y-4 pt-2 border-t border-border animate-fade-in">
           <div>
-            <h4 className="text-sm font-medium mb-2">מקבל</h4>
-            <div className="grid grid-cols-8 gap-2">
+            <h4 className="text-sm font-medium mb-2 flex items-center">
+              <span className="h-2 w-2 bg-blue-500 rounded-full mr-2"></span>
+              מקבל
+            </h4>
+            <div className="grid grid-cols-8 gap-2 animate-stagger-fade">
               {stickersToReceive.map(stickerId => {
                 const actualSticker = getActualStickerByNumber(stickerId);
                 return (
@@ -171,7 +175,7 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
                           e.preventDefault();
                           handleStickerClick(stickerId);
                         }}
-                        className="cursor-pointer"
+                        className="cursor-pointer hover-lift relative group"
                       >
                         <StickerImage
                           alt={`מדבקה ${stickerId}`}
@@ -184,6 +188,7 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
                           isDuplicate={actualSticker?.isDuplicate}
                           duplicateCount={actualSticker?.duplicateCount}
                         />
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md ring-2 ring-blue-500/50" />
                       </div>
                     </DialogTrigger>
                   </Dialog>
@@ -193,8 +198,11 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
           </div>
           
           <div>
-            <h4 className="text-sm font-medium mb-2">נותן</h4>
-            <div className="grid grid-cols-8 gap-2">
+            <h4 className="text-sm font-medium mb-2 flex items-center">
+              <span className="h-2 w-2 bg-green-500 rounded-full mr-2"></span>
+              נותן
+            </h4>
+            <div className="grid grid-cols-8 gap-2 animate-stagger-fade">
               {stickersToGive.map(stickerId => {
                 const actualSticker = getActualStickerByNumber(stickerId);
                 return (
@@ -206,7 +214,7 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
                           e.preventDefault();
                           handleStickerClick(stickerId);
                         }}
-                        className="cursor-pointer"
+                        className="cursor-pointer hover-lift relative group"
                       >
                         <StickerImage
                           alt={`מדבקה ${stickerId}`}
@@ -219,6 +227,7 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
                           isDuplicate={actualSticker?.isDuplicate}
                           duplicateCount={actualSticker?.duplicateCount}
                         />
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md ring-2 ring-green-500/50" />
                       </div>
                     </DialogTrigger>
                   </Dialog>
@@ -244,10 +253,10 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
       )}
       
       <div className="mt-4 flex space-x-2">
-        <button className="flex-1 py-2 rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground text-sm font-medium transition-colors">
+        <button className="flex-1 py-2 rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground text-sm font-medium transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/20 hover-lift">
           עדכן עסקה
         </button>
-        <button className="flex-1 py-2 rounded-md bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium transition-colors">
+        <button className="flex-1 py-2 rounded-md bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium transition-all duration-300 hover-lift">
           בטל עסקה
         </button>
       </div>
