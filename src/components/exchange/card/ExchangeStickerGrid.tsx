@@ -48,21 +48,21 @@ const ExchangeStickerGrid = ({
   }
   
   return (
-    <div className="space-y-2">
+    <div className="space-y-1"> {/* Reduced spacing */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">{title}</h3>
-        <Badge variant="outline" className="text-xs">{stickerNumbers.length}</Badge>
+        <Badge variant="outline" className="text-xs h-5 px-1.5">{stickerNumbers.length}</Badge> {/* Reduced height and padding */}
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1"> {/* Reduced gap */}
         {matchedStickers.map(({ number, isOwned, isDuplicate }) => (
           <div 
             key={number}
             className={cn(
-              "w-9 h-9 flex items-center justify-center text-sm font-medium rounded-md cursor-pointer border",
+              "w-8 h-8 flex items-center justify-center text-sm font-medium rounded-md cursor-pointer border", /* Reduced size */
               isOwned 
                 ? "bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700 text-green-800 dark:text-green-300" 
                 : "bg-card border-border",
-              isDuplicate && isOwned && "ring-2 ring-yellow-400"
+              isDuplicate && isOwned && "ring-1 ring-yellow-400" /* Reduced ring size */
             )}
             onClick={() => onStickerClick(number)}
             onContextMenu={(e) => {

@@ -81,6 +81,7 @@ const StickerCollection = ({
                 transaction={transaction}
                 isRecentlyAdded={recentlyAdded}
                 onClick={() => handleStickerClick(sticker)}
+                className="compact-sticker-container" /* Add custom class for fixed height */
               />
             );
           }
@@ -104,6 +105,7 @@ const StickerCollection = ({
               onClick={() => handleStickerClick(sticker)}
               transaction={transaction}
               isRecentlyAdded={recentlyAdded}
+              className="list-sticker-container" /* Add custom class for fixed height */
             />
           );
         })}
