@@ -1,7 +1,5 @@
 
 import InventoryCard from "./InventoryCard";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
 
 interface InventoryStatsProps {
   stats: {
@@ -15,13 +13,8 @@ interface InventoryStatsProps {
 }
 
 const InventoryStats = ({ stats, activeTab, setActiveTab }: InventoryStatsProps) => {
-  const isMobile = useIsMobile();
-  
   return (
-    <div className={cn(
-      "flex flex-row overflow-x-auto scrollbar-none animate-fade-up no-scrollbar",
-      isMobile ? "gap-1.5 mb-2 pb-0.5" : "gap-2 mb-4 pb-1"
-    )}>
+    <div className="flex flex-row overflow-x-auto scrollbar-none gap-2 animate-fade-up mb-4 no-scrollbar pb-1">
       <InventoryCard 
         title="סך הכל" 
         value={stats.all} 

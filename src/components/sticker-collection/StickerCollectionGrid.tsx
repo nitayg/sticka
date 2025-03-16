@@ -1,7 +1,6 @@
 
 import { ReactNode, useEffect, useState, useRef, Children, isValidElement } from 'react';
 import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 interface StickerCollectionGridProps {
   viewMode: 'grid' | 'list' | 'compact';
@@ -18,16 +17,11 @@ const StickerCollectionGrid = ({
   const itemRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const isMobile = useIsMobile();
 
   // Calculate optimal row count based on available height and view mode
   useEffect(() => {
     const calculateRowCount = () => {
-      // Ajust header height based on mobile/desktop and if filter is active
-      const headerHeight = isMobile 
-        ? (activeFilter ? 220 : 180) 
-        : (activeFilter ? 160 : 120);
-      
+      const headerHeight = 180; // Adjust based on your total header height including filters, stats, etc.
       const availableHeight = window.innerHeight - headerHeight;
       
       // Estimate item height based on view mode
@@ -35,32 +29,31 @@ const StickerCollectionGrid = ({
       if (viewMode === 'grid') {
         itemHeight = 200; // Card view height estimate
       } else if (viewMode === 'list') {
-        itemHeight = isMobile ? 88 : 96; // List view height estimate, slightly smaller on mobile
+        itemHeight = 96; // List view height estimate
       } else {
-        itemHeight = isMobile ? 54 : 60; // Compact view height estimate, smaller on mobile
+        itemHeight = 60; // Compact view height estimate
       }
       
       // Calculate max rows that fit in available height with gap
-      const gapSize = viewMode === 'compact' ? 8 : 16; // Smaller gap for compact view
+      const gapSize = viewMode === 'compact' ? 10 : 16; // Gap between rows
       const maxRows = Math.floor(availableHeight / (itemHeight + gapSize));
       
-      // Ensure at least 1 row, maximum 8 rows (or 12 for compact view)
-      const maxAllowedRows = viewMode === 'compact' ? 12 : 8;
+      // Ensure at least 1 row, maximum 8 rows (or 10 for compact view)
+      const maxAllowedRows = viewMode === 'compact' ? 10 : 8;
       return Math.max(1, Math.min(maxRows, maxAllowedRows));
     };
 
-    // Set initial row count and recalculate whenever window size changes
-    const updateRowCount = () => {
+    // Set initial row count
+    setRowCount(calculateRowCount());
+
+    // Update row count on window resize
+    const handleResize = () => {
       setRowCount(calculateRowCount());
     };
-    
-    // Run on mount and whenever dependencies change
-    updateRowCount();
-    
-    // Update row count on window resize
-    window.addEventListener('resize', updateRowCount);
-    return () => window.removeEventListener('resize', updateRowCount);
-  }, [viewMode, activeFilter, isMobile]);
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [viewMode]);
 
   // Wrap first child with ref
   let modifiedChildren = children;
@@ -86,16 +79,15 @@ const StickerCollectionGrid = ({
       className={cn(
         "max-h-[calc(100vh-3.5rem)] overflow-x-auto overflow-y-hidden pb-4 px-2",
         "scrollbar-hide transition-all duration-300 backdrop-blur-sm",
-        activeFilter && "pt-1", // Reduced padding top when filter is active
-        isMobile && "px-1" // Smaller padding on mobile
+        activeFilter && "pt-2"
       )}
     >
       <div 
         ref={gridRef}
         className={cn(
           "transition-all duration-300 ease-in-out",
-          viewMode === 'list' && "grid grid-flow-col auto-cols-max gap-x-3 animate-stagger-fade", // Reduced gap
-          viewMode === 'compact' && "grid grid-flow-col gap-x-3 gap-y-1.5 animate-stagger-fade", // Reduced gaps
+          viewMode === 'list' && "grid grid-flow-col auto-cols-max gap-x-4 animate-stagger-fade",
+          viewMode === 'compact' && "grid grid-flow-col gap-x-4 gap-y-2 animate-stagger-fade", 
           viewMode === 'grid' && "grid grid-flow-col gap-x-4 animate-stagger-fade",
           `grid-rows-${rowCount}`
         )}

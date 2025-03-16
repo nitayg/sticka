@@ -1,6 +1,5 @@
 
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface InventoryCardProps {
   title: string;
@@ -17,8 +16,6 @@ const InventoryCard = ({
   onClick,
   className
 }: InventoryCardProps) => {
-  const isMobile = useIsMobile();
-  
   return (
     <div
       className={cn(
@@ -27,7 +24,6 @@ const InventoryCard = ({
         active
           ? "border-interactive/50 shadow-[0_0_15px_rgba(59,130,246,0.15)] bg-interactive/5"
           : "border-border hover:border-interactive/30 group",
-        isMobile && "p-1.5", // Smaller padding on mobile
         className
       )}
       onClick={onClick}
@@ -42,14 +38,10 @@ const InventoryCard = ({
 
       <div className="relative z-10">
         <p className={cn(
-          "font-bold transition-all duration-300",
-          active ? "text-interactive" : "group-hover:text-interactive",
-          isMobile ? "text-base" : "text-lg"
+          "text-lg font-bold transition-all duration-300",
+          active ? "text-interactive" : "group-hover:text-interactive"
         )}>{value}</p>
-        <h3 className={cn(
-          "text-muted-foreground mt-1",
-          isMobile ? "text-[10px]" : "text-xs"
-        )}>{title}</h3>
+        <h3 className="text-xs text-muted-foreground mt-1">{title}</h3>
       </div>
       
       {/* Subtle shine effect on hover */}
