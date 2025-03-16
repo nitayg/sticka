@@ -42,12 +42,12 @@ const InventoryContent = ({
 
   return (
     <div className="animate-fade-in">
-      <div className="mb-2 flex justify-end"> {/* Reduced margin */}
+      <div className="mb-4 flex justify-end">
         <Button 
           variant="outline" 
           size="sm" 
           onClick={toggleView}
-          className="text-xs hover-lift glass-effect h-7 px-2" /* Reduced height and padding */
+          className="text-xs hover-lift glass-effect"
         >
           {useTableView ? "תצוגת גריד" : "תצוגת טבלה"}
         </Button>

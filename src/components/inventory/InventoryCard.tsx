@@ -19,7 +19,7 @@ const InventoryCard = ({
   return (
     <div
       className={cn(
-        "relative bg-card rounded-lg p-1.5 text-center cursor-pointer transition-all duration-300 overflow-hidden", // Reduced padding
+        "relative bg-card rounded-lg p-2 text-center cursor-pointer transition-all duration-300 overflow-hidden",
         "hover-lift backdrop-blur-sm border",
         active
           ? "border-interactive/50 shadow-[0_0_15px_rgba(59,130,246,0.15)] bg-interactive/5"
@@ -38,10 +38,10 @@ const InventoryCard = ({
 
       <div className="relative z-10">
         <p className={cn(
-          "text-base font-bold transition-all duration-300", // Reduced font size
+          "text-lg font-bold transition-all duration-300",
           active ? "text-interactive" : "group-hover:text-interactive"
         )}>{value}</p>
-        <h3 className="text-xs text-muted-foreground mt-0.5">{title}</h3> {/* Reduced margin */}
+        <h3 className="text-xs text-muted-foreground mt-1">{title}</h3>
       </div>
       
       {/* Subtle shine effect on hover */}
