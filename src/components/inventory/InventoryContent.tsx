@@ -1,13 +1,12 @@
 
 import React, { useState } from "react";
-import { List, Grid, LayoutGrid } from "lucide-react";
+import { List } from "lucide-react";
 import { Button } from "../ui/button";
 import EmptyState from "../EmptyState";
 import StickerCollection from "../StickerCollection";
 import InventoryTable from "./InventoryTable";
 import { Plus } from "lucide-react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface InventoryContentProps {
   filteredStickers: any[];
@@ -32,7 +31,6 @@ const InventoryContent = ({
 }: InventoryContentProps) => {
   // Store the view preference in local storage
   const [useTableView, setUseTableView] = useLocalStorage("inventoryTableView", true);
-  const isMobile = useIsMobile();
   
   // Sort stickers by number
   const sortedStickers = [...filteredStickers].sort((a, b) => a.number - b.number);
@@ -44,24 +42,14 @@ const InventoryContent = ({
 
   return (
     <div className="animate-fade-in">
-      <div className={`mb-${isMobile ? '2' : '4'} flex justify-end`}>
+      <div className="mb-4 flex justify-end">
         <Button 
           variant="outline" 
           size="sm" 
           onClick={toggleView}
-          className="text-xs hover-lift glass-effect transition-all duration-300 transform hover:scale-105"
+          className="text-xs hover-lift glass-effect"
         >
-          {useTableView ? (
-            <>
-              <LayoutGrid className="h-3.5 w-3.5 mr-1.5" />
-              תצוגת גריד
-            </>
-          ) : (
-            <>
-              <List className="h-3.5 w-3.5 mr-1.5" />
-              תצוגת טבלה
-            </>
-          )}
+          {useTableView ? "תצוגת גריד" : "תצוגת טבלה"}
         </Button>
       </div>
       
