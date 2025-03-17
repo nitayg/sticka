@@ -42,12 +42,12 @@ const InventoryContent = ({
 
   return (
     <div className="animate-fade-in">
-      <div className="mb-1 flex justify-end"> {/* Reduced margin further */}
+      <div className="mb-1 flex justify-end">
         <Button 
           variant="outline" 
           size="sm" 
           onClick={toggleView}
-          className="text-xs hover-lift glass-effect h-6 px-2" /* Reduced height further */
+          className="text-xs hover-lift glass-effect h-6 px-2"
         >
           {useTableView ? "תצוגת גריד" : "תצוגת טבלה"}
         </Button>
@@ -63,7 +63,7 @@ const InventoryContent = ({
             />
           </div>
         ) : (
-          <div className="animate-fade-in grid-container"> {/* Add grid-container class */}
+          <div className="animate-fade-in grid-container">
             <StickerCollection 
               stickers={sortedStickers}
               viewMode={viewMode}
@@ -79,14 +79,14 @@ const InventoryContent = ({
       ) : (
         <div className="animate-fade-in">
           <EmptyState
-            icon={<List className="h-8 w-8" />} {/* Reduced icon size */}
+            icon={<List className="h-8 w-8" />}
             title="לא נמצאו מדבקות"
             description={`אין מדבקות בקטגוריה "${activeTab}".`}
             action={
               <Button 
                 onClick={() => setIsIntakeFormOpen(true)}
                 className="px-3 py-1 rounded-md bg-interactive hover:bg-interactive-hover text-interactive-foreground text-xs font-medium transition-colors flex items-center gap-1 hover-lift"
-                size="sm" {/* Use smaller button */}
+                size="sm"
               >
                 <Plus className="h-3 w-3" />
                 הוספת מדבקה
