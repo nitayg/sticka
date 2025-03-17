@@ -21,25 +21,29 @@ const StickerCollectionGrid = ({
   // Calculate optimal row count based on available height and view mode
   useEffect(() => {
     const calculateRowCount = () => {
-      const headerHeight = 180; // Adjust based on your total header height including filters, stats, etc.
+      // Account for all elements above the grid
+      const headerHeight = 180; // Header + filters + stats + title
       const availableHeight = window.innerHeight - headerHeight;
       
-      // Estimate item height based on view mode
+      // Estimate item height based on view mode and get actual height if available
       let itemHeight;
       if (viewMode === 'grid') {
         itemHeight = 200; // Card view height estimate
       } else if (viewMode === 'list') {
-        itemHeight = 96; // List view height estimate
+        itemHeight = 82; // List view height estimate (reduced from 96)
       } else {
-        itemHeight = 60; // Compact view height estimate
+        itemHeight = 50; // Compact view height estimate (reduced from 60)
       }
       
-      // Calculate max rows that fit in available height with gap
-      const gapSize = viewMode === 'compact' ? 10 : 16; // Gap between rows
-      const maxRows = Math.floor(availableHeight / (itemHeight + gapSize));
+      // Calculate gap between rows based on view mode
+      const gapSize = viewMode === 'compact' ? 6 : 12; // Reduced gaps
       
-      // Ensure at least 1 row, maximum 8 rows (or 10 for compact view)
-      const maxAllowedRows = viewMode === 'compact' ? 10 : 8;
+      // Calculate max rows that fit in available height with gap
+      // Subtract space for the last row's gap
+      const maxRows = Math.floor((availableHeight - gapSize) / (itemHeight + gapSize));
+      
+      // Ensure at least 1 row, maximum 12 rows for compact view, 8 for others
+      const maxAllowedRows = viewMode === 'compact' ? 12 : 8;
       return Math.max(1, Math.min(maxRows, maxAllowedRows));
     };
 
@@ -77,17 +81,17 @@ const StickerCollectionGrid = ({
     <div 
       ref={containerRef}
       className={cn(
-        "max-h-[calc(100vh-3.5rem)] overflow-x-auto overflow-y-hidden pb-4 px-2",
+        "max-h-[calc(100vh-3.5rem)] overflow-x-auto overflow-y-hidden pb-2 px-2", // Reduced bottom padding
         "scrollbar-hide transition-all duration-300 backdrop-blur-sm",
-        activeFilter && "pt-2"
+        activeFilter && "pt-1" // Reduced top padding when filter is active
       )}
     >
       <div 
         ref={gridRef}
         className={cn(
           "transition-all duration-300 ease-in-out",
-          viewMode === 'list' && "grid grid-flow-col auto-cols-max gap-x-4 animate-stagger-fade",
-          viewMode === 'compact' && "grid grid-flow-col gap-x-4 gap-y-2 animate-stagger-fade", 
+          viewMode === 'list' && "grid grid-flow-col auto-cols-max gap-x-3 gap-y-2 animate-stagger-fade", // Reduced gaps
+          viewMode === 'compact' && "grid grid-flow-col gap-x-3 gap-y-1 animate-stagger-fade", // Reduced gaps even more for compact
           viewMode === 'grid' && "grid grid-flow-col gap-x-4 animate-stagger-fade",
           `grid-rows-${rowCount}`
         )}
