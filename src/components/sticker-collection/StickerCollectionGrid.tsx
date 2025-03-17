@@ -17,49 +17,73 @@ const StickerCollectionGrid = ({
   const itemRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Debug logging for height calculations
+  const logHeights = (availableHeight: number, headerHeight: number, itemHeight: number, maxRows: number) => {
+    console.log(`
+      View Mode: ${viewMode}
+      Window Height: ${window.innerHeight}px
+      Available Height: ${availableHeight}px
+      Header Height: ${headerHeight}px
+      Item Height: ${itemHeight}px
+      Gap Size: ${viewMode === 'compact' ? 4 : viewMode === 'list' ? 8 : 12}px
+      Calculated Max Rows: ${maxRows}
+    `);
+  };
 
   // Calculate optimal row count based on available height and view mode
   useEffect(() => {
     const calculateRowCount = () => {
-      // Account for all elements above the grid
-      const headerHeight = 180; // Header + filters + stats + title
-      const availableHeight = window.innerHeight - headerHeight;
+      // Fixed elements heights
+      const headerHeight = 56; // Mobile header (h-14 = 56px)
+      const navigationHeight = 60; // Bottom navigation
+      const pageHeaderHeight = 50; // Headers, tabs, filters, etc.
+      const statsHeight = 80; // Statistics cards
+      const filtersHeight = 80; // Filters and album selection
+      const safetyMargin = 20; // Extra margin to ensure no scrollbar appears
       
-      // Estimate item height based on view mode and get actual height if available
+      // Total fixed elements overhead
+      const fixedElementsHeight = headerHeight + navigationHeight + pageHeaderHeight + 
+                                statsHeight + filtersHeight + safetyMargin;
+      
+      // Available height for the grid
+      const availableHeight = window.innerHeight - fixedElementsHeight;
+      
+      // Item heights based on view mode (measured in pixels)
       let itemHeight;
       if (viewMode === 'grid') {
-        itemHeight = 200; // Card view height estimate
+        itemHeight = 200; // Card view height
       } else if (viewMode === 'list') {
-        itemHeight = 82; // List view height estimate (reduced from 96)
+        itemHeight = 80; // List view height (adjusted from StickerListItem)
       } else {
-        itemHeight = 50; // Compact view height estimate (reduced from 60)
+        itemHeight = 48; // Compact view height (adjusted from CompactStickerItem)
       }
       
-      // Calculate gap between rows based on view mode
-      const gapSize = viewMode === 'compact' ? 6 : 12; // Reduced gaps
+      // Gap sizes (pixels) - reduced for compact and list views
+      const gapSize = viewMode === 'compact' ? 4 : viewMode === 'list' ? 8 : 12;
       
       // Calculate max rows that fit in available height with gap
-      // Subtract space for the last row's gap
-      const maxRows = Math.floor((availableHeight - gapSize) / (itemHeight + gapSize));
+      const maxRows = Math.floor(availableHeight / (itemHeight + gapSize));
       
-      // Ensure at least 1 row, maximum 12 rows for compact view, 8 for others
-      const maxAllowedRows = viewMode === 'compact' ? 12 : 8;
+      // Log for debugging
+      logHeights(availableHeight, fixedElementsHeight, itemHeight, maxRows);
+      
+      // Ensure at least 1 row, maximum 12 rows for compact view, 6 for list, 4 for grid
+      const maxAllowedRows = viewMode === 'compact' ? 10 : viewMode === 'list' ? 6 : 4;
       return Math.max(1, Math.min(maxRows, maxAllowedRows));
     };
 
-    // Set initial row count
-    setRowCount(calculateRowCount());
-
-    // Update row count on window resize
+    // Set initial row count and update on resize
     const handleResize = () => {
       setRowCount(calculateRowCount());
     };
 
+    handleResize(); // Run immediately
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [viewMode]);
 
-  // Wrap first child with ref
+  // Wrap first child with ref for measurement
   let modifiedChildren = children;
   const childrenArray = Children.toArray(children);
   
@@ -81,8 +105,12 @@ const StickerCollectionGrid = ({
     <div 
       ref={containerRef}
       className={cn(
-        "max-h-[calc(100vh-3.5rem)] overflow-x-auto overflow-y-hidden pb-2 px-2", // Reduced bottom padding
+        "overflow-x-auto overflow-y-hidden pb-1 px-2", // Reduced padding
         "scrollbar-hide transition-all duration-300 backdrop-blur-sm",
+        // Add fixed height calculated based on view mode
+        viewMode === 'compact' && "max-h-[calc(100vh-280px)]",
+        viewMode === 'list' && "max-h-[calc(100vh-280px)]",
+        viewMode === 'grid' && "max-h-[calc(100vh-280px)]",
         activeFilter && "pt-1" // Reduced top padding when filter is active
       )}
     >
@@ -90,15 +118,15 @@ const StickerCollectionGrid = ({
         ref={gridRef}
         className={cn(
           "transition-all duration-300 ease-in-out",
-          viewMode === 'list' && "grid grid-flow-col auto-cols-max gap-x-3 gap-y-2 animate-stagger-fade", // Reduced gaps
-          viewMode === 'compact' && "grid grid-flow-col gap-x-3 gap-y-1 animate-stagger-fade", // Reduced gaps even more for compact
-          viewMode === 'grid' && "grid grid-flow-col gap-x-4 animate-stagger-fade",
+          viewMode === 'list' && "grid grid-flow-col auto-cols-max grid-list-gap animate-stagger-fade", 
+          viewMode === 'compact' && "grid grid-flow-col grid-compact-gap animate-stagger-fade", 
+          viewMode === 'grid' && "grid grid-flow-col grid-card-gap animate-stagger-fade",
           `grid-rows-${rowCount}`
         )}
         style={{
-          // Using inline style for dynamic grid-template-rows
+          // Using inline style for dynamic grid-template-rows and gap settings
           gridTemplateRows: `repeat(${rowCount}, auto)`,
-          // Add smooth scroll behavior
+          gap: viewMode === 'compact' ? '4px' : viewMode === 'list' ? '8px' : '12px',
           scrollBehavior: 'smooth'
         }}
       >

@@ -27,13 +27,13 @@ const CompactStickerItem = ({
     <div
       onClick={onClick}
       className={cn(
-        "w-14 h-14 flex flex-col items-center justify-center rounded-md cursor-pointer",
+        "w-14 h-12 flex flex-col items-center justify-center rounded-md cursor-pointer",
         "border border-border transition-all duration-200 hover:shadow-sm",
         "relative overflow-hidden",
-        "min-w-[56px] min-h-[56px] mb-2", // Increased margin-bottom from 1 to 2 (from 0.25rem to 0.5rem)
+        "min-w-[56px] min-h-[48px]", // Reduced height to 48px (from 56px)
         transaction ? transaction.color : "bg-card",
         isRecentlyAdded && "border-yellow-400",
-        className // Add className to the className list
+        className // Include any additional classes
       )}
     >
       {isRecentlyAdded && (

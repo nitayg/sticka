@@ -48,7 +48,7 @@ const StickerCollection = ({
   if (stickers.length === 0) {
     return (
       <EmptyState
-        icon={<Image className="h-12 w-12" />}
+        icon={<Image className="h-10 w-10" />} // Reduced icon size
         title="לא נמצאו מדבקות"
         description="הוסף מדבקות לאוסף שלך או שנה את קריטריוני הסינון."
         action={
@@ -61,8 +61,6 @@ const StickerCollection = ({
     );
   }
 
-  // We don't need to sort here since the stickers should already be sorted by the parent component
-  
   return (
     <>
       <StickerCollectionGrid 
@@ -81,7 +79,7 @@ const StickerCollection = ({
                 transaction={transaction}
                 isRecentlyAdded={recentlyAdded}
                 onClick={() => handleStickerClick(sticker)}
-                className="compact-sticker-container" /* Add custom class for fixed height */
+                className="compact-sticker-container" // Use our fixed height class
               />
             );
           }
@@ -105,7 +103,7 @@ const StickerCollection = ({
               onClick={() => handleStickerClick(sticker)}
               transaction={transaction}
               isRecentlyAdded={recentlyAdded}
-              className="list-sticker-container" /* Add custom class for fixed height */
+              className="list-sticker-container" // Use our fixed height class
             />
           );
         })}
