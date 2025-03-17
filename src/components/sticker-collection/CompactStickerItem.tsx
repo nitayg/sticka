@@ -7,6 +7,7 @@ interface CompactStickerItemProps {
   onClick: () => void;
   isRecentlyAdded?: boolean;
   transaction?: { person: string, color: string } | null;
+  className?: string; // Add className to the interface
 }
 
 // Helper to get first name
@@ -19,7 +20,8 @@ const CompactStickerItem = ({
   sticker,
   onClick,
   isRecentlyAdded = false,
-  transaction
+  transaction,
+  className
 }: CompactStickerItemProps) => {
   return (
     <div
@@ -30,7 +32,8 @@ const CompactStickerItem = ({
         "relative overflow-hidden",
         "min-w-[56px] min-h-[56px] mb-2", // Increased margin-bottom from 1 to 2 (from 0.25rem to 0.5rem)
         transaction ? transaction.color : "bg-card",
-        isRecentlyAdded && "border-yellow-400"
+        isRecentlyAdded && "border-yellow-400",
+        className // Add className to the className list
       )}
     >
       {isRecentlyAdded && (

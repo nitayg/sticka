@@ -12,6 +12,7 @@ interface StickerListItemProps {
   isSelected?: boolean;
   onSelect?: () => void;
   transactions?: string[];
+  className?: string; // Add className to the interface
 }
 
 // Helper function to get first name only
@@ -26,7 +27,8 @@ const StickerListItem = ({
   transaction,
   isRecentlyAdded = false,
   isSelected,
-  onSelect
+  onSelect,
+  className
 }: StickerListItemProps) => {
   const handleClick = () => {
     if (onSelect) {
@@ -46,7 +48,8 @@ const StickerListItem = ({
         (onClick || onSelect) && "cursor-pointer",
         isRecentlyAdded && "border-yellow-400 animate-pulse-brief",
         isSelected && "ring-2 ring-blue-500 shadow-lg shadow-blue-500/20",
-        transaction && transaction.color
+        transaction && transaction.color,
+        className
       )}
     >
       {isRecentlyAdded && (
