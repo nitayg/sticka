@@ -14,7 +14,7 @@ const Index = lazy(() => import("./pages/Index"));
 
 // Create a loading fallback with improved visual indicators
 const LoadingFallback = () => (
-  <div className="h-screen w-full flex items-center justify-center bg-background" dir="rtl">
+  <div className="h-screen w-full flex items-center justify-center bg-background">
     <div className="flex flex-col items-center space-y-4">
       <div className="relative w-20 h-20">
         <div className="absolute top-0 left-0 right-0 bottom-0 animate-ping rounded-full bg-interactive/20 opacity-75"></div>
@@ -76,12 +76,8 @@ const App = () => {
     initSupabase();
   }, []);
   
-  // Set up global RTL direction
+  // החלת הגדרות ה-manifest המותאמות בטעינת האפליקציה
   useEffect(() => {
-    document.documentElement.dir = "rtl";
-    document.body.classList.add("dir-rtl");
-    
-    // Apply manifest overrides
     ManifestUpdater.applyManifestOverrides();
   }, []);
 

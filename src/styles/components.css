@@ -151,14 +151,6 @@
   direction: rtl !important;
 }
 
-body {
-  direction: rtl !important;
-}
-
-html {
-  direction: rtl !important;
-}
-
 /* Fix for header to fill the screen to the top */
 .fixed.top-0 {
   width: 100%;
@@ -206,13 +198,6 @@ html {
   margin-bottom: 0;
 }
 
-@media (max-width: 390px) {
-  .compact-sticker-container {
-    height: 40px;
-    min-height: 40px;
-  }
-}
-
 /* List sticker item custom styles */
 .list-sticker-container {
   height: 80px;
@@ -220,42 +205,17 @@ html {
   margin-bottom: 0;
 }
 
-@media (max-width: 390px) {
-  .list-sticker-container {
-    height: 70px;
-    min-height: 70px;
-  }
-}
-
 /* Adjust grid spacing for different view modes */
 .grid-compact-gap {
   gap: 4px !important;
-}
-
-@media (max-width: 390px) {
-  .grid-compact-gap {
-    gap: 3px !important;
-  }
 }
 
 .grid-list-gap {
   gap: 8px !important;
 }
 
-@media (max-width: 390px) {
-  .grid-list-gap {
-    gap: 6px !important;
-  }
-}
-
 .grid-card-gap {
   gap: 12px !important;
-}
-
-@media (max-width: 390px) {
-  .grid-card-gap {
-    gap: 8px !important;
-  }
 }
 
 /* Make sure stickers fit properly in grid cells */
@@ -290,35 +250,19 @@ html {
 }
 
 /* Responsive sizing for different view modes */
-@media (max-height: 667px) {
+@media (max-height: 600px) {
   .compact-sticker-container {
-    height: 36px;
-    min-height: 36px;
+    height: 42px;
+    min-height: 42px;
   }
   
   .list-sticker-container {
-    height: 64px;
-    min-height: 64px;
+    height: 70px;
+    min-height: 70px;
   }
 }
 
 /* Fix for RTL in flex containers */
 [dir="rtl"] .flex {
   flex-direction: row;
-}
-
-/* iOS specific adjustments */
-@supports (-webkit-touch-callout: none) {
-  /* iOS specific styles */
-  .main-content {
-    max-height: calc(100vh - 130px);
-  }
-  
-  .safe-area-inset-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 0);
-  }
-  
-  .safe-area-inset-top {
-    padding-top: env(safe-area-inset-top, 0);
-  }
 }
