@@ -1,6 +1,7 @@
 
 import { Sticker } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CompactStickerItemProps {
   sticker: Sticker;
@@ -23,14 +24,16 @@ const CompactStickerItem = ({
   transaction,
   className
 }: CompactStickerItemProps) => {
+  const isMobile = useIsMobile();
+  
   return (
     <div
       onClick={onClick}
       className={cn(
-        "w-14 h-12 flex flex-col items-center justify-center rounded-md cursor-pointer",
+        "flex flex-col items-center justify-center rounded-md cursor-pointer",
         "border border-border transition-all duration-200 hover:shadow-sm",
         "relative overflow-hidden",
-        "min-w-[56px] min-h-[48px]", 
+        isMobile ? "w-12 h-10 min-w-[48px] min-h-[40px]" : "w-14 h-12 min-w-[56px] min-h-[48px]",
         transaction ? transaction.color : "bg-card",
         isRecentlyAdded && "border-yellow-400",
         className 
@@ -41,7 +44,7 @@ const CompactStickerItem = ({
         <div className="absolute top-0 left-0 w-0 h-0 border-solid border-t-[10px] border-t-yellow-400 border-r-[10px] border-r-transparent z-10"></div>
       )}
       
-      <span className="text-lg font-bold text-foreground">
+      <span className={cn("font-bold text-foreground", isMobile ? "text-base" : "text-lg")}>
         {sticker.number}
       </span>
       

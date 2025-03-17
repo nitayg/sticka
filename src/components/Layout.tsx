@@ -95,7 +95,7 @@ const Layout = ({ children }: LayoutProps) => {
 
       {/* Footer navigation that hides when scrolling down */}
       <div className={`fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black to-black/95 text-white border-t border-gray-800/50 transition-transform duration-300 ease-in-out backdrop-blur-md shadow-lg ${isScrollingDown ? 'translate-y-full' : 'translate-y-0'}`}>
-        <div className="w-full flex justify-between items-center px-2 pt-2 pb-6" dir="rtl">
+        <div className="w-full flex justify-between items-center px-2 pt-2 pb-6 dir-rtl" dir="rtl">
           {navigation.map((item, index) => {
             const isActive = location.pathname === item.href;
             

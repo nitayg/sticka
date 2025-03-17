@@ -36,8 +36,12 @@ const StickerCollection = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   const handleStickerClick = (sticker: Sticker) => {
-    setSelectedSticker(sticker);
-    setIsDialogOpen(true);
+    try {
+      setSelectedSticker(sticker);
+      setIsDialogOpen(true);
+    } catch (error) {
+      console.error("Error handling sticker click:", error);
+    }
   };
   
   const handleCloseDialog = () => {
@@ -68,57 +72,64 @@ const StickerCollection = ({
         activeFilter={activeFilter}
       >
         {stickers.map(sticker => {
-          const transaction = transactionMap[sticker.id];
-          const recentlyAdded = isRecentlyAdded(sticker);
-          
-          if (viewMode === "compact") {
-            return (
-              <CompactStickerItem
-                key={sticker.id}
-                sticker={sticker}
+          try {
+            const transaction = transactionMap[sticker.id];
+            const recentlyAdded = isRecentlyAdded(sticker);
+            
+            if (viewMode === "compact") {
+              return (
+                <CompactStickerItem
+                  key={sticker.id}
+                  sticker={sticker}
+                  transaction={transaction}
+                  isRecentlyAdded={recentlyAdded}
+                  onClick={() => handleStickerClick(sticker)}
+                  className="compact-sticker-container"
+                />
+              );
+            }
+            
+            return viewMode === "grid" ? (
+              <StickerCard 
+                key={sticker.id} 
+                sticker={sticker} 
+                compact
+                showImages={showImages}
+                showAlbumInfo={showMultipleAlbums}
+                onClick={() => handleStickerClick(sticker)}
                 transaction={transaction}
                 isRecentlyAdded={recentlyAdded}
+              />
+            ) : (
+              <StickerListItem 
+                key={sticker.id} 
+                sticker={sticker}
+                showImages={showImages}
                 onClick={() => handleStickerClick(sticker)}
-                className="compact-sticker-container"
+                transaction={transaction}
+                isRecentlyAdded={recentlyAdded}
+                className="list-sticker-container"
               />
             );
+          } catch (error) {
+            console.error(`Error rendering sticker ${sticker.id}:`, error);
+            return null; // Skip problematic stickers instead of crashing
           }
-          
-          return viewMode === "grid" ? (
-            <StickerCard 
-              key={sticker.id} 
-              sticker={sticker} 
-              compact
-              showImages={showImages}
-              showAlbumInfo={showMultipleAlbums}
-              onClick={() => handleStickerClick(sticker)}
-              transaction={transaction}
-              isRecentlyAdded={recentlyAdded}
-            />
-          ) : (
-            <StickerListItem 
-              key={sticker.id} 
-              sticker={sticker}
-              showImages={showImages}
-              onClick={() => handleStickerClick(sticker)}
-              transaction={transaction}
-              isRecentlyAdded={recentlyAdded}
-              className="list-sticker-container"
-            />
-          );
         })}
       </StickerCollectionGrid>
       
-      <StickerDetailsDialog
-        sticker={selectedSticker}
-        isOpen={isDialogOpen}
-        onClose={handleCloseDialog}
-        onUpdate={() => {
-          onRefresh();
-          window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
-          window.dispatchEvent(new CustomEvent('albumDataChanged'));
-        }}
-      />
+      {selectedSticker && (
+        <StickerDetailsDialog
+          sticker={selectedSticker}
+          isOpen={isDialogOpen}
+          onClose={handleCloseDialog}
+          onUpdate={() => {
+            onRefresh();
+            window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
+            window.dispatchEvent(new CustomEvent('albumDataChanged'));
+          }}
+        />
+      )}
     </div>
   );
 };
