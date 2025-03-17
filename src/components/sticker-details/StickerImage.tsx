@@ -52,12 +52,12 @@ const StickerImage = ({
       <div className={cn(
         "relative aspect-square rounded-lg overflow-hidden border flex items-center justify-center transition-all",
         getBgColor(),
-        isDuplicate && isOwned && "ring-1 ring-interactive", // Reduced ring size
+        isDuplicate && isOwned && "ring-1 ring-interactive",
         isRecentlyAdded && "animate-pulse-brief border-yellow-400"
       )}>
         {stickerNumber && (
           <div className={cn(
-            "text-base font-bold", // Reduced text size
+            "text-base font-bold",
             isOwned ? "text-green-800" : "text-muted-foreground",
             inTransaction && "text-foreground"
           )}>
@@ -65,15 +65,15 @@ const StickerImage = ({
           </div>
         )}
         {isDuplicate && isOwned && (
-          <div className="absolute top-0.5 right-0.5 text-xs font-semibold text-interactive"> {/* Adjusted position */}
+          <div className="absolute top-0.5 right-0.5 text-xs font-semibold text-interactive">
             {duplicateCount > 0 ? duplicateCount + 1 : '2+'}
           </div>
         )}
         {isRecentlyAdded && (
-          <div className="absolute top-0 left-0 w-0 h-0 border-solid border-t-[10px] border-t-yellow-400 border-r-[10px] border-r-transparent"></div> {/* Reduced indicator size */}
+          <div className="absolute top-0 left-0 w-0 h-0 border-solid border-t-[10px] border-t-yellow-400 border-r-[10px] border-r-transparent"></div>
         )}
         {inTransaction && transactionPerson && (
-          <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-center text-[8px] py-0.5 truncate"> {/* Reduced text size */}
+          <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-center text-[8px] py-0.5 truncate">
             {getFirstName(transactionPerson)}
           </div>
         )}
@@ -95,7 +95,7 @@ const StickerImage = ({
               className="w-full h-full object-cover"
             />
             {inTransaction && transactionPerson && (
-              <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-center py-0.5 text-xs"> {/* Reduced padding */}
+              <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-center py-0.5 text-xs">
                 {getFirstName(transactionPerson)}
               </div>
             )}
@@ -108,14 +108,14 @@ const StickerImage = ({
               className="w-full h-full object-cover opacity-60"
             />
             {inTransaction && transactionPerson && (
-              <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-center py-0.5 text-xs"> {/* Reduced padding */}
+              <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-center py-0.5 text-xs">
                 {getFirstName(transactionPerson)}
               </div>
             )}
           </>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted">
-            <Image className="h-8 w-8 text-muted-foreground" /> {/* Reduced icon size */}
+            <Image className="h-8 w-8 text-muted-foreground" />
           </div>
         )
       ) : (
@@ -123,11 +123,11 @@ const StickerImage = ({
           "w-full h-full flex flex-col items-center justify-center",
           inTransaction && transactionColor ? transactionColor : "bg-muted"
         )}>
-          <Image className="h-8 w-8 text-muted-foreground mb-1 opacity-40" /> {/* Reduced icon size and margin */}
-          {stickerNumber && <div className="text-2xl font-bold">{stickerNumber}</div>} {/* Reduced text size */}
+          <Image className="h-8 w-8 text-muted-foreground mb-1 opacity-40" />
+          {stickerNumber && <div className="text-2xl font-bold">{stickerNumber}</div>}
           
           {inTransaction && transactionPerson && (
-            <div className="mt-1 text-xs font-medium bg-background/80 px-2 py-0.5 rounded-sm"> {/* Reduced margin */}
+            <div className="mt-1 text-xs font-medium bg-background/80 px-2 py-0.5 rounded-sm">
               {getFirstName(transactionPerson)}
             </div>
           )}
@@ -135,7 +135,7 @@ const StickerImage = ({
       )}
       
       {isRecentlyAdded && (
-        <div className="absolute top-0 left-0 w-0 h-0 border-solid border-t-[16px] border-t-yellow-400 border-r-[16px] border-r-transparent z-10"></div> {/* Reduced indicator size */}
+        <div className="absolute top-0 left-0 w-0 h-0 border-solid border-t-[16px] border-t-yellow-400 border-r-[16px] border-r-transparent z-10"></div>
       )}
     </div>
   );
