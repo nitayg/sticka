@@ -14,33 +14,46 @@ const StickerCollectionGrid = ({
   children
 }: StickerCollectionGridProps) => {
   const [rowCount, setRowCount] = useState(3);
+  const [itemScale, setItemScale] = useState(1);
   const itemRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Define minimum rows for each view mode
+  const getMinRows = (): number => {
+    switch (viewMode) {
+      case 'grid': return 3;
+      case 'compact': return 5;
+      case 'list': return 4;
+      default: return 3;
+    }
+  };
   
   // Debug logging for height calculations
-  const logHeights = (availableHeight: number, headerHeight: number, itemHeight: number, maxRows: number) => {
+  const logHeights = (availableHeight: number, fixedElementsHeight: number, itemHeight: number, gapSize: number, maxRows: number) => {
     console.log(`
       View Mode: ${viewMode}
       Window Height: ${window.innerHeight}px
       Available Height: ${availableHeight}px
-      Header Height: ${headerHeight}px
+      Fixed Elements Height: ${fixedElementsHeight}px
       Item Height: ${itemHeight}px
-      Gap Size: ${viewMode === 'compact' ? 4 : viewMode === 'list' ? 8 : 12}px
-      Calculated Max Rows: ${maxRows}
+      Gap Size: ${gapSize}px
+      Item Scale: ${itemScale}
+      Calculated Rows: ${maxRows}
+      Min Rows: ${getMinRows()}
     `);
   };
 
   // Calculate optimal row count based on available height and view mode
   useEffect(() => {
-    const calculateRowCount = () => {
-      // Fixed elements heights
+    const calculateLayout = () => {
+      // Fixed elements heights - carefully measured
       const headerHeight = 56; // Mobile header (h-14 = 56px)
-      const navigationHeight = 60; // Bottom navigation
-      const pageHeaderHeight = 50; // Headers, tabs, filters, etc.
-      const statsHeight = 80; // Statistics cards
-      const filtersHeight = 80; // Filters and album selection
-      const safetyMargin = 20; // Extra margin to ensure no scrollbar appears
+      const navigationHeight = 64; // Bottom navigation
+      const pageHeaderHeight = 44; // Page title and actions
+      const statsHeight = 76; // Statistics cards
+      const filtersHeight = 46; // Filters and view toggle
+      const safetyMargin = 12; // Extra margin to prevent scrollbar
       
       // Total fixed elements overhead
       const fixedElementsHeight = headerHeight + navigationHeight + pageHeaderHeight + 
@@ -49,38 +62,49 @@ const StickerCollectionGrid = ({
       // Available height for the grid
       const availableHeight = window.innerHeight - fixedElementsHeight;
       
-      // Item heights based on view mode (measured in pixels)
-      let itemHeight;
+      // Item heights based on view mode (in pixels)
+      let baseItemHeight;
       if (viewMode === 'grid') {
-        itemHeight = 200; // Card view height
+        baseItemHeight = 180; // Card view height
       } else if (viewMode === 'list') {
-        itemHeight = 80; // List view height (adjusted from StickerListItem)
-      } else {
-        itemHeight = 48; // Compact view height (adjusted from CompactStickerItem)
+        baseItemHeight = 80; // List view height
+      } else { // compact
+        baseItemHeight = 48; // Compact view height
       }
       
-      // Gap sizes (pixels) - reduced for compact and list views
+      // Gap sizes (pixels)
       const gapSize = viewMode === 'compact' ? 4 : viewMode === 'list' ? 8 : 12;
       
-      // Calculate max rows that fit in available height with gap
-      const maxRows = Math.floor(availableHeight / (itemHeight + gapSize));
+      // Calculate maximum rows that fit in available height with gap
+      let maxRows = Math.floor(availableHeight / (baseItemHeight + gapSize));
+      
+      // Determine min rows based on view mode
+      const minRows = getMinRows();
+      
+      // If maxRows is less than minRows, calculate a scale factor
+      let scaleFactor = 1;
+      if (maxRows < minRows) {
+        scaleFactor = availableHeight / ((baseItemHeight + gapSize) * minRows);
+        maxRows = minRows; // Force min rows
+        setItemScale(scaleFactor);
+      } else {
+        setItemScale(1); // Reset scale if not needed
+      }
+      
+      // Set row count to be at least minRows and max 12 for compact, 6 for list, 4 for grid
+      const maxAllowedRows = viewMode === 'compact' ? 10 : viewMode === 'list' ? 6 : 4;
+      const finalRowCount = Math.max(minRows, Math.min(maxRows, maxAllowedRows));
       
       // Log for debugging
-      logHeights(availableHeight, fixedElementsHeight, itemHeight, maxRows);
+      logHeights(availableHeight, fixedElementsHeight, baseItemHeight, gapSize, finalRowCount);
       
-      // Ensure at least 1 row, maximum 12 rows for compact view, 6 for list, 4 for grid
-      const maxAllowedRows = viewMode === 'compact' ? 10 : viewMode === 'list' ? 6 : 4;
-      return Math.max(1, Math.min(maxRows, maxAllowedRows));
+      setRowCount(finalRowCount);
     };
 
-    // Set initial row count and update on resize
-    const handleResize = () => {
-      setRowCount(calculateRowCount());
-    };
-
-    handleResize(); // Run immediately
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    // Set initial layout and update on resize
+    calculateLayout();
+    window.addEventListener('resize', calculateLayout);
+    return () => window.removeEventListener('resize', calculateLayout);
   }, [viewMode]);
 
   // Wrap first child with ref for measurement
@@ -105,7 +129,7 @@ const StickerCollectionGrid = ({
     <div 
       ref={containerRef}
       className={cn(
-        "overflow-x-auto overflow-y-hidden pb-1 px-2", // Reduced padding
+        "overflow-x-auto overflow-y-hidden pb-1 px-2", 
         "scrollbar-hide transition-all duration-300 backdrop-blur-sm",
         // Add fixed height calculated based on view mode
         viewMode === 'compact' && "max-h-[calc(100vh-280px)]",
@@ -113,6 +137,7 @@ const StickerCollectionGrid = ({
         viewMode === 'grid' && "max-h-[calc(100vh-280px)]",
         activeFilter && "pt-1" // Reduced top padding when filter is active
       )}
+      style={{ direction: 'rtl' }} // Explicitly set RTL direction for this container
     >
       <div 
         ref={gridRef}
@@ -127,7 +152,10 @@ const StickerCollectionGrid = ({
           // Using inline style for dynamic grid-template-rows and gap settings
           gridTemplateRows: `repeat(${rowCount}, auto)`,
           gap: viewMode === 'compact' ? '4px' : viewMode === 'list' ? '8px' : '12px',
-          scrollBehavior: 'smooth'
+          scrollBehavior: 'smooth',
+          transform: `scale(${itemScale})`,
+          transformOrigin: 'top right', // RTL-friendly origin
+          direction: 'rtl' // Ensure RTL direction for grid
         }}
       >
         {modifiedChildren}

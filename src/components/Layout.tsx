@@ -65,8 +65,8 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <div className={cn(
       "min-h-screen bg-background flex flex-col w-full", 
-      isAlbumView && "prevent-scroll", // Apply the prevent-scroll class only on album view
-      "dir-rtl"
+      isAlbumView && "prevent-scroll", 
+      "dir-rtl" // Ensure RTL direction
     )}>
       {/* Mobile Header */}
       <MobileHeader isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
@@ -84,7 +84,7 @@ const Layout = ({ children }: LayoutProps) => {
       <div className="flex flex-1">
         {/* Main Content */}
         <main className={cn(
-          "flex-1 pt-14 pb-16 w-full", // Reduced bottom padding
+          "flex-1 pt-14 pb-16 w-full", 
           isAlbumView ? "main-content overflow-hidden" : "overflow-y-auto overflow-x-hidden"
         )}>
           <div className="max-w-4xl mx-auto px-1 animate-fade-in">
@@ -95,7 +95,7 @@ const Layout = ({ children }: LayoutProps) => {
 
       {/* Footer navigation that hides when scrolling down */}
       <div className={`fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black to-black/95 text-white border-t border-gray-800/50 transition-transform duration-300 ease-in-out backdrop-blur-md shadow-lg ${isScrollingDown ? 'translate-y-full' : 'translate-y-0'}`}>
-        <div className="w-full flex justify-between items-center px-2 pt-2 pb-6"> {/* Reduced bottom padding */}
+        <div className="w-full flex justify-between items-center px-2 pt-2 pb-6" dir="rtl">
           {navigation.map((item, index) => {
             const isActive = location.pathname === item.href;
             

@@ -41,7 +41,7 @@ const InventoryContent = ({
   };
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in" dir="rtl">
       <div className="mb-1 flex justify-end">
         <Button 
           variant="outline" 

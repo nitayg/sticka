@@ -48,7 +48,7 @@ const StickerCollection = ({
   if (stickers.length === 0) {
     return (
       <EmptyState
-        icon={<Image className="h-10 w-10" />} // Reduced icon size
+        icon={<Image className="h-10 w-10" />}
         title="לא נמצאו מדבקות"
         description="הוסף מדבקות לאוסף שלך או שנה את קריטריוני הסינון."
         action={
@@ -62,7 +62,7 @@ const StickerCollection = ({
   }
 
   return (
-    <>
+    <div dir="rtl"> {/* Ensure RTL direction */}
       <StickerCollectionGrid 
         viewMode={viewMode} 
         activeFilter={activeFilter}
@@ -79,7 +79,7 @@ const StickerCollection = ({
                 transaction={transaction}
                 isRecentlyAdded={recentlyAdded}
                 onClick={() => handleStickerClick(sticker)}
-                className="compact-sticker-container" // Use our fixed height class
+                className="compact-sticker-container"
               />
             );
           }
@@ -103,7 +103,7 @@ const StickerCollection = ({
               onClick={() => handleStickerClick(sticker)}
               transaction={transaction}
               isRecentlyAdded={recentlyAdded}
-              className="list-sticker-container" // Use our fixed height class
+              className="list-sticker-container"
             />
           );
         })}
@@ -119,7 +119,7 @@ const StickerCollection = ({
           window.dispatchEvent(new CustomEvent('albumDataChanged'));
         }}
       />
-    </>
+    </div>
   );
 };
 
