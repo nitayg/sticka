@@ -36,6 +36,10 @@ export {
 // ייצוא פונקציות אחסון
 export * from './storage-utils';
 
+// Sync module aliases to maintain compatibility with existing code
+export { initializeSync as initializeFromStorage } from './sync-client';
+export { syncFromCloud as syncWithSupabase } from './sync-client';
+
 // אתחול מערכת סנכרון
 import { syncFromCloud } from './sync-client';
 import { setupRealtimeConnection } from './realtime-manager';

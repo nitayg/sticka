@@ -7,5 +7,6 @@ export const StorageEvents = {
   EXCHANGE_OFFERS: 'exchange-offers-updated',
   SYNC_COMPLETE: 'sync-complete',
   SYNC_START: 'sync-start',
-  SYNC_ERROR: 'sync-error'
+  SYNC_ERROR: 'sync-error',
+  DATA_CHANGED: 'data-changed'
 };
