@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAlbumStore } from "@/store/useAlbumStore";
 import AlbumHeader from "./album/AlbumHeader";
 import FilterControls from "./album/FilterControls";
@@ -21,31 +21,6 @@ const AlbumView = () => {
     handleRefresh,
     handleAlbumChange,
   } = useAlbumStore();
-  
-  const [isMobile, setIsMobile] = useState(false);
-  
-  // Detect if we're on a mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      const isMobileDevice = window.innerWidth < 768 || 
-                             /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      setIsMobile(isMobileDevice);
-      
-      // Auto-adjust view mode on mobile devices
-      if (isMobileDevice) {
-        // On iOS, set to compact mode by default for better performance
-        const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-        if (isIOS && viewMode === "list") {
-          console.log("Auto-switching from list to compact view on iOS device");
-          setViewMode("compact");
-        }
-      }
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
   
   // Use the custom hook to fetch and compute album-related data
   const { 
@@ -77,11 +52,6 @@ const AlbumView = () => {
   useEffect(() => {
     if (selectedAlbumId) {
       localStorage.setItem('lastSelectedAlbumId', selectedAlbumId);
-      
-      // Dispatch album change event to notify layout
-      window.dispatchEvent(new CustomEvent('albumChanged', { 
-        detail: { albumId: selectedAlbumId } 
-      }));
     }
   }, [selectedAlbumId]);
   

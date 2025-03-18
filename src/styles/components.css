@@ -191,31 +191,31 @@
 }
 
 /* New styles for compact and list views */
-/* Compact sticker item custom styles - made more compact for mobile */
+/* Compact sticker item custom styles */
 .compact-sticker-container {
-  height: 42px;
-  min-height: 42px;
+  height: 48px;
+  min-height: 48px;
   margin-bottom: 0;
 }
 
-/* List sticker item custom styles - made more compact for mobile */
+/* List sticker item custom styles */
 .list-sticker-container {
-  height: 70px;
-  min-height: 70px;
+  height: 80px;
+  min-height: 80px;
   margin-bottom: 0;
 }
 
 /* Adjust grid spacing for different view modes */
 .grid-compact-gap {
-  gap: 3px !important; /* Reduced from 4px */
+  gap: 4px !important;
 }
 
 .grid-list-gap {
-  gap: 6px !important; /* Reduced from 8px */
+  gap: 8px !important;
 }
 
 .grid-card-gap {
-  gap: 10px !important; /* Reduced from 12px */
+  gap: 12px !important;
 }
 
 /* Make sure stickers fit properly in grid cells */
@@ -234,7 +234,7 @@
 /* Ensure the main content area doesn't overflow */
 .main-content {
   overflow-y: hidden;
-  max-height: calc(100vh - 120px); /* Reduced from 116px */
+  max-height: calc(100vh - 116px);
 }
 
 /* Ensure the grid container doesn't cause overflow */
@@ -249,61 +249,20 @@
   direction: rtl !important;
 }
 
-/* Responsive sizing for different devices */
-@media (max-width: 500px) {
+/* Responsive sizing for different view modes */
+@media (max-height: 600px) {
   .compact-sticker-container {
-    height: 40px;
-    min-height: 40px;
+    height: 42px;
+    min-height: 42px;
   }
   
   .list-sticker-container {
-    height: 65px;
-    min-height: 65px;
-  }
-  
-  .grid-compact-gap {
-    gap: 2px !important;
-  }
-  
-  .grid-list-gap {
-    gap: 4px !important;
-  }
-  
-  .grid-card-gap {
-    gap: 8px !important;
-  }
-}
-
-/* iOS specific fixes */
-@supports (-webkit-touch-callout: none) {
-  .main-content {
-    max-height: calc(100vh - 130px); /* Even more reduction for iOS */
-  }
-  
-  .compact-sticker-container {
-    height: 38px;
-    min-height: 38px;
-  }
-  
-  .list-sticker-container {
-    height: 60px;
-    min-height: 60px;
+    height: 70px;
+    min-height: 70px;
   }
 }
 
 /* Fix for RTL in flex containers */
 [dir="rtl"] .flex {
   flex-direction: row;
-}
-
-/* Enhanced iPhone X+ safe area handling */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .fb-bottom-nav, 
-  .fixed.bottom-0 {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  
-  .main-content {
-    padding-bottom: calc(env(safe-area-inset-bottom) + 60px);
-  }
 }
