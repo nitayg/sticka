@@ -34,6 +34,20 @@ const AlbumView = () => {
     activeTab: "number", // Default to number tab
     showAllAlbumStickers: false // Default not showing all album stickers
   });
+
+  // Check if device is iOS
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  
+  // Detect Safari on iOS
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) && isIOS;
+  
+  // Set view mode based on device detection - optimize for mobile
+  useEffect(() => {
+    // For iOS devices, default to compact view which works better
+    if (isIOS) {
+      setViewMode('compact');
+    }
+  }, [isIOS]);
   
   // Set selected album from local storage if available
   useEffect(() => {

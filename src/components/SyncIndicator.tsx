@@ -65,31 +65,15 @@ const SyncIndicator = ({ headerPosition = false, className }: SyncIndicatorProps
     return null;
   }
   
-  if (headerPosition) {
-    // תצוגה בהדר
-    return (
-      <div className={cn(
-        "flex items-center justify-center h-8 w-8 mx-1 transition-opacity",
-        animated ? "opacity-100" : "opacity-0",
-        className
-      )}>
-        <Loader2 className={cn(
-          "h-4 w-4 text-blue-500 transition-all",
-          animated ? "animate-spin" : ""
-        )} />
-      </div>
-    );
-  }
-  
-  // תצוגה כללית
+  // תמיד נציג את האינדיקטור רק בהדר - לא בתחתית המסך
   return (
     <div className={cn(
-      "fixed bottom-20 left-4 z-50 bg-background/80 backdrop-blur-sm rounded-full p-2 shadow-md border border-border/30 transition-opacity",
+      "flex items-center justify-center h-8 w-8 mx-1 transition-opacity",
       animated ? "opacity-100" : "opacity-0",
       className
     )}>
       <Loader2 className={cn(
-        "h-5 w-5 text-blue-500 transition-all",
+        "h-4 w-4 text-blue-500 transition-all",
         animated ? "animate-spin" : ""
       )} />
     </div>

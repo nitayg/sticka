@@ -2,6 +2,7 @@
 import { LayoutList, Image, Grid2X2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 interface ViewModeToggleProps {
   viewMode?: "grid" | "list" | "compact";
@@ -18,12 +19,21 @@ const ViewModeToggle = ({
   setShowImages = () => {},
   iconOnly = false
 }: ViewModeToggleProps) => {
+  // Check if device is iOS
+  const [isIOS, setIsIOS] = useState(false);
+  
+  useEffect(() => {
+    const isiOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    setIsIOS(isiOSDevice);
+  }, []);
+
   const handleViewModeToggle = () => {
-    // Cycle through view modes: grid -> list -> compact -> grid
+    // Cycle through view modes: grid -> compact -> list -> grid 
+    // On iOS, skip list mode which can cause issues on smaller devices
     if (viewMode === "grid") {
-      setViewMode("list");
-    } else if (viewMode === "list") {
       setViewMode("compact");
+    } else if (viewMode === "compact") {
+      setViewMode(isIOS ? "grid" : "list"); // Skip list mode on iOS
     } else {
       setViewMode("grid");
     }

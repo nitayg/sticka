@@ -49,31 +49,35 @@ const StickerCollectionGrid = ({
     const calculateLayout = () => {
       // Fixed elements heights - carefully measured
       const headerHeight = 56; // Mobile header (h-14 = 56px)
-      const navigationHeight = 64; // Bottom navigation
+      const navigationHeight = 56; // Bottom navigation
       const pageHeaderHeight = 44; // Page title and actions
       const statsHeight = 76; // Statistics cards
       const filtersHeight = 46; // Filters and view toggle
-      const safetyMargin = 12; // Extra margin to prevent scrollbar
+      const safetyMargin = 16; // Extra margin to prevent scrollbar
       
-      // Total fixed elements overhead
+      // חישוב Safe Area - iOS רק עם גובה המסך יותר מ-800px
+      const hasSafeArea = window.innerHeight > 800;
+      const safeAreaHeight = hasSafeArea ? 34 : 0; // מעריך גובה של Safe Area בהתבסס על iPhone
+      
+      // Total fixed elements overhead - הורדנו ערכים כמו ה-SyncIndicator התחתון
       const fixedElementsHeight = headerHeight + navigationHeight + pageHeaderHeight + 
-                                statsHeight + filtersHeight + safetyMargin;
+                                statsHeight + filtersHeight + safeAreaHeight + safetyMargin;
       
       // Available height for the grid
       const availableHeight = window.innerHeight - fixedElementsHeight;
       
-      // Item heights based on view mode (in pixels)
+      // Item heights based on view mode (in pixels) - קטנו את הגובה
       let baseItemHeight;
       if (viewMode === 'grid') {
-        baseItemHeight = 180; // Card view height
+        baseItemHeight = 140; // Card view height - reduced for better fit
       } else if (viewMode === 'list') {
-        baseItemHeight = 80; // List view height
+        baseItemHeight = 76; // List view height - reduced
       } else { // compact
-        baseItemHeight = 48; // Compact view height
+        baseItemHeight = 46; // Compact view height - reduced
       }
       
-      // Gap sizes (pixels)
-      const gapSize = viewMode === 'compact' ? 4 : viewMode === 'list' ? 8 : 12;
+      // Gap sizes (pixels) - הקטנו את המרווחים
+      const gapSize = viewMode === 'compact' ? 4 : viewMode === 'list' ? 6 : 10;
       
       // Calculate maximum rows that fit in available height with gap
       let maxRows = Math.floor(availableHeight / (baseItemHeight + gapSize));
@@ -92,7 +96,7 @@ const StickerCollectionGrid = ({
       }
       
       // Set row count to be at least minRows and max 12 for compact, 6 for list, 4 for grid
-      const maxAllowedRows = viewMode === 'compact' ? 10 : viewMode === 'list' ? 6 : 4;
+      const maxAllowedRows = viewMode === 'compact' ? 12 : viewMode === 'list' ? 6 : 5;
       const finalRowCount = Math.max(minRows, Math.min(maxRows, maxAllowedRows));
       
       // Log for debugging
@@ -129,12 +133,12 @@ const StickerCollectionGrid = ({
     <div 
       ref={containerRef}
       className={cn(
-        "overflow-x-auto overflow-y-hidden pb-1 px-2", 
+        "overflow-x-auto overflow-y-hidden pb-0 px-2", 
         "scrollbar-hide transition-all duration-300 backdrop-blur-sm",
-        // Add fixed height calculated based on view mode
-        viewMode === 'compact' && "max-h-[calc(100vh-280px)]",
-        viewMode === 'list' && "max-h-[calc(100vh-280px)]",
-        viewMode === 'grid' && "max-h-[calc(100vh-280px)]",
+        // Adjusted fixed height calculation for better fit
+        viewMode === 'compact' && "max-h-[calc(100vh-260px)]",
+        viewMode === 'list' && "max-h-[calc(100vh-260px)]",
+        viewMode === 'grid' && "max-h-[calc(100vh-260px)]",
         activeFilter && "pt-1" // Reduced top padding when filter is active
       )}
       style={{ direction: 'rtl' }} // Explicitly set RTL direction for this container
@@ -151,7 +155,7 @@ const StickerCollectionGrid = ({
         style={{
           // Using inline style for dynamic grid-template-rows and gap settings
           gridTemplateRows: `repeat(${rowCount}, auto)`,
-          gap: viewMode === 'compact' ? '4px' : viewMode === 'list' ? '8px' : '12px',
+          gap: viewMode === 'compact' ? '4px' : viewMode === 'list' ? '6px' : '10px',
           scrollBehavior: 'smooth',
           transform: `scale(${itemScale})`,
           transformOrigin: 'top right', // RTL-friendly origin

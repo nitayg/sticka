@@ -94,8 +94,8 @@ const Layout = ({ children }: LayoutProps) => {
       </div>
 
       {/* Footer navigation that hides when scrolling down */}
-      <div className={`fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black to-black/95 text-white border-t border-gray-800/50 transition-transform duration-300 ease-in-out backdrop-blur-md shadow-lg ${isScrollingDown ? 'translate-y-full' : 'translate-y-0'}`}>
-        <div className="w-full flex justify-between items-center px-2 pt-2 pb-6" dir="rtl">
+      <div className={`fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md text-foreground border-t border-border/40 transition-transform duration-300 ease-in-out ${isScrollingDown ? 'translate-y-full' : 'translate-y-0'} safe-area-inset-bottom`}>
+        <div className="w-full flex justify-between items-center px-2 py-2" dir="rtl">
           {navigation.map((item, index) => {
             const isActive = location.pathname === item.href;
             
@@ -103,17 +103,17 @@ const Layout = ({ children }: LayoutProps) => {
               <Link
                 key={index}
                 to={item.href}
-                className={`flex flex-col items-center justify-center p-1 transition-all duration-300 ${
+                className={`flex flex-col items-center justify-center py-1 px-1 transition-all duration-300 ${
                   isActive 
-                    ? "text-blue-400 scale-105" 
-                    : "text-gray-400 hover:text-gray-200"
+                    ? "text-interactive" 
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <div className={`relative ${isActive ? 'nav-icon-active' : ''}`}>
                   {isActive && (
-                    <div className="absolute inset-0 bg-blue-500/20 rounded-full -m-1 animate-pulse" />
+                    <div className="absolute inset-0 bg-interactive/20 rounded-full -m-1 animate-pulse" />
                   )}
-                  <item.icon className={`h-6 w-6 transition-all duration-300 ${isActive ? 'drop-shadow-[0_0_3px_rgba(59,130,246,0.5)]' : ''}`} />
+                  <item.icon className={`h-5 w-5 transition-all duration-300 ${isActive ? 'drop-shadow-[0_0_3px_rgba(59,130,246,0.5)]' : ''}`} />
                 </div>
                 <span className={`text-xs mt-1 transition-all duration-300 ${
                   isActive ? 'font-medium' : ''
