@@ -65,7 +65,11 @@ const SyncIndicator = ({ headerPosition = false, className }: SyncIndicatorProps
     return null;
   }
   
-  // תמיד נציג את האינדיקטור רק בהדר - לא בתחתית המסך
+  // אם לא נמצאים בהדר, לא נציג את האינדיקטור כלל
+  if (!headerPosition) {
+    return null;
+  }
+  
   return (
     <div className={cn(
       "flex items-center justify-center h-8 w-8 mx-1 transition-opacity",

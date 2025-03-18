@@ -53,31 +53,31 @@ const StickerCollectionGrid = ({
       const pageHeaderHeight = 44; // Page title and actions
       const statsHeight = 76; // Statistics cards
       const filtersHeight = 46; // Filters and view toggle
-      const safetyMargin = 16; // Extra margin to prevent scrollbar
+      const safetyMargin = 20; // Extra margin to prevent scrollbar and ensure no cutoff
       
       // חישוב Safe Area - iOS רק עם גובה המסך יותר מ-800px
       const hasSafeArea = window.innerHeight > 800;
       const safeAreaHeight = hasSafeArea ? 34 : 0; // מעריך גובה של Safe Area בהתבסס על iPhone
       
-      // Total fixed elements overhead - הורדנו ערכים כמו ה-SyncIndicator התחתון
+      // Total fixed elements overhead - כולל כל מה שמעל ומתחת לגריד
       const fixedElementsHeight = headerHeight + navigationHeight + pageHeaderHeight + 
                                 statsHeight + filtersHeight + safeAreaHeight + safetyMargin;
       
       // Available height for the grid
       const availableHeight = window.innerHeight - fixedElementsHeight;
       
-      // Item heights based on view mode (in pixels) - קטנו את הגובה
+      // Item heights based on view mode (in pixels) - מותאם לגודל המסך
       let baseItemHeight;
       if (viewMode === 'grid') {
-        baseItemHeight = 140; // Card view height - reduced for better fit
+        baseItemHeight = 138; // Card view height - reduced for better fit
       } else if (viewMode === 'list') {
-        baseItemHeight = 76; // List view height - reduced
+        baseItemHeight = 74; // List view height - reduced
       } else { // compact
-        baseItemHeight = 46; // Compact view height - reduced
+        baseItemHeight = 44; // Compact view height - reduced
       }
       
-      // Gap sizes (pixels) - הקטנו את המרווחים
-      const gapSize = viewMode === 'compact' ? 4 : viewMode === 'list' ? 6 : 10;
+      // Gap sizes (pixels) - smaller gaps to fit more content
+      const gapSize = viewMode === 'compact' ? 4 : viewMode === 'list' ? 6 : 8;
       
       // Calculate maximum rows that fit in available height with gap
       let maxRows = Math.floor(availableHeight / (baseItemHeight + gapSize));
@@ -133,12 +133,12 @@ const StickerCollectionGrid = ({
     <div 
       ref={containerRef}
       className={cn(
-        "overflow-x-auto overflow-y-hidden pb-0 px-2", 
+        "overflow-x-auto overflow-y-hidden pb-2 px-2", 
         "scrollbar-hide transition-all duration-300 backdrop-blur-sm",
         // Adjusted fixed height calculation for better fit
-        viewMode === 'compact' && "max-h-[calc(100vh-260px)]",
-        viewMode === 'list' && "max-h-[calc(100vh-260px)]",
-        viewMode === 'grid' && "max-h-[calc(100vh-260px)]",
+        viewMode === 'compact' && "max-h-[calc(100vh-250px)]",
+        viewMode === 'list' && "max-h-[calc(100vh-250px)]",
+        viewMode === 'grid' && "max-h-[calc(100vh-250px)]",
         activeFilter && "pt-1" // Reduced top padding when filter is active
       )}
       style={{ direction: 'rtl' }} // Explicitly set RTL direction for this container
@@ -155,7 +155,7 @@ const StickerCollectionGrid = ({
         style={{
           // Using inline style for dynamic grid-template-rows and gap settings
           gridTemplateRows: `repeat(${rowCount}, auto)`,
-          gap: viewMode === 'compact' ? '4px' : viewMode === 'list' ? '6px' : '10px',
+          gap: viewMode === 'compact' ? '4px' : viewMode === 'list' ? '6px' : '8px',
           scrollBehavior: 'smooth',
           transform: `scale(${itemScale})`,
           transformOrigin: 'top right', // RTL-friendly origin
