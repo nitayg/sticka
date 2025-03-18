@@ -16,9 +16,9 @@ const StickerCollectionGrid = ({
   const itemRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
-  // גבהים קבועים (תתאים את הערכים אם צריך)
+  // גבהים קבועים (תתאים אם צריך)
   const HEADER_HEIGHT = 56; // h-14
-  const ALBUM_GRID_HEIGHT = 0; // 0 אם אין גריד אלבומים, או 100px אם יש
+  const ALBUM_GRID_HEIGHT = 0; // 0 אם אין גריד אלבומים, או תשנה אם יש
   const GAP_ABOVE_STICKER_GRID = 20; // רווח קבוע, שנה אם שונה
   const FOOTER_HEIGHT = 96; // כולל pb-24 ו-safe-area-inset-bottom
   const TOTAL_FIXED_HEIGHT = HEADER_HEIGHT + ALBUM_GRID_HEIGHT + GAP_ABOVE_STICKER_GRID + FOOTER_HEIGHT;
@@ -41,24 +41,27 @@ const StickerCollectionGrid = ({
     }
   };
 
-  // חישוב דינמי של rowCount לפי גובה החלון
+  // חישוב דינמי של rowCount עם התאמה ל-Safe Area
   useEffect(() => {
     const calculateLayout = () => {
+      // קבלת גובה החלון ו-Safe Area
       const windowHeight = window.innerHeight;
-      const availableHeight = windowHeight - TOTAL_FIXED_HEIGHT;
+      const safeAreaBottom = window.innerHeight - document.documentElement.clientHeight; // הערכת Safe Area תחתית
+
+      const availableHeight = windowHeight - (TOTAL_FIXED_HEIGHT + safeAreaBottom);
 
       const baseItemHeight = getBaseItemHeight();
       const gapSize = getGapSize();
-      const totalItemHeightWithGaps = baseItemHeight + gapSize; // גובה שורה כולל מרווח
+      const totalItemHeightWithGaps = baseItemHeight + gapSize;
 
-      // חישוב מספר השורות המקסימלי שיכול להיכנס
+      // חישוב מספר השורות המקסימלי
       const maxRows = Math.floor(availableHeight / totalItemHeightWithGaps);
       const minRows = { grid: 3, compact: 5, list: 4 }[viewMode] || 3;
       const maxAllowedRows = { compact: 12, list: 6, grid: 5 }[viewMode] || 5;
 
       const finalRowCount = Math.max(minRows, Math.min(maxRows, maxAllowedRows));
 
-      console.log(`View Mode: ${viewMode}, Window Height: ${windowHeight}px, Available Height: ${availableHeight}px, Row Count: ${finalRowCount}`);
+      console.log(`View Mode: ${viewMode}, Window Height: ${windowHeight}px, Safe Area Bottom: ${safeAreaBottom}px, Available Height: ${availableHeight}px, Row Count: ${finalRowCount}, Total Height Needed: ${(baseItemHeight + gapSize) * finalRowCount}px`);
 
       setRowCount(finalRowCount);
     };
