@@ -21,6 +21,9 @@ const Layout = ({ children }: LayoutProps) => {
   
   // Track if we're on the main album view to control overflow behavior
   const isAlbumView = location.pathname === "/";
+  
+  // Check if we're on iOS for safe area handling
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
 
   // Listen for album changes from children components
   useEffect(() => {
@@ -85,7 +88,11 @@ const Layout = ({ children }: LayoutProps) => {
         {/* Main Content */}
         <main className={cn(
           "flex-1 pt-14 pb-16 w-full", 
-          isAlbumView ? "main-content overflow-hidden" : "overflow-y-auto overflow-x-hidden"
+          isAlbumView 
+            ? "main-content overflow-hidden" 
+            : "overflow-y-auto overflow-x-hidden",
+          // Add extra bottom padding on iOS for the safe area
+          isIOS && "pb-20"
         )}>
           <div className="max-w-4xl mx-auto px-1 animate-fade-in">
             {children}
@@ -93,9 +100,12 @@ const Layout = ({ children }: LayoutProps) => {
         </main>
       </div>
 
-      {/* Footer navigation that hides when scrolling down */}
-      <div className={`fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black to-black/95 text-white border-t border-gray-800/50 transition-transform duration-300 ease-in-out backdrop-blur-md shadow-lg ${isScrollingDown ? 'translate-y-full' : 'translate-y-0'}`}>
-        <div className="w-full flex justify-between items-center px-2 pt-2 pb-6" dir="rtl">
+      {/* Footer navigation with improved mobile styling and layout */}
+      <div className={`fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black to-black/95 text-white 
+                   border-t border-gray-800/50 transition-transform duration-300 ease-in-out backdrop-blur-md shadow-lg 
+                   ${isScrollingDown ? 'translate-y-full' : 'translate-y-0'}
+                   ${isIOS ? 'pb-6' : 'pb-3'}`}>
+        <div className="w-full flex justify-between items-center px-2 pt-1" dir="rtl">
           {navigation.map((item, index) => {
             const isActive = location.pathname === item.href;
             
@@ -105,7 +115,7 @@ const Layout = ({ children }: LayoutProps) => {
                 to={item.href}
                 className={`flex flex-col items-center justify-center p-1 transition-all duration-300 ${
                   isActive 
-                    ? "text-blue-400 scale-105" 
+                    ? "text-blue-400" 
                     : "text-gray-400 hover:text-gray-200"
                 }`}
               >

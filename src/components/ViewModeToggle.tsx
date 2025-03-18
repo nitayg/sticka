@@ -2,6 +2,7 @@
 import { LayoutList, Image, Grid2X2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 interface ViewModeToggleProps {
   viewMode?: "grid" | "list" | "compact";
@@ -18,15 +19,45 @@ const ViewModeToggle = ({
   setShowImages = () => {},
   iconOnly = false
 }: ViewModeToggleProps) => {
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Detect if we're on a mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileDevice = window.innerWidth < 768 || 
+                            /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      setIsMobile(isMobileDevice);
+      
+      // Auto switch to compact view on small mobile devices
+      if (isMobileDevice && viewMode === "list" && window.innerWidth < 375) {
+        setViewMode("compact");
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const handleViewModeToggle = () => {
     // Cycle through view modes: grid -> list -> compact -> grid
+    // On iOS devices, skip the list mode to avoid crashes
+    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    
     if (viewMode === "grid") {
-      setViewMode("list");
+      if (isIOS) {
+        setViewMode("compact");
+      } else {
+        setViewMode("list");
+      }
     } else if (viewMode === "list") {
       setViewMode("compact");
     } else {
       setViewMode("grid");
     }
+    
+    // Log the change for debugging
+    console.log(`View mode changed to: ${viewMode} on device: ${navigator.userAgent}`);
   };
 
   return (

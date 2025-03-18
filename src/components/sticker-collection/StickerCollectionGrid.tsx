@@ -24,7 +24,7 @@ const StickerCollectionGrid = ({
     switch (viewMode) {
       case 'grid': return 3;
       case 'compact': return 5;
-      case 'list': return 4;
+      case 'list': return 3; // Reduced from 4 to 3 for better mobile display
       default: return 3;
     }
   };
@@ -41,42 +41,66 @@ const StickerCollectionGrid = ({
       Item Scale: ${itemScale}
       Calculated Rows: ${maxRows}
       Min Rows: ${getMinRows()}
+      User Agent: ${navigator.userAgent}
     `);
   };
 
   // Calculate optimal row count based on available height and view mode
   useEffect(() => {
     const calculateLayout = () => {
-      // Fixed elements heights - carefully measured
+      // Check if we're on iOS to adjust for safe area
+      const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+      
+      // Fixed elements heights - carefully measured and adjusted for iOS
       const headerHeight = 56; // Mobile header (h-14 = 56px)
-      const navigationHeight = 64; // Bottom navigation
+      const navigationHeight = 72; // Bottom navigation with safe area
       const pageHeaderHeight = 44; // Page title and actions
       const statsHeight = 76; // Statistics cards
       const filtersHeight = 46; // Filters and view toggle
-      const safetyMargin = 12; // Extra margin to prevent scrollbar
+      const safetyMargin = isIOS ? 40 : 10; // Extra margin for iOS devices
       
       // Total fixed elements overhead
       const fixedElementsHeight = headerHeight + navigationHeight + pageHeaderHeight + 
                                 statsHeight + filtersHeight + safetyMargin;
       
-      // Available height for the grid
+      // Available height for the grid - more conservative for iOS
       const availableHeight = window.innerHeight - fixedElementsHeight;
       
-      // Item heights based on view mode (in pixels)
-      let baseItemHeight;
-      if (viewMode === 'grid') {
-        baseItemHeight = 180; // Card view height
-      } else if (viewMode === 'list') {
-        baseItemHeight = 80; // List view height
-      } else { // compact
-        baseItemHeight = 48; // Compact view height
+      // Determine base item heights based on view mode and device
+      let baseItemHeight: number;
+      
+      if (isIOS) {
+        // iOS specific heights (slightly smaller)
+        if (viewMode === 'grid') {
+          baseItemHeight = 150; // Card view height on iOS
+        } else if (viewMode === 'list') {
+          baseItemHeight = 70; // List view height on iOS
+        } else { // compact
+          baseItemHeight = 42; // Compact view height on iOS
+        }
+      } else {
+        // Standard heights
+        if (viewMode === 'grid') {
+          baseItemHeight = 180; // Card view height
+        } else if (viewMode === 'list') {
+          baseItemHeight = 80; // List view height
+        } else { // compact
+          baseItemHeight = 48; // Compact view height
+        }
       }
       
-      // Gap sizes (pixels)
-      const gapSize = viewMode === 'compact' ? 4 : viewMode === 'list' ? 8 : 12;
+      // Gap sizes (pixels) - adjusted for iOS
+      const gapSize = isIOS ? 
+        (viewMode === 'compact' ? 3 : viewMode === 'list' ? 6 : 8) : 
+        (viewMode === 'compact' ? 4 : viewMode === 'list' ? 8 : 12);
       
       // Calculate maximum rows that fit in available height with gap
       let maxRows = Math.floor(availableHeight / (baseItemHeight + gapSize));
+      
+      // Hard limits based on device and view mode
+      const maxAllowedRows = isIOS ? 
+        (viewMode === 'compact' ? 8 : viewMode === 'list' ? 4 : 3) : 
+        (viewMode === 'compact' ? 10 : viewMode === 'list' ? 6 : 4);
       
       // Determine min rows based on view mode
       const minRows = getMinRows();
@@ -86,13 +110,12 @@ const StickerCollectionGrid = ({
       if (maxRows < minRows) {
         scaleFactor = availableHeight / ((baseItemHeight + gapSize) * minRows);
         maxRows = minRows; // Force min rows
-        setItemScale(scaleFactor);
+        setItemScale(Math.min(scaleFactor, 0.95)); // Cap scale reduction
       } else {
         setItemScale(1); // Reset scale if not needed
       }
       
-      // Set row count to be at least minRows and max 12 for compact, 6 for list, 4 for grid
-      const maxAllowedRows = viewMode === 'compact' ? 10 : viewMode === 'list' ? 6 : 4;
+      // Set row count to be at least minRows and max to our calculated maximum
       const finalRowCount = Math.max(minRows, Math.min(maxRows, maxAllowedRows));
       
       // Log for debugging
@@ -131,10 +154,10 @@ const StickerCollectionGrid = ({
       className={cn(
         "overflow-x-auto overflow-y-hidden pb-1 px-2", 
         "scrollbar-hide transition-all duration-300 backdrop-blur-sm",
-        // Add fixed height calculated based on view mode
-        viewMode === 'compact' && "max-h-[calc(100vh-280px)]",
-        viewMode === 'list' && "max-h-[calc(100vh-280px)]",
-        viewMode === 'grid' && "max-h-[calc(100vh-280px)]",
+        // Update max-height calculation to be more responsive
+        viewMode === 'compact' && "max-h-[calc(100vh-290px)]",
+        viewMode === 'list' && "max-h-[calc(100vh-290px)]",
+        viewMode === 'grid' && "max-h-[calc(100vh-290px)]",
         activeFilter && "pt-1" // Reduced top padding when filter is active
       )}
       style={{ direction: 'rtl' }} // Explicitly set RTL direction for this container
