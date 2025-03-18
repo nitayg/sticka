@@ -1,4 +1,3 @@
-
 import { LayoutList, Image, Grid2X2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
@@ -19,11 +18,11 @@ const ViewModeToggle = ({
   setShowImages = () => {},
   iconOnly = false
 }: ViewModeToggleProps) => {
-  // Check if device is iOS
+  // Check if device is iOS using a more reliable method
   const [isIOS, setIsIOS] = useState(false);
   
   useEffect(() => {
-    const isiOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isiOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
     setIsIOS(isiOSDevice);
   }, []);
 

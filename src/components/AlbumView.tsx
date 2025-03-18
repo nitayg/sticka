@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useAlbumStore } from "@/store/useAlbumStore";
 import AlbumHeader from "./album/AlbumHeader";
@@ -22,7 +21,6 @@ const AlbumView = () => {
     handleAlbumChange,
   } = useAlbumStore();
   
-  // Use the custom hook to fetch and compute album-related data
   const { 
     albums, 
     stickers, 
@@ -35,24 +33,18 @@ const AlbumView = () => {
     showAllAlbumStickers: false // Default not showing all album stickers
   });
 
-  // Check if device is iOS
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   
-  // Detect Safari on iOS
   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) && isIOS;
   
-  // Set view mode based on device detection - optimize for mobile
   useEffect(() => {
-    // For iOS devices, default to compact view which works better
     if (isIOS) {
       setViewMode('compact');
     }
   }, [isIOS]);
   
-  // Set selected album from local storage if available
   useEffect(() => {
     if (albums.length > 0 && !selectedAlbumId) {
-      // Try to get last selected album from localStorage
       const lastSelectedAlbum = localStorage.getItem('lastSelectedAlbumId');
       if (lastSelectedAlbum && albums.some(album => album.id === lastSelectedAlbum)) {
         handleAlbumChange(lastSelectedAlbum);
@@ -62,7 +54,6 @@ const AlbumView = () => {
     }
   }, [albums, selectedAlbumId, handleAlbumChange]);
   
-  // Store selected album ID when it changes
   useEffect(() => {
     if (selectedAlbumId) {
       localStorage.setItem('lastSelectedAlbumId', selectedAlbumId);
@@ -96,10 +87,8 @@ const AlbumView = () => {
   
   return (
     <div className="space-y-4 animate-fade-in">
-      {/* Event handling component - only render if an album is selected */}
       {selectedAlbumId && <AlbumEventHandler album={albums.find(a => a.id === selectedAlbumId)} />}
       
-      {/* Album selection */}
       <FilterControls
         albums={albums}
         selectedAlbum={selectedAlbumId}
@@ -107,7 +96,6 @@ const AlbumView = () => {
         onTeamsManage={() => {}} // Empty function since we're removing tabs
       />
       
-      {/* Filtered sticker collection */}
       <FilteredStickerContainer
         stickers={stickers}
         selectedAlbumId={selectedAlbumId}
