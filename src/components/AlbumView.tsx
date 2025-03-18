@@ -36,13 +36,11 @@ const AlbumView = () => {
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) && isIOS;
-  
   useEffect(() => {
     if (isIOS) {
       setViewMode('compact');
     }
-  }, [isIOS]);
+  }, [isIOS, setViewMode]);
   
   useEffect(() => {
     if (albums.length > 0 && !selectedAlbumId) {

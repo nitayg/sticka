@@ -11,7 +11,7 @@ const MobileNavigation = ({ navigation }: MobileNavigationProps) => {
   const location = useLocation();
 
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-t border-border/70 safe-area-inset-bottom">
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-t border-border/70 pb-5 safe-area-inset-bottom">
       <nav className="flex justify-around">
         {navigation.map((item) => (
           <Link

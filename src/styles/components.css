@@ -1,3 +1,4 @@
+
 /* Scrollbar styles */
 ::-webkit-scrollbar {
   width: 6px;
@@ -98,7 +99,7 @@
 
 /* Facebook-style bottom navigation */
 .fb-bottom-nav {
-  @apply fixed bottom-0 left-0 right-0 z-50 bg-black text-white border-t border-gray-800 py-1 px-2;
+  @apply fixed bottom-0 left-0 right-0 z-50 bg-black text-white border-t border-gray-800 py-1 px-2 pb-5 safe-area-inset-bottom;
 }
 
 /* Create story button */
@@ -250,7 +251,7 @@
 
 /* תיקון עבור iOS Safe Areas */
 .safe-area-inset-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-bottom: env(safe-area-inset-bottom, 20px);
 }
 
 .safe-area-inset-top {
@@ -285,4 +286,9 @@
 /* Fix for RTL in flex containers */
 [dir="rtl"] .flex {
   flex-direction: row;
+}
+
+/* Spacing below the footer */
+.pb-5 {
+  padding-bottom: 1.25rem !important;
 }
