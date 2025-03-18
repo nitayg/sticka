@@ -19,6 +19,37 @@ let pendingSync = false;
 let lastSyncTime: Date | null = null;
 
 /**
+ * אתחול ראשוני של מערכת הסנכרון
+ */
+export const initializeSync = async () => {
+  try {
+    console.log('Initializing sync system...');
+    
+    // ביצוע סנכרון ראשוני מול השרת
+    await syncFromCloud(true);
+    
+    // הפעלת מנגנון הסנכרון בזמן אמת
+    setupRealtimeConnection();
+    
+    // מעקב אחר מצב חיבור לאינטרנט
+    window.addEventListener('online', () => {
+      console.log('Device is online, triggering sync');
+      syncFromCloud();
+    });
+
+    window.addEventListener('offline', () => {
+      console.log('Device is offline');
+    });
+    
+    console.log('Sync system initialized successfully');
+    return true;
+  } catch (error) {
+    console.error('Error initializing sync system:', error);
+    return false;
+  }
+};
+
+/**
  * מסנכרן נתונים מול Supabase
  * מביא את כל הנתונים מהענן ומעדכן את האחסון המקומי
  */
@@ -193,3 +224,6 @@ export const forceSync = async (): Promise<boolean> => {
   
   return await syncFromCloud();
 };
+
+// Import the realtime-manager for initialization
+import { setupRealtimeConnection } from './realtime-manager';
