@@ -1,4 +1,3 @@
-
 import { ReactNode, useEffect, useState, useRef, Children, isValidElement } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -14,95 +13,67 @@ const StickerCollectionGrid = ({
   children
 }: StickerCollectionGridProps) => {
   const [rowCount, setRowCount] = useState(3);
-  const [itemScale, setItemScale] = useState(1);
   const itemRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Define minimum rows for each view mode
-  const getMinRows = (): number => {
+  // גבהים קבועים (תתאים את הערכים אם צריך)
+  const HEADER_HEIGHT = 56; // h-14
+  const ALBUM_GRID_HEIGHT = 0; // 0 אם אין גריד אלבומים, או 100px אם יש
+  const GAP_ABOVE_STICKER_GRID = 20; // רווח קבוע, שנה אם שונה
+  const FOOTER_HEIGHT = 96; // כולל pb-24 ו-safe-area-inset-bottom
+  const TOTAL_FIXED_HEIGHT = HEADER_HEIGHT + ALBUM_GRID_HEIGHT + GAP_ABOVE_STICKER_GRID + FOOTER_HEIGHT;
+
+  // גובה כל מדבקה ומרווחים לפי מצב תצוגה
+  const getBaseItemHeight = (): number => {
     switch (viewMode) {
-      case 'grid': return 3;
-      case 'compact': return 5;
-      case 'list': return 4;
-      default: return 3;
+      case 'grid': return 138;
+      case 'list': return 74;
+      case 'compact': return 44;
+      default: return 138;
     }
   };
-  
-  // Calculate optimal row count based on available height and view mode
+
+  const getGapSize = (): number => {
+    switch (viewMode) {
+      case 'compact': return 4;
+      case 'list': return 6;
+      default: return 8;
+    }
+  };
+
+  // חישוב דינמי של rowCount לפי גובה החלון
   useEffect(() => {
     const calculateLayout = () => {
-      // Fixed elements heights - carefully measured
-      const headerHeight = 56; // Mobile header (h-14 = 56px)
-      const navigationHeight = 96; // Bottom navigation (increased to 96px to account for the footer + safe area)
-      const pageHeaderHeight = 44; // Page title and actions
-      const statsHeight = 76; // Statistics cards
-      const filtersHeight = 46; // Filters and view toggle
-      const safetyMargin = 30; // Extra margin to prevent scrollbar and ensure no cutoff
-      
-      // iOS safe area considerations 
-      const hasSafeArea = window.innerHeight > 800;
-      const safeAreaHeight = hasSafeArea ? 34 : 0; 
-      
-      // Total fixed elements overhead
-      const fixedElementsHeight = headerHeight + navigationHeight + pageHeaderHeight + 
-                                statsHeight + filtersHeight + safeAreaHeight + safetyMargin;
-      
-      // Available height for the grid
-      const availableHeight = window.innerHeight - fixedElementsHeight;
-      
-      // Item heights based on view mode (in pixels)
-      let baseItemHeight;
-      if (viewMode === 'grid') {
-        baseItemHeight = 138; // Card view height
-      } else if (viewMode === 'list') {
-        baseItemHeight = 74; // List view height
-      } else { // compact
-        baseItemHeight = 44; // Compact view height
-      }
-      
-      // Gap sizes (pixels) - smaller gaps to fit more content
-      const gapSize = viewMode === 'compact' ? 4 : viewMode === 'list' ? 6 : 8;
-      
-      // Calculate maximum rows that fit in available height with gap
-      let maxRows = Math.floor(availableHeight / (baseItemHeight + gapSize));
-      
-      // Determine min rows based on view mode
-      const minRows = getMinRows();
-      
-      // If maxRows is less than minRows, calculate a scale factor
-      let scaleFactor = 1;
-      if (maxRows < minRows) {
-        scaleFactor = availableHeight / ((baseItemHeight + gapSize) * minRows);
-        maxRows = minRows; // Force min rows
-        setItemScale(scaleFactor);
-      } else {
-        setItemScale(1); // Reset scale if not needed
-      }
-      
-      // Set row count to be at least minRows and max 12 for compact, 6 for list, 4 for grid
-      const maxAllowedRows = viewMode === 'compact' ? 12 : viewMode === 'list' ? 6 : 5;
+      const windowHeight = window.innerHeight;
+      const availableHeight = windowHeight - TOTAL_FIXED_HEIGHT;
+
+      const baseItemHeight = getBaseItemHeight();
+      const gapSize = getGapSize();
+      const totalItemHeightWithGaps = baseItemHeight + gapSize; // גובה שורה כולל מרווח
+
+      // חישוב מספר השורות המקסימלי שיכול להיכנס
+      const maxRows = Math.floor(availableHeight / totalItemHeightWithGaps);
+      const minRows = { grid: 3, compact: 5, list: 4 }[viewMode] || 3;
+      const maxAllowedRows = { compact: 12, list: 6, grid: 5 }[viewMode] || 5;
+
       const finalRowCount = Math.max(minRows, Math.min(maxRows, maxAllowedRows));
-      
-      console.log(`View Mode: ${viewMode}, Available Height: ${availableHeight}px, Final Row Count: ${finalRowCount}`);
-      
+
+      console.log(`View Mode: ${viewMode}, Window Height: ${windowHeight}px, Available Height: ${availableHeight}px, Row Count: ${finalRowCount}`);
+
       setRowCount(finalRowCount);
     };
 
-    // Set initial layout and update on resize
     calculateLayout();
     window.addEventListener('resize', calculateLayout);
     return () => window.removeEventListener('resize', calculateLayout);
   }, [viewMode]);
 
-  // Wrap first child with ref for measurement
+  // התאמת ילדים עם ref
   let modifiedChildren = children;
   const childrenArray = Children.toArray(children);
-  
   if (childrenArray.length > 0 && !itemRef.current) {
     const firstChild = childrenArray[0];
     const restChildren = childrenArray.slice(1);
-    
     if (isValidElement(firstChild)) {
       modifiedChildren = [
         <div key="first-child-wrapper" ref={itemRef} className="contents animate-fade-in">
@@ -114,36 +85,29 @@ const StickerCollectionGrid = ({
   }
 
   return (
-    <div 
-      ref={containerRef}
+    <div
       className={cn(
-        "overflow-x-auto overflow-y-hidden pb-2 px-2", 
-        "scrollbar-hide transition-all duration-300 backdrop-blur-sm",
-        // Adjusted fixed height calculation with more space for the content
-        viewMode === 'compact' && "max-h-[calc(100vh-260px)]",
-        viewMode === 'list' && "max-h-[calc(100vh-260px)]",
-        viewMode === 'grid' && "max-h-[calc(100vh-260px)]",
-        activeFilter && "pt-1" // Reduced top padding when filter is active
+        "overflow-x-auto overflow-y-hidden pb-2 px-2 scrollbar-hide transition-all duration-300 backdrop-blur-sm",
+        viewMode === 'compact' && "max-h-full",
+        viewMode === 'list' && "max-h-full",
+        viewMode === 'grid' && "max-h-full",
+        activeFilter && "pt-1"
       )}
-      style={{ direction: 'rtl' }} // Explicitly set RTL direction for this container
+      style={{ direction: 'rtl' }}
     >
-      <div 
+      <div
         ref={gridRef}
         className={cn(
           "transition-all duration-300 ease-in-out",
-          viewMode === 'list' && "grid grid-flow-col auto-cols-max grid-list-gap animate-stagger-fade", 
-          viewMode === 'compact' && "grid grid-flow-col grid-compact-gap animate-stagger-fade", 
+          viewMode === 'list' && "grid grid-flow-col auto-cols-max grid-list-gap animate-stagger-fade",
+          viewMode === 'compact' && "grid grid-flow-col grid-compact-gap animate-stagger-fade",
           viewMode === 'grid' && "grid grid-flow-col grid-card-gap animate-stagger-fade",
           `grid-rows-${rowCount}`
         )}
         style={{
-          // Using inline style for dynamic grid-template-rows and gap settings
           gridTemplateRows: `repeat(${rowCount}, auto)`,
-          gap: viewMode === 'compact' ? '4px' : viewMode === 'list' ? '6px' : '8px',
-          scrollBehavior: 'smooth',
-          transform: `scale(${itemScale})`,
-          transformOrigin: 'top right', // RTL-friendly origin
-          direction: 'rtl' // Ensure RTL direction for grid
+          gap: getGapSize() + 'px',
+          direction: 'rtl'
         }}
       >
         {modifiedChildren}
