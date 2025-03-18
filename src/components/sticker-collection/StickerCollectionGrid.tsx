@@ -29,51 +29,36 @@ const StickerCollectionGrid = ({
     }
   };
   
-  // Debug logging for height calculations
-  const logHeights = (availableHeight: number, fixedElementsHeight: number, itemHeight: number, gapSize: number, maxRows: number) => {
-    console.log(`
-      View Mode: ${viewMode}
-      Window Height: ${window.innerHeight}px
-      Available Height: ${availableHeight}px
-      Fixed Elements Height: ${fixedElementsHeight}px
-      Item Height: ${itemHeight}px
-      Gap Size: ${gapSize}px
-      Item Scale: ${itemScale}
-      Calculated Rows: ${maxRows}
-      Min Rows: ${getMinRows()}
-    `);
-  };
-
   // Calculate optimal row count based on available height and view mode
   useEffect(() => {
     const calculateLayout = () => {
       // Fixed elements heights - carefully measured
       const headerHeight = 56; // Mobile header (h-14 = 56px)
-      const navigationHeight = 56; // Bottom navigation
+      const navigationHeight = 96; // Bottom navigation (increased to 96px to account for the footer + safe area)
       const pageHeaderHeight = 44; // Page title and actions
       const statsHeight = 76; // Statistics cards
       const filtersHeight = 46; // Filters and view toggle
-      const safetyMargin = 20; // Extra margin to prevent scrollbar and ensure no cutoff
+      const safetyMargin = 30; // Extra margin to prevent scrollbar and ensure no cutoff
       
-      // חישוב Safe Area - iOS רק עם גובה המסך יותר מ-800px
+      // iOS safe area considerations 
       const hasSafeArea = window.innerHeight > 800;
-      const safeAreaHeight = hasSafeArea ? 34 : 0; // מעריך גובה של Safe Area בהתבסס על iPhone
+      const safeAreaHeight = hasSafeArea ? 34 : 0; 
       
-      // Total fixed elements overhead - כולל כל מה שמעל ומתחת לגריד
+      // Total fixed elements overhead
       const fixedElementsHeight = headerHeight + navigationHeight + pageHeaderHeight + 
                                 statsHeight + filtersHeight + safeAreaHeight + safetyMargin;
       
       // Available height for the grid
       const availableHeight = window.innerHeight - fixedElementsHeight;
       
-      // Item heights based on view mode (in pixels) - מותאם לגודל המסך
+      // Item heights based on view mode (in pixels)
       let baseItemHeight;
       if (viewMode === 'grid') {
-        baseItemHeight = 138; // Card view height - reduced for better fit
+        baseItemHeight = 138; // Card view height
       } else if (viewMode === 'list') {
-        baseItemHeight = 74; // List view height - reduced
+        baseItemHeight = 74; // List view height
       } else { // compact
-        baseItemHeight = 44; // Compact view height - reduced
+        baseItemHeight = 44; // Compact view height
       }
       
       // Gap sizes (pixels) - smaller gaps to fit more content
@@ -99,8 +84,7 @@ const StickerCollectionGrid = ({
       const maxAllowedRows = viewMode === 'compact' ? 12 : viewMode === 'list' ? 6 : 5;
       const finalRowCount = Math.max(minRows, Math.min(maxRows, maxAllowedRows));
       
-      // Log for debugging
-      logHeights(availableHeight, fixedElementsHeight, baseItemHeight, gapSize, finalRowCount);
+      console.log(`View Mode: ${viewMode}, Available Height: ${availableHeight}px, Final Row Count: ${finalRowCount}`);
       
       setRowCount(finalRowCount);
     };
@@ -135,10 +119,10 @@ const StickerCollectionGrid = ({
       className={cn(
         "overflow-x-auto overflow-y-hidden pb-2 px-2", 
         "scrollbar-hide transition-all duration-300 backdrop-blur-sm",
-        // Adjusted fixed height calculation for better fit
-        viewMode === 'compact' && "max-h-[calc(100vh-250px)]",
-        viewMode === 'list' && "max-h-[calc(100vh-250px)]",
-        viewMode === 'grid' && "max-h-[calc(100vh-250px)]",
+        // Adjusted fixed height calculation with more space for the content
+        viewMode === 'compact' && "max-h-[calc(100vh-260px)]",
+        viewMode === 'list' && "max-h-[calc(100vh-260px)]",
+        viewMode === 'grid' && "max-h-[calc(100vh-260px)]",
         activeFilter && "pt-1" // Reduced top padding when filter is active
       )}
       style={{ direction: 'rtl' }} // Explicitly set RTL direction for this container

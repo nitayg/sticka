@@ -84,7 +84,7 @@ const Layout = ({ children }: LayoutProps) => {
       <div className="flex flex-1">
         {/* Main Content */}
         <main className={cn(
-          "flex-1 pt-14 pb-20 w-full", 
+          "flex-1 pt-14 pb-24 w-full", 
           isAlbumView ? "main-content overflow-hidden" : "overflow-y-auto overflow-x-hidden"
         )}>
           <div className="max-w-4xl mx-auto px-1 animate-fade-in">
@@ -103,7 +103,7 @@ const Layout = ({ children }: LayoutProps) => {
               <Link
                 key={index}
                 to={item.href}
-                className={`flex flex-col items-center justify-center py-1 transition-all duration-300 ${
+                className={`flex flex-col items-center justify-center transition-all duration-300 ${
                   isActive 
                     ? "text-interactive" 
                     : "text-muted-foreground hover:text-foreground"

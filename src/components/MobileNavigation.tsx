@@ -28,7 +28,7 @@ const MobileNavigation = ({ navigation }: MobileNavigationProps) => {
               <span className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1 h-1 bg-interactive rounded-full" />
             )}
             <item.icon className="h-5 w-5 mb-1" />
-            {item.name}
+            <span className="text-center mt-1">{item.name}</span>
           </Link>
         ))}
       </nav>

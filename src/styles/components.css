@@ -234,7 +234,7 @@
 /* Ensure the main content area doesn't overflow */
 .main-content {
   overflow-y: hidden;
-  max-height: calc(100vh - 128px);
+  max-height: calc(100vh - 140px); /* Increased space for footer */
 }
 
 /* Ensure the grid container doesn't cause overflow */
@@ -292,3 +292,17 @@
 .pb-5 {
   padding-bottom: 1.25rem !important;
 }
+
+/* Make sure footer text is properly centered under icons */
+.fixed.bottom-0 .flex-col {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+
+/* Extra padding for bottom content to ensure no cutoff */
+.pb-24 {
+  padding-bottom: 6rem !important; /* Ensure enough space at the bottom */
+}
+
