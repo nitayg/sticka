@@ -23,9 +23,14 @@ interface AlbumState {
   handleAlbumChange: (albumId: string) => void;
 }
 
+// זיהוי אם המכשיר הוא אייפון
+const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+// ברירת מחדל ל-compact באייפון, ובמחשב grid
+const defaultViewMode: ViewMode = isIOS ? 'compact' : 'grid';
+
 export const useAlbumStore = create<AlbumState>((set) => ({
   // UI state
-  viewMode: "compact",
+  viewMode: defaultViewMode,
   showImages: true,
   
   // Filter state

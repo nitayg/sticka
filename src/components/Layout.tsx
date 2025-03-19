@@ -84,7 +84,7 @@ const Layout = ({ children }: LayoutProps) => {
       <div className="flex flex-1">
         {/* Main Content */}
         <main className={cn(
-          "flex-1 pt-14 pb-24 w-full", 
+          "flex-1 pt-14 pb-28 w-full", // הגדלת ה-padding בתחתית 
           isAlbumView ? "main-content overflow-hidden" : "overflow-y-auto overflow-x-hidden"
         )}>
           <div className="max-w-4xl mx-auto px-1 animate-fade-in">
@@ -94,8 +94,8 @@ const Layout = ({ children }: LayoutProps) => {
       </div>
 
       {/* Footer navigation that hides when scrolling down */}
-      <div className={`fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md text-foreground border-t border-border/40 transition-transform duration-300 ease-in-out ${isScrollingDown ? 'translate-y-full' : 'translate-y-0'} pb-5 safe-area-inset-bottom`}>
-        <div className="w-full flex justify-between items-center px-6 py-2" dir="rtl">
+      <div className={`fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md text-foreground border-t border-border/40 transition-transform duration-300 ease-in-out ${isScrollingDown ? 'translate-y-full' : 'translate-y-0'} pb-6 safe-area-inset-bottom`}>
+        <div className="w-full flex justify-between items-center px-6 pt-3 pb-2" dir="rtl">
           {navigation.map((item, index) => {
             const isActive = location.pathname === item.href;
             
