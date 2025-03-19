@@ -17,50 +17,12 @@ const StickerCollectionGrid = ({
   const itemRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
-  // חישוב דינמי של rowCount על פי גובה החלון
-  useEffect(() => {
-    const calculateLayout = () => {
-      // גובה של כל פריט + מרווח
-      const baseItemHeight = getBaseItemHeight();
-      const gapSize = getGapSize();
-      const itemHeightWithGap = baseItemHeight + gapSize;
-      
-      // חישוב גובה זמין (מסך מלא פחות פוטר והדר)
-      const windowHeight = window.innerHeight;
-      const headerHeight = 56; // גובה ההדר
-      const footerHeight = 100; // גובה הפוטר כולל שוליים
-      const availableHeight = windowHeight - (headerHeight + footerHeight);
-      
-      // מחשב את מספר השורות שיתאימו לגובה הזמין
-      let maxRows = Math.floor(availableHeight / itemHeightWithGap);
-      
-      // מגביל את מספר השורות המקסימלי לפי סוג התצוגה
-      const isDesktop = window.innerWidth >= 768;
-      
-      // הגדרת מינימום ומקסימום שורות לפי סוג התצוגה
-      let minRows = 3;
-      let maxAllowedRows = 10;
-      
-      if (isDesktop) {
-        minRows = { grid: 5, compact: 8, list: 6 }[viewMode] || 5;
-        maxAllowedRows = { grid: 8, compact: 12, list: 8 }[viewMode] || 8;
-      } else {
-        minRows = { grid: 3, compact: 5, list: 4 }[viewMode] || 3;
-        maxAllowedRows = { grid: 5, compact: 8, list: 6 }[viewMode] || 6;
-      }
-      
-      // מחשב את מספר השורות הסופי
-      const finalRowCount = Math.max(minRows, Math.min(maxRows, maxAllowedRows));
-      
-      console.log(`View Mode: ${viewMode}, Window Height: ${windowHeight}px, Available Height: ${availableHeight}px, Item Height: ${itemHeightWithGap}px, Row Count: ${finalRowCount}`);
-      
-      setRowCount(finalRowCount);
-    };
-
-    calculateLayout();
-    window.addEventListener('resize', calculateLayout);
-    return () => window.removeEventListener('resize', calculateLayout);
-  }, [viewMode]);
+  // גבהים קבועים (תתאים אם צריך)
+  const HEADER_HEIGHT = 56; // h-14
+  const ALBUM_GRID_HEIGHT = 0; // 0 אם אין גריד אלבומים, או תשנה אם יש
+  const GAP_ABOVE_STICKER_GRID = 20; // רווח קבוע, שנה אם שונה
+  const FOOTER_HEIGHT = 120; // כולל pb-24 ו-safe-area-inset-bottom - הגדלתי את זה מ-96 ל-120
+  const TOTAL_FIXED_HEIGHT = HEADER_HEIGHT + ALBUM_GRID_HEIGHT + GAP_ABOVE_STICKER_GRID + FOOTER_HEIGHT;
 
   // גובה כל מדבקה ומרווחים לפי מצב תצוגה
   const getBaseItemHeight = (): number => {
@@ -79,6 +41,40 @@ const StickerCollectionGrid = ({
       default: return 8;
     }
   };
+
+  // חישוב דינמי של rowCount עם התאמה ל-Safe Area
+  useEffect(() => {
+    const calculateLayout = () => {
+      // קבלת גובה החלון ו-Safe Area
+      const windowHeight = window.innerHeight;
+      const safeAreaBottom = 20; // קבוע במקום חישוב שעלול להיות לא מדויק
+
+      const availableHeight = windowHeight - (TOTAL_FIXED_HEIGHT + safeAreaBottom);
+
+      const baseItemHeight = getBaseItemHeight();
+      const gapSize = getGapSize();
+      const totalItemHeightWithGaps = baseItemHeight + gapSize;
+
+      // חישוב מספר השורות המקסימלי
+      const maxRows = Math.floor(availableHeight / totalItemHeightWithGaps);
+      
+      // קביעת מינימום שורות לפי מצב תצוגה
+      const minRows = { grid: 3, compact: 5, list: 4 }[viewMode] || 3;
+      
+      // הגבלת מקסימום שורות - מקטין את זה כדי למנוע חיתוך
+      const maxAllowedRows = { compact: 10, list: 5, grid: 4 }[viewMode] || 4;
+
+      const finalRowCount = Math.max(minRows, Math.min(maxRows, maxAllowedRows));
+
+      console.log(`View Mode: ${viewMode}, Window Height: ${windowHeight}px, Safe Area Bottom: ${safeAreaBottom}px, Available Height: ${availableHeight}px, Row Count: ${finalRowCount}, Total Height Needed: ${(baseItemHeight + gapSize) * finalRowCount}px`);
+
+      setRowCount(finalRowCount);
+    };
+
+    calculateLayout();
+    window.addEventListener('resize', calculateLayout);
+    return () => window.removeEventListener('resize', calculateLayout);
+  }, [viewMode]);
 
   // התאמת ילדים עם ref
   let modifiedChildren = children;
@@ -99,7 +95,7 @@ const StickerCollectionGrid = ({
   return (
     <div
       className={cn(
-        "overflow-x-auto pb-1 px-2 scrollbar-hide transition-all duration-300 backdrop-blur-sm",
+        "overflow-x-auto pb-4 px-2 scrollbar-hide transition-all duration-300 backdrop-blur-sm",
         viewMode === 'compact' && "max-h-full",
         viewMode === 'list' && "max-h-full",
         viewMode === 'grid' && "max-h-full",
@@ -120,8 +116,8 @@ const StickerCollectionGrid = ({
           gridTemplateRows: `repeat(${rowCount}, auto)`,
           gap: getGapSize() + 'px',
           direction: 'rtl',
-          overflow: 'visible',
-          paddingBottom: '40px' // הקטנת הפדינג בתחתית הגריד
+          overflow: 'visible', // מונע חיתוך של תאים בשורה האחרונה
+          paddingBottom: '80px' // מוסיף פדינג בתחתית הגריד
         }}
       >
         {modifiedChildren}
