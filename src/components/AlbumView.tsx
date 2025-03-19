@@ -35,12 +35,15 @@ const AlbumView = () => {
   });
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isDesktop = window.innerWidth >= 768;
   
   useEffect(() => {
     if (isIOS) {
       setViewMode('compact');
+    } else if (isDesktop) {
+      setViewMode('grid');
     }
-  }, [isIOS, setViewMode]);
+  }, [isIOS, isDesktop, setViewMode]);
   
   useEffect(() => {
     if (albums.length > 0 && !selectedAlbumId) {
@@ -95,7 +98,7 @@ const AlbumView = () => {
         onTeamsManage={() => {}} // Empty function since we're removing tabs
       />
       
-      <div className="pb-16"> {/* הוספת padding תחתון */}
+      <div className="pb-2"> {/* הקטנה משמעותית של ה-padding */}
         <FilteredStickerContainer
           stickers={stickers}
           selectedAlbumId={selectedAlbumId}

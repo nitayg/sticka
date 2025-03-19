@@ -3,6 +3,20 @@ import { create } from 'zustand';
 
 type ViewMode = "grid" | "list" | "compact";
 
+// Helper to detect device type
+const getDefaultViewMode = (): ViewMode => {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isDesktop = window.innerWidth >= 768;
+  
+  if (isIOS) {
+    return "compact";
+  } else if (isDesktop) {
+    return "grid";
+  }
+  
+  return "compact"; // Default for other devices
+};
+
 interface AlbumState {
   // UI state
   viewMode: ViewMode;
@@ -25,7 +39,7 @@ interface AlbumState {
 
 export const useAlbumStore = create<AlbumState>((set) => ({
   // UI state
-  viewMode: "compact",
+  viewMode: getDefaultViewMode(),
   showImages: true,
   
   // Filter state
