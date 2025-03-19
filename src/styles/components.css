@@ -1,308 +1,42 @@
 
-/* Scrollbar styles */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Add or modify these classes to make owned stickers appear in green */
+.sticker-owned {
+  color: #10b981 !important; /* Green-500 in Tailwind */
+  border-color: #10b981 !important;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+.sticker-owned .sticker-number {
+  color: #10b981 !important;
+  font-weight: 600;
 }
 
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 10px;
+.sticker-card.is-owned {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  border-color: #10b981 !important;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
+.sticker-card.is-owned .sticker-number {
+  color: #10b981 !important;
 }
 
-/* Glass morphism effects */
-.glass {
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.sticker-list-item.is-owned {
+  color: #10b981 !important;
 }
 
-/* Facebook-style design elements */
-.fb-header {
-  @apply bg-black fixed top-0 left-0 right-0 h-14 shadow-sm flex items-center px-4 z-50;
+/* Selection styles for the inventory table */
+.selected-row {
+  background-color: rgba(59, 130, 246, 0.1) !important;
 }
 
-.fb-nav-item {
-  @apply flex flex-col items-center justify-center p-2;
+tr.selected-row td {
+  font-weight: 500;
 }
 
-.fb-nav-item.active {
-  @apply text-blue-500;
-}
-
-.fb-nav-item:not(.active) {
-  @apply text-gray-400;
-}
-
-/* Facebook-style stories container */
-.fb-stories-container {
-  @apply grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 pb-4;
-}
-
-/* Facebook-style story item */
-.fb-story-item {
-  @apply aspect-[9/16] rounded-lg overflow-hidden relative cursor-pointer border border-gray-800 transition-transform;
-}
-
-.fb-story-item:hover {
-  @apply transform scale-[1.02];
-}
-
-.fb-story-avatar {
-  @apply absolute top-2 left-2 h-8 w-8 rounded-full border-2 border-blue-500 bg-black;
-}
-
-.fb-story-gradient {
-  @apply absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2;
-}
-
-.fb-story-title {
-  @apply text-xs text-white text-center;
-}
-
-/* Card hover effect with Facebook-style */
-.card-hover {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.3);
-}
-
-/* New card style with background image */
-.card-with-background {
-  background-size: cover;
-  background-position: center;
-  position: relative;
-}
-
-.card-with-background::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 40%;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
-  pointer-events: none;
-}
-
-/* Facebook-style bottom navigation */
-.fb-bottom-nav {
-  @apply fixed bottom-0 left-0 right-0 z-50 bg-black text-white border-t border-gray-800 py-1 px-2 pb-5 safe-area-inset-bottom;
-}
-
-/* Create story button */
-.create-story-btn {
-  @apply h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center absolute bottom-4 right-4 shadow-lg;
-}
-
-/* Facebook-style action buttons */
-.fb-action-btn {
-  @apply h-10 w-10 rounded-full bg-gray-800 flex items-center justify-center transition-colors;
-}
-
-.fb-action-btn:hover {
-  @apply bg-gray-700;
-}
-
-/* No scrollbar utility */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* Hide scrollbar but allow scrolling */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-/* Sticker shadow effect */
-.sticker-shadow {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* RTL fixes */
-[dir="rtl"] .space-x-reverse {
-  --tw-space-x-reverse: 1;
-}
-
-/* Explicitly set RTL direction for all components */
-.dir-rtl {
-  direction: rtl !important;
-}
-
-/* Fix for header to fill the screen to the top */
-.fixed.top-0 {
-  width: 100%;
-  left: 0;
-  right: 0;
-}
-
-/* Club card hover effect */
-.club-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.club-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.2);
-}
-
-/* Starred club highlight */
-.club-starred {
-  background: linear-gradient(to bottom, rgba(250, 204, 21, 0.05), transparent);
-}
-
-/* Horizontal scrolling grid - Enhanced for better responsiveness */
-.horizontal-scroll-grid {
-  display: grid;
-  grid-auto-flow: column;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 0.5rem;
-  gap: 0.25rem;
-  scroll-snap-type: x mandatory;
-  max-height: calc(100vh - 3rem);
-  direction: rtl !important;
-}
-
-.horizontal-scroll-grid > * {
-  scroll-snap-align: start;
-}
-
-/* New styles for compact and list views */
-/* Compact sticker item custom styles */
-.compact-sticker-container {
-  height: 44px;
-  min-height: 44px;
-  margin-bottom: 0;
-}
-
-/* List sticker item custom styles */
-.list-sticker-container {
-  height: 74px;
-  min-height: 74px;
-  margin-bottom: 0;
-}
-
-/* Adjust grid spacing for different view modes */
-.grid-compact-gap {
-  gap: 4px !important;
-}
-
-.grid-list-gap {
-  gap: 6px !important;
-}
-
-.grid-card-gap {
-  gap: 8px !important;
-}
-
-/* Make sure stickers fit properly in grid cells */
-.sticker-grid-item {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-/* Update Layout to prevent vertical scrolling */
-.prevent-scroll {
-  overflow: hidden !important;
-  max-height: 100vh;
-}
-
-/* Ensure the main content area doesn't overflow */
-.main-content {
-  overflow-y: hidden;
-  max-height: calc(100vh - 140px); /* Increased space for footer */
-}
-
-/* Ensure the grid container doesn't cause overflow */
-.grid-container {
-  overflow-y: hidden;
-  max-height: 100%;
-  direction: rtl !important;
-}
-
-/* Fix for RTL in grid container */
-.grid-flow-col {
-  direction: rtl !important;
-}
-
-/* תיקון עבור iOS Safe Areas */
-.safe-area-inset-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 20px);
-}
-
-.safe-area-inset-top {
-  padding-top: env(safe-area-inset-top, 0);
-}
-
-/* Responsive sizing for different view modes */
-@media (max-height: 800px) {
-  .compact-sticker-container {
-    height: 40px;
-    min-height: 40px;
-  }
-  
-  .list-sticker-container {
-    height: 64px;
-    min-height: 64px;
+/* Ensure mobile compatibility */
+@media (max-width: 640px) {
+  .inventory-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
   }
 }
-
-@media (max-height: 700px) {
-  .compact-sticker-container {
-    height: 36px;
-    min-height: 36px;
-  }
-  
-  .list-sticker-container {
-    height: 58px;
-    min-height: 58px;
-  }
-}
-
-/* Fix for RTL in flex containers */
-[dir="rtl"] .flex {
-  flex-direction: row;
-}
-
-/* Spacing below the footer */
-.pb-5 {
-  padding-bottom: 1.25rem !important;
-}
-
-/* Make sure footer text is properly centered under icons */
-.fixed.bottom-0 .flex-col {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  text-align: center !important;
-}
-
-/* Extra padding for bottom content to ensure no cutoff */
-.pb-24 {
-  padding-bottom: 6rem !important; /* Ensure enough space at the bottom */
-}
-

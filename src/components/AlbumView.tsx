@@ -59,6 +59,19 @@ const AlbumView = () => {
     }
   }, [selectedAlbumId]);
   
+  // Listen for inventory changes to refresh stickers
+  useEffect(() => {
+    const handleInventoryChanged = () => {
+      console.log("Inventory data changed event received in AlbumView");
+      handleRefresh();
+    };
+    
+    window.addEventListener('inventoryDataChanged', handleInventoryChanged);
+    return () => {
+      window.removeEventListener('inventoryDataChanged', handleInventoryChanged);
+    };
+  }, [handleRefresh]);
+  
   if (isLoading) {
     return (
       <div className="space-y-4 animate-fade-in">
