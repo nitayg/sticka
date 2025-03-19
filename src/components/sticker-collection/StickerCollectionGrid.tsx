@@ -1,3 +1,4 @@
+
 import { ReactNode, useEffect, useState, useRef, Children, isValidElement } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -20,7 +21,7 @@ const StickerCollectionGrid = ({
   const HEADER_HEIGHT = 56; // h-14
   const ALBUM_GRID_HEIGHT = 0; // 0 אם אין גריד אלבומים, או תשנה אם יש
   const GAP_ABOVE_STICKER_GRID = 20; // רווח קבוע, שנה אם שונה
-  const FOOTER_HEIGHT = 96; // כולל pb-24 ו-safe-area-inset-bottom
+  const FOOTER_HEIGHT = 120; // כולל pb-24 ו-safe-area-inset-bottom - הגדלתי את זה מ-96 ל-120
   const TOTAL_FIXED_HEIGHT = HEADER_HEIGHT + ALBUM_GRID_HEIGHT + GAP_ABOVE_STICKER_GRID + FOOTER_HEIGHT;
 
   // גובה כל מדבקה ומרווחים לפי מצב תצוגה
@@ -46,7 +47,7 @@ const StickerCollectionGrid = ({
     const calculateLayout = () => {
       // קבלת גובה החלון ו-Safe Area
       const windowHeight = window.innerHeight;
-      const safeAreaBottom = window.innerHeight - document.documentElement.clientHeight; // הערכת Safe Area תחתית
+      const safeAreaBottom = 20; // קבוע במקום חישוב שעלול להיות לא מדויק
 
       const availableHeight = windowHeight - (TOTAL_FIXED_HEIGHT + safeAreaBottom);
 
@@ -56,8 +57,12 @@ const StickerCollectionGrid = ({
 
       // חישוב מספר השורות המקסימלי
       const maxRows = Math.floor(availableHeight / totalItemHeightWithGaps);
+      
+      // קביעת מינימום שורות לפי מצב תצוגה
       const minRows = { grid: 3, compact: 5, list: 4 }[viewMode] || 3;
-      const maxAllowedRows = { compact: 12, list: 6, grid: 5 }[viewMode] || 5;
+      
+      // הגבלת מקסימום שורות - מקטין את זה כדי למנוע חיתוך
+      const maxAllowedRows = { compact: 10, list: 5, grid: 4 }[viewMode] || 4;
 
       const finalRowCount = Math.max(minRows, Math.min(maxRows, maxAllowedRows));
 
@@ -90,7 +95,7 @@ const StickerCollectionGrid = ({
   return (
     <div
       className={cn(
-        "overflow-x-auto overflow-y-hidden pb-2 px-2 scrollbar-hide transition-all duration-300 backdrop-blur-sm",
+        "overflow-x-auto pb-4 px-2 scrollbar-hide transition-all duration-300 backdrop-blur-sm",
         viewMode === 'compact' && "max-h-full",
         viewMode === 'list' && "max-h-full",
         viewMode === 'grid' && "max-h-full",
@@ -110,7 +115,9 @@ const StickerCollectionGrid = ({
         style={{
           gridTemplateRows: `repeat(${rowCount}, auto)`,
           gap: getGapSize() + 'px',
-          direction: 'rtl'
+          direction: 'rtl',
+          overflow: 'visible', // מונע חיתוך של תאים בשורה האחרונה
+          paddingBottom: '80px' // מוסיף פדינג בתחתית הגריד
         }}
       >
         {modifiedChildren}

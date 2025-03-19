@@ -95,7 +95,7 @@ const Layout = ({ children }: LayoutProps) => {
 
       {/* Footer navigation that hides when scrolling down */}
       <div className={`fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md text-foreground border-t border-border/40 transition-transform duration-300 ease-in-out ${isScrollingDown ? 'translate-y-full' : 'translate-y-0'} pb-5 safe-area-inset-bottom`}>
-        <div className="w-full flex justify-between items-center px-4 py-2" dir="rtl">
+        <div className="w-full flex justify-between items-center px-6 py-2" dir="rtl">
           {navigation.map((item, index) => {
             const isActive = location.pathname === item.href;
             
@@ -103,21 +103,26 @@ const Layout = ({ children }: LayoutProps) => {
               <Link
                 key={index}
                 to={item.href}
-                className={`flex flex-col items-center justify-center transition-all duration-300 ${
-                  isActive 
-                    ? "text-interactive" 
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                className="flex flex-col items-center justify-center transition-all duration-300"
               >
-                <div className={`relative ${isActive ? 'nav-icon-active' : ''}`}>
+                <div className={cn(
+                  "relative flex flex-col items-center",
+                  isActive ? "text-interactive" : "text-muted-foreground hover:text-foreground"
+                )}>
                   {isActive && (
                     <div className="absolute inset-0 bg-interactive/20 rounded-full -m-1 animate-pulse" />
                   )}
-                  <item.icon className={`h-5 w-5 transition-all duration-300 ${isActive ? 'drop-shadow-[0_0_3px_rgba(59,130,246,0.5)]' : ''}`} />
+                  <item.icon className={cn(
+                    "h-5 w-5 transition-all duration-300 mb-1",
+                    isActive ? 'drop-shadow-[0_0_3px_rgba(59,130,246,0.5)]' : ''
+                  )} />
+                  <span className={cn(
+                    "text-xs text-center transition-all duration-300",
+                    isActive ? 'font-medium' : ''
+                  )}>
+                    {item.name}
+                  </span>
                 </div>
-                <span className={`text-xs mt-1 text-center transition-all duration-300 ${
-                  isActive ? 'font-medium' : ''
-                }`}>{item.name}</span>
               </Link>
             );
           })}

@@ -85,7 +85,7 @@ const AlbumView = () => {
   }
   
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-2 animate-fade-in">
       {selectedAlbumId && <AlbumEventHandler album={albums.find(a => a.id === selectedAlbumId)} />}
       
       <FilterControls
@@ -95,18 +95,20 @@ const AlbumView = () => {
         onTeamsManage={() => {}} // Empty function since we're removing tabs
       />
       
-      <FilteredStickerContainer
-        stickers={stickers}
-        selectedAlbumId={selectedAlbumId}
-        viewMode={viewMode}
-        showImages={showImages}
-        onRefresh={handleRefresh}
-        transactionMap={transactionMap}
-        activeTab="number" // Default to number tab
-        selectedRange={null}
-        selectedTeam={null}
-        showAllAlbumStickers={false}
-      />
+      <div className="pb-16"> {/* הוספת padding תחתון */}
+        <FilteredStickerContainer
+          stickers={stickers}
+          selectedAlbumId={selectedAlbumId}
+          viewMode={viewMode}
+          showImages={showImages}
+          onRefresh={handleRefresh}
+          transactionMap={transactionMap}
+          activeTab="number" // Default to number tab
+          selectedRange={null}
+          selectedTeam={null}
+          showAllAlbumStickers={false}
+        />
+      </div>
     </div>
   );
 };
