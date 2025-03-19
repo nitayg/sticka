@@ -222,7 +222,7 @@
 .sticker-grid-item {
   width: 100%;
   height: 100%;
-  overflow: visible !important; /* שינוי מ-hidden ל-visible */
+  overflow: hidden;
 }
 
 /* Update Layout to prevent vertical scrolling */
@@ -234,12 +234,12 @@
 /* Ensure the main content area doesn't overflow */
 .main-content {
   overflow-y: hidden;
-  max-height: calc(100vh - 160px); /* Increased space for footer */
+  max-height: calc(100vh - 140px); /* Increased space for footer */
 }
 
 /* Ensure the grid container doesn't cause overflow */
 .grid-container {
-  overflow-y: visible !important; /* שינוי מ-hidden ל-visible */
+  overflow-y: hidden;
   max-height: 100%;
   direction: rtl !important;
 }
@@ -247,7 +247,6 @@
 /* Fix for RTL in grid container */
 .grid-flow-col {
   direction: rtl !important;
-  overflow: visible !important; /* תוספת למניעת חיתוך תוכן */
 }
 
 /* תיקון עבור iOS Safe Areas */
@@ -289,14 +288,9 @@
   flex-direction: row;
 }
 
-/* Spacing below the footer - הגדלת המרווח */
+/* Spacing below the footer */
 .pb-5 {
-  padding-bottom: 1.5rem !important;
-}
-
-/* הגדרת גובה מרווח לפוטר - גדול יותר */
-.pb-6 {
-  padding-bottom: 2rem !important;
+  padding-bottom: 1.25rem !important;
 }
 
 /* Make sure footer text is properly centered under icons */
@@ -312,17 +306,3 @@
   padding-bottom: 6rem !important; /* Ensure enough space at the bottom */
 }
 
-.pb-28 {
-  padding-bottom: 7rem !important; /* אפילו יותר מרווח */
-}
-
-/* תיקון תצוגת גריד - מניעת חיתוך תאים */
-.grid {
-  overflow: visible !important;
-  align-items: start;
-}
-
-/* מרווחים לתוכן הראשי */
-.main-content > div {
-  padding-bottom: 120px;
-}

@@ -95,7 +95,7 @@ const AlbumView = () => {
         onTeamsManage={() => {}} // Empty function since we're removing tabs
       />
       
-      <div className="pb-20"> {/* הגדלת padding תחתון */}
+      <div className="pb-16"> {/* הוספת padding תחתון */}
         <FilteredStickerContainer
           stickers={stickers}
           selectedAlbumId={selectedAlbumId}
