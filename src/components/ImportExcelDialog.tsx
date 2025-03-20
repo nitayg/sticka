@@ -1,7 +1,4 @@
-
-// Update ImportExcelDialog to support iconOnly mode
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileSpreadsheet } from "lucide-react";
 import { Album } from "@/lib/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -10,6 +7,8 @@ import AlbumSelectField from "./excel-import/AlbumSelectField";
 import FileUploadField from "./excel-import/FileUploadField";
 import { useToast } from "@/components/ui/use-toast";
 import { importStickersFromCSV } from "@/lib/sticker-operations";
+import { parseCSV, ParsedCsvRow } from "@/utils/csv-parser";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ImportExcelDialogProps {
   albums: Album[];
@@ -29,7 +28,12 @@ const ImportExcelDialog = ({
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [parsedData, setParsedData] = useState<ParsedCsvRow[]>([]);
   const { toast } = useToast();
+  
+  const handleFileUpload = (data: ParsedCsvRow[]) => {
+    setParsedData(data);
+  };
   
   const handleImport = async () => {
     if (!selectedAlbum) {
@@ -41,10 +45,10 @@ const ImportExcelDialog = ({
       return;
     }
     
-    if (!file) {
+    if (!file && parsedData.length === 0) {
       toast({
         title: "לא נבחר קובץ",
-        description: "יש לבחור קובץ אקסל לייבוא",
+        description: "יש לבחור קובץ אקסל או CSV לייבוא",
         variant: "destructive",
       });
       return;
@@ -53,14 +57,27 @@ const ImportExcelDialog = ({
     setIsImporting(true);
     
     try {
-      // Parse Excel file and convert to the format expected by importStickersFromCSV
-      // This is a placeholder - the actual implementation would depend on how your Excel import works
-      const csvData: [number, string, string][] = [[1, "Example Sticker", "Team"]]; 
+      let dataToImport: [number, string, string][] = [];
       
-      const result = await importStickersFromCSV(selectedAlbum, csvData);
+      if (parsedData.length > 0) {
+        dataToImport = parsedData.map(row => [row.number, row.name, row.team]);
+      } 
+      else if (file) {
+        const fileContent = await file.text();
+        const parsed = parseCSV(fileContent);
+        dataToImport = parsed.map(row => [row.number, row.name, row.team]);
+      }
+      
+      if (dataToImport.length === 0) {
+        throw new Error("לא נמצאו מדבקות בקובץ");
+      }
+      
+      console.log("Importing data:", dataToImport);
+      const result = await importStickersFromCSV(selectedAlbum, dataToImport);
       
       setOpen(false);
       setFile(null);
+      setParsedData([]);
       
       toast({
         title: "ייבוא הושלם בהצלחה",
@@ -81,13 +98,23 @@ const ImportExcelDialog = ({
   };
   
   const trigger = iconOnly ? (
-    <Button 
-      variant="ghost" 
-      size="icon"
-      className="h-10 w-10 rounded-full bg-gray-800"
-    >
-      <FileSpreadsheet className="h-5 w-5" />
-    </Button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button 
+            variant="secondary" 
+            size="sm"
+            className="flex gap-1.5"
+          >
+            <FileSpreadsheet className="h-3.5 w-3.5 ml-1" />
+            <span className="sr-only md:not-sr-only md:inline-block">יבא מאקסל</span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>יבוא מדבקות מאקסל</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   ) : (
     <Button variant="outline" size="sm">
       <FileSpreadsheet className="h-4 w-4 ml-2" />
@@ -114,11 +141,12 @@ const ImportExcelDialog = ({
           <FileUploadField
             file={file}
             setFile={setFile}
+            onParse={handleFileUpload}
           />
           
           <Button 
             onClick={handleImport} 
-            disabled={isImporting || !file || !selectedAlbum}
+            disabled={isImporting || (!file && parsedData.length === 0) || !selectedAlbum}
             className="bg-interactive hover:bg-interactive-hover text-interactive-foreground"
           >
             {isImporting ? "מייבא..." : "ייבא מדבקות"}

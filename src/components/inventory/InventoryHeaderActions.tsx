@@ -1,6 +1,6 @@
 
 import React from "react";
-import { History, FileMinus, Copy, ClipboardCopy, Plus } from "lucide-react";
+import { History, FileMinus, Copy, ClipboardCopy, Plus, FileSpreadsheet } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "../ui/button";
 import { useToast } from "../ui/use-toast";
@@ -16,6 +16,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import ImportExcelDialog from "../ImportExcelDialog";
+import { getAllAlbums } from "@/lib/data";
 
 interface InventoryHeaderActionsProps {
   onAddClick: () => void;
@@ -31,6 +33,14 @@ const InventoryHeaderActions = ({
   setReportFormat
 }: InventoryHeaderActionsProps) => {
   const { toast } = useToast();
+  const albums = getAllAlbums();
+  const [selectedAlbum, setSelectedAlbum] = React.useState("");
+
+  React.useEffect(() => {
+    if (albums.length > 0 && !selectedAlbum) {
+      setSelectedAlbum(albums[0].id);
+    }
+  }, [albums, selectedAlbum]);
 
   const copyMissingStickers = () => {
     const missingStickers = albumStickers.filter(s => !s.isOwned);
@@ -83,6 +93,13 @@ const InventoryHeaderActions = ({
     }
   };
 
+  const handleImportComplete = () => {
+    toast({
+      title: "ייבוא הושלם",
+      description: "המדבקות יובאו בהצלחה",
+    });
+  };
+
   return (
     <div className="flex gap-2">
       <Button 
@@ -92,6 +109,14 @@ const InventoryHeaderActions = ({
         <Plus className="h-3.5 w-3.5 ml-1" />
         הוספה
       </Button>
+
+      <ImportExcelDialog 
+        albums={albums} 
+        selectedAlbum={selectedAlbum} 
+        setSelectedAlbum={setSelectedAlbum} 
+        onImportComplete={handleImportComplete}
+        iconOnly
+      />
 
       <TooltipProvider>
         <Tooltip>
