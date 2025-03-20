@@ -1,3 +1,4 @@
+
 import { useState, ReactNode, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { 
@@ -116,7 +117,7 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
             // Only import if we have valid data
             if (importData.length > 0) {
               console.log("Importing stickers:", importData);
-              const importedStickers = importStickersFromCSV(newAlbumId, importData);
+              const importedStickers = await importStickersFromCSV(newAlbumId, importData);
               importedCount = importedStickers.length;
               
               if (importedStickers.length > 0) {

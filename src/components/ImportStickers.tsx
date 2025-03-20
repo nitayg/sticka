@@ -63,7 +63,7 @@ const ImportStickers = ({ albumId, onImportComplete }: ImportStickersProps) => {
         return [number, name, team] as [number, string, string];
       });
       
-      const newStickers = importStickersFromCSV(albumId, stickersData);
+      const newStickers = await importStickersFromCSV(albumId, stickersData);
       
       toast({
         title: "הייבוא הושלם בהצלחה",
