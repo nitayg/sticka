@@ -48,7 +48,8 @@ const StickerListItem = ({
         (onClick || onSelect) && "cursor-pointer",
         isRecentlyAdded && "border-yellow-400 animate-pulse-brief",
         isSelected && "ring-2 ring-blue-500 shadow-lg shadow-blue-500/20",
-        transaction && transaction.color,
+        transaction ? transaction.color : "",
+        sticker.isOwned && !transaction ? "border-green-500" : "",
         className
       )}
     >
@@ -58,7 +59,7 @@ const StickerListItem = ({
       
       <div className={cn(
         "h-14 w-14 rounded-md overflow-hidden flex-shrink-0 relative", // Reduced height/width to h-14 w-14
-        transaction ? transaction.color : "bg-secondary"
+        transaction ? transaction.color : sticker.isOwned ? "bg-green-50" : "bg-secondary"
       )}>
         {showImages ? (
           <img 
@@ -72,7 +73,12 @@ const StickerListItem = ({
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center">
             <Image className="h-4 w-4 text-muted-foreground mb-0.5 opacity-40" />
-            <div className="text-sm font-bold">{sticker.number}</div>
+            <div className={cn(
+              "text-sm font-bold",
+              sticker.isOwned && !transaction ? "text-green-700" : ""
+            )}>
+              {sticker.number}
+            </div>
             {transaction && (
               <div className="mt-0.5 text-[9px] font-medium">
                 {getFirstName(transaction.person)}
@@ -94,7 +100,7 @@ const StickerListItem = ({
         isRecentlyAdded && "animate-fade-up"
       )}>
         <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground"> {/* Reduced text size */}
-          <span>#{sticker.number}</span>
+          <span className={sticker.isOwned && !transaction ? "text-green-700" : ""}>#{sticker.number}</span>
           <span className="mx-1">•</span>
           {sticker.teamLogo ? (
             <img src={sticker.teamLogo} alt={sticker.team} className="w-4 h-4 object-contain ml-1" />
@@ -103,7 +109,12 @@ const StickerListItem = ({
           )}
           <span>{sticker.team}</span>
         </div>
-        <h3 className="text-sm font-semibold text-foreground truncate gradient-text">{sticker.name}</h3> {/* Reduced text size */}
+        <h3 className={cn(
+          "text-sm font-semibold truncate gradient-text",
+          sticker.isOwned && !transaction ? "text-green-700" : "text-foreground"
+        )}>
+          {sticker.name}
+        </h3> {/* Reduced text size */}
         <p className="text-xs text-muted-foreground">{sticker.category}</p> {/* Reduced text size */}
       </div>
       <div className="flex-shrink-0 flex space-x-2">

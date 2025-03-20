@@ -31,7 +31,7 @@ const CompactStickerItem = ({
         "border border-border transition-all duration-200 hover:shadow-sm",
         "relative overflow-hidden",
         "min-w-[56px] min-h-[48px]", 
-        transaction ? transaction.color : "bg-card",
+        transaction ? transaction.color : sticker.isOwned ? "bg-green-50 border-green-500" : "bg-card",
         isRecentlyAdded && "border-yellow-400",
         className 
       )}
@@ -41,7 +41,10 @@ const CompactStickerItem = ({
         <div className="absolute top-0 left-0 w-0 h-0 border-solid border-t-[10px] border-t-yellow-400 border-r-[10px] border-r-transparent z-10"></div>
       )}
       
-      <span className="text-lg font-bold text-foreground">
+      <span className={cn(
+        "text-lg font-bold",
+        sticker.isOwned && !transaction ? "text-green-600" : "text-foreground"
+      )}>
         {sticker.number}
       </span>
       

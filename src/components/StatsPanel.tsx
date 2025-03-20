@@ -13,12 +13,30 @@ const StatsPanel = ({ albumId }: StatsPanelProps) => {
   const [stats, setStats] = useState({ total: 0, owned: 0, needed: 0, duplicates: 0 });
   const [showVisual, setShowVisual] = useState(false);
 
-  // Update stats when album changes
+  // Update stats when album changes or when inventory is updated
   useEffect(() => {
-    const newStats = getStats();
-    // Calculate needed stickers from total and owned
-    const needed = newStats.total - newStats.owned;
-    setStats({ ...newStats, needed });
+    const updateStats = () => {
+      const newStats = getStats();
+      // Calculate needed stickers from total and owned
+      const needed = newStats.total - newStats.owned;
+      setStats({ ...newStats, needed });
+    };
+
+    // Initial update
+    updateStats();
+
+    // Add event listener for inventory changes
+    const handleInventoryChanged = () => {
+      updateStats();
+    };
+
+    window.addEventListener('inventoryDataChanged', handleInventoryChanged);
+    window.addEventListener('stickerDataChanged', handleInventoryChanged);
+    
+    return () => {
+      window.removeEventListener('inventoryDataChanged', handleInventoryChanged);
+      window.removeEventListener('stickerDataChanged', handleInventoryChanged);
+    };
   }, [albumId]);
 
   return (

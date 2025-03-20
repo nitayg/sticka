@@ -113,11 +113,13 @@ const FilteredStickerContainer = ({
     window.addEventListener('stickerDataChanged', handleStickerDataChanged as EventListener);
     window.addEventListener('forceRefresh', handleForceRefresh);
     window.addEventListener('albumDataChanged', handleForceRefresh);
+    window.addEventListener('inventoryDataChanged', handleForceRefresh);
     
     return () => {
       window.removeEventListener('stickerDataChanged', handleStickerDataChanged as EventListener);
       window.removeEventListener('forceRefresh', handleForceRefresh);
       window.removeEventListener('albumDataChanged', handleForceRefresh);
+      window.removeEventListener('inventoryDataChanged', handleForceRefresh);
     };
   }, [selectedAlbumId, onRefresh, stickers.length]);
 

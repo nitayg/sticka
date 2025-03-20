@@ -1,3 +1,4 @@
+
 import { Sticker } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Check, Shield, X, BookOpen } from "lucide-react";
@@ -48,7 +49,8 @@ const StickerCard = ({
           "transition-all duration-300 ease-out",
           "w-full h-full min-w-[120px] max-w-[160px]",
           isRecentlyAdded && "border-yellow-400",
-          transaction && transaction.color,
+          transaction ? transaction.color : "",
+          sticker.isOwned && !transaction ? "border-2 border-green-500" : "",
           className
         )}
         style={backgroundImageUrl ? {
@@ -62,7 +64,12 @@ const StickerCard = ({
         {/* Overlay for cards without image */}
         {!backgroundImageUrl && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-3xl text-muted-foreground">{sticker.number}</span>
+            <span className={cn(
+              "text-3xl",
+              sticker.isOwned && !transaction ? "text-green-600" : "text-muted-foreground"
+            )}>
+              {sticker.number}
+            </span>
           </div>
         )}
         
@@ -137,13 +144,14 @@ const StickerCard = ({
     <div 
       onClick={onClick}
       className={cn(
-        "relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 border border-border",
+        "relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 border",
         "transition-all duration-300 ease-out",
         "card-hover sticker-shadow",
         onClick && "cursor-pointer",
         "w-full",
         isRecentlyAdded && "border-yellow-400",
-        transaction && transaction.color,
+        transaction ? transaction.color : "",
+        sticker.isOwned && !transaction ? "border-green-500" : "border-border",
         className
       )}
     >
@@ -190,11 +198,15 @@ const StickerCard = ({
       
       <div className={cn(
         "px-2 py-2 space-y-1",
-        "dark:text-gray-200"
+        "dark:text-gray-200",
+        sticker.isOwned && !transaction ? "bg-green-50" : ""
       )}>
         <div className="space-y-0.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground dark:text-gray-300">
+            <span className={cn(
+              "text-xs font-medium",
+              sticker.isOwned && !transaction ? "text-green-700" : "text-muted-foreground dark:text-gray-300"
+            )}>
               #{sticker.number}
             </span>
             <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground dark:text-gray-300">
@@ -207,7 +219,8 @@ const StickerCard = ({
             </div>
           </div>
           <h3 className={cn(
-            "font-semibold text-foreground dark:text-white line-clamp-1",
+            "font-semibold line-clamp-1",
+            sticker.isOwned && !transaction ? "text-green-700" : "text-foreground dark:text-white",
             "text-base"
           )}>
             {sticker.name}
