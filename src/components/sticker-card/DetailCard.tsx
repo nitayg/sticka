@@ -1,7 +1,7 @@
 
 import { Sticker } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { BookOpen, Check, X } from "lucide-react";
+import { BookOpen, Check, Shield, X } from "lucide-react";
 import { getAlbumById } from "@/lib/album-operations";
 import StickerImage from "../sticker-details/StickerImage";
 
