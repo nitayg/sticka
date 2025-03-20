@@ -94,6 +94,10 @@ const InventoryHeaderActions = ({
   };
 
   const handleImportComplete = () => {
+    // Add a refresh trigger
+    window.dispatchEvent(new CustomEvent('forceRefresh'));
+    window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
+    
     toast({
       title: "ייבוא הושלם",
       description: "המדבקות יובאו בהצלחה",

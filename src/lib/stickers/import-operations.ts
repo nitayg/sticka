@@ -5,7 +5,7 @@ import { getStickerData, setStickerData } from './basic-operations';
 import { saveStickerBatch } from '../supabase/stickers';
 
 // Import stickers from CSV
-export const importStickersFromCSV = (albumId: string, data: [number, string, string][]): Sticker[] => {
+export const importStickersFromCSV = async (albumId: string, data: [number, string, string][]): Promise<Sticker[]> => {
   if (!albumId || !data || !data.length) {
     console.error(`Cannot import stickers. Missing albumId or data`, { albumId, dataLength: data?.length });
     return [];
@@ -54,9 +54,9 @@ export const importStickersFromCSV = (albumId: string, data: [number, string, st
   }
   
   try {
-    // שמירה בשרת תחילה - כעת נעשה בצורה סינכרונית במקום אסינכרונית
+    // שמירה בשרת תחילה
     console.log(`Adding ${newStickers.length} new stickers to server for album ${albumId}`);
-    saveStickerBatch(newStickers).catch(error => {
+    await saveStickerBatch(newStickers).catch(error => {
       console.error(`Error importing stickers to server: ${error}`);
     });
     

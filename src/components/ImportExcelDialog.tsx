@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { FileSpreadsheet } from "lucide-react";
 import { Album } from "@/lib/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -105,6 +106,7 @@ const ImportExcelDialog = ({
             variant="secondary" 
             size="sm"
             className="flex gap-1.5"
+            onClick={() => setOpen(true)}
           >
             <FileSpreadsheet className="h-3.5 w-3.5 ml-1" />
             <span className="sr-only md:not-sr-only md:inline-block">יבא מאקסל</span>
@@ -116,7 +118,7 @@ const ImportExcelDialog = ({
       </Tooltip>
     </TooltipProvider>
   ) : (
-    <Button variant="outline" size="sm">
+    <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
       <FileSpreadsheet className="h-4 w-4 ml-2" />
       יבא מאקסל
     </Button>
