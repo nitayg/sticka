@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Dialog,
@@ -52,15 +51,24 @@ const ImportStickers = ({ albumId, onImportComplete }: ImportStickersProps) => {
       // מעבר על כל שורה וחילוץ הנתונים
       const stickersData = rows.map(row => {
         const columns = row.split(',').map(col => col.trim());
-        const number = parseInt(columns[0], 10);
+        const stickerNumber = columns[0];
         const name = columns[1] || '';
         const team = columns[2] || '';
         
-        if (isNaN(number)) {
+        // Check if the number contains any non-numeric characters
+        const isAlphanumeric = /[^0-9]/.test(stickerNumber);
+        
+        // If it's alphanumeric (like "L1"), keep it as a string
+        // Otherwise parse it as a number
+        const number = isAlphanumeric 
+          ? stickerNumber 
+          : parseInt(stickerNumber, 10);
+        
+        if (typeof number === 'number' && isNaN(number)) {
           throw new Error(`שגיאה בפרסור המספר בשורה: ${row}`);
         }
         
-        return [number, name, team] as [number, string, string];
+        return [number, name, team] as [number | string, string, string];
       });
       
       const newStickers = await importStickersFromCSV(albumId, stickersData);

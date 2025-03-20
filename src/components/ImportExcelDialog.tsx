@@ -58,7 +58,7 @@ const ImportExcelDialog = ({
     setIsImporting(true);
     
     try {
-      let dataToImport: [number, string, string][] = [];
+      let dataToImport: [number | string, string, string][] = [];
       
       if (parsedData.length > 0) {
         dataToImport = parsedData.map(row => [row.number, row.name, row.team]);

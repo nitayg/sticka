@@ -5,7 +5,7 @@ import { getStickerData, setStickerData } from './basic-operations';
 import { saveStickerBatch } from '../supabase/stickers';
 
 // Import stickers from CSV
-export const importStickersFromCSV = async (albumId: string, data: [number, string, string][]): Promise<Sticker[]> => {
+export const importStickersFromCSV = async (albumId: string, data: [number | string, string, string][]): Promise<Sticker[]> => {
   if (!albumId || !data || !data.length) {
     console.error(`Cannot import stickers. Missing albumId or data`, { albumId, dataLength: data?.length });
     return [];
@@ -16,14 +16,26 @@ export const importStickersFromCSV = async (albumId: string, data: [number, stri
   
   // Get existing stickers for this album
   const existingStickers = getStickerData().filter(sticker => sticker.albumId === albumId);
-  const existingNumbers = new Set(existingStickers.map(s => s.number));
+  
+  // Create sets for both numeric and alphanumeric sticker numbers
+  const existingNumbers = new Set();
+  existingStickers.forEach(s => {
+    if (typeof s.number === 'number') {
+      existingNumbers.add(s.number);
+    } else if (typeof s.number === 'string') {
+      existingNumbers.add(s.number);
+    }
+  });
   
   console.log(`Found ${existingStickers.length} existing stickers for album ${albumId}`);
   
   // Create new stickers
   const newStickers: Sticker[] = [];
   
-  data.forEach(([number, name, team]) => {
+  data.forEach(([stickerNumber, name, team]) => {
+    // Ensure stickerNumber is treated correctly whether it's numeric or alphanumeric
+    const number = stickerNumber;
+    
     // Skip if the sticker already exists with this number in this album
     if (existingNumbers.has(number)) {
       console.log(`Skipping sticker #${number} - already exists in album`);

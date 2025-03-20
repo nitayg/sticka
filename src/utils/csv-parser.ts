@@ -1,6 +1,5 @@
-
 export interface ParsedCsvRow {
-  number: number;
+  number: number | string;
   name: string;
   team: string;
 }
@@ -43,12 +42,20 @@ export const parseCSV = (csvContent: string): ParsedCsvRow[] => {
     }
     
     // Extract fields - allow flexible field order
-    const [number, name, team] = fields;
+    const [numberStr, name, team] = fields;
+    
+    // Check if the number contains any non-numeric characters
+    const isAlphanumeric = numberStr ? /[^0-9]/.test(numberStr) : false;
+    
+    // If the number contains letters, keep it as a string, otherwise parse as number
+    const parsedNumber = isAlphanumeric 
+      ? numberStr // Keep alphanumeric as string
+      : parseNumberField(numberStr);
     
     // If we're returning an object format
     const result: ParsedCsvRow = {
-      number: parseNumberField(number),
-      name: name || `Sticker ${number}`,
+      number: parsedNumber,
+      name: name || `Sticker ${numberStr}`,
       team: team || 'Unknown',
     };
     

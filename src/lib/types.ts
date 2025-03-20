@@ -1,4 +1,3 @@
-
 import { LucideIcon } from "lucide-react";
 
 export interface Sticker {
@@ -8,7 +7,7 @@ export interface Sticker {
   teamLogo?: string; // Add team logo URL field
   category: string;
   imageUrl?: string;
-  number: number;
+  number: number | string; // Updated to support both numeric and alphanumeric values
   isOwned: boolean;
   isDuplicate: boolean;
   duplicateCount?: number; // Add duplicate count field
