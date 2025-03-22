@@ -3,7 +3,7 @@
  * SyncProvider
  * קומפוננטה אחראית על אתחול מערכת הסנכרון והפצת אירועים
  */
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { initializeSync, StorageEvents, setAlbumData, setStickerData } from '@/lib/sync';
 
@@ -14,11 +14,32 @@ interface SyncProviderProps {
 
 const SyncProvider = ({ children, notifications = false }: SyncProviderProps) => {
   const { toast } = useToast();
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Limit the frequency of data change events
+  const useThrottledEventListener = (eventName: string, handler: (event: any) => void) => {
+    useEffect(() => {
+      let lastHandleTime = 0;
+      const throttleTime = 1000; // 1 second
+      
+      const throttledHandler = (event: any) => {
+        const now = Date.now();
+        if (now - lastHandleTime >= throttleTime) {
+          lastHandleTime = now;
+          handler(event);
+        }
+      };
+      
+      window.addEventListener(eventName, throttledHandler);
+      return () => window.removeEventListener(eventName, throttledHandler);
+    }, [eventName, handler]);
+  };
 
   useEffect(() => {
     // אתחול מערכת הסנכרון
     const initSync = async () => {
       await initializeSync();
+      setIsInitialized(true);
       
       if (notifications) {
         toast({
@@ -29,32 +50,22 @@ const SyncProvider = ({ children, notifications = false }: SyncProviderProps) =>
     };
     
     initSync();
-
-    // מאזינים לאירועי סנכרון
-    const handleAlbumsUpdated = (event: any) => {
-      if (event.detail) {
-        setAlbumData(event.detail);
-        console.log('Albums updated from sync');
-      }
-    };
-
-    const handleStickersUpdated = (event: any) => {
-      if (event.detail) {
-        setStickerData(event.detail);
-        console.log('Stickers updated from sync');
-      }
-    };
-
-    // רישום למאזינים
-    window.addEventListener(StorageEvents.ALBUMS, handleAlbumsUpdated);
-    window.addEventListener(StorageEvents.STICKERS, handleStickersUpdated);
-
-    // ניקוי מאזינים
-    return () => {
-      window.removeEventListener(StorageEvents.ALBUMS, handleAlbumsUpdated);
-      window.removeEventListener(StorageEvents.STICKERS, handleStickersUpdated);
-    };
   }, [toast, notifications]);
+
+  // Throttled event handlers to prevent too frequent updates
+  useThrottledEventListener(StorageEvents.ALBUMS, (event) => {
+    if (event.detail) {
+      setAlbumData(event.detail);
+      console.log('Albums updated from sync');
+    }
+  });
+
+  useThrottledEventListener(StorageEvents.STICKERS, (event) => {
+    if (event.detail) {
+      setStickerData(event.detail);
+      console.log('Stickers updated from sync');
+    }
+  });
 
   return <>{children}</>;
 };

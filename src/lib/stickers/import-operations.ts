@@ -14,7 +14,7 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
   console.log(`Importing ${data.length} stickers from CSV for album ${albumId}`);
   console.log(`First few entries:`, data.slice(0, 3));
   
-  // Get existing stickers for this album
+  // Get existing stickers for this album from local cache
   const existingStickers = getStickerData().filter(sticker => sticker.albumId === albumId);
   
   // Create sets for both numeric and alphanumeric sticker numbers
@@ -30,30 +30,36 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
   // Create new stickers
   const newStickers: Sticker[] = [];
   
-  data.forEach(([stickerNumber, name, team]) => {
-    // Skip if the sticker already exists with this number in this album
-    if (existingNumbers.has(stickerNumber)) {
-      console.log(`Skipping sticker #${stickerNumber} - already exists in album`);
-      return;
-    }
+  // Process in batches of 100 to prevent large array operations
+  const BATCH_SIZE = 100;
+  for (let i = 0; i < data.length; i += BATCH_SIZE) {
+    const batch = data.slice(i, i + BATCH_SIZE);
     
-    const newSticker: Sticker = {
-      id: generateId(),
-      number: stickerNumber,
-      name: name || `Sticker ${stickerNumber}`,
-      team: team || 'Unknown',
-      teamLogo: '',
-      category: team || 'Default',
-      imageUrl: '',
-      isOwned: false,
-      isDuplicate: false,
-      duplicateCount: 0,
-      albumId,
-      lastModified: new Date().getTime(),
-    };
-    
-    newStickers.push(newSticker);
-  });
+    batch.forEach(([stickerNumber, name, team]) => {
+      // Skip if the sticker already exists with this number in this album
+      if (existingNumbers.has(stickerNumber)) {
+        console.log(`Skipping sticker #${stickerNumber} - already exists in album`);
+        return;
+      }
+      
+      const newSticker: Sticker = {
+        id: generateId(),
+        number: stickerNumber,
+        name: name || `Sticker ${stickerNumber}`,
+        team: team || 'Unknown',
+        teamLogo: '',
+        category: team || 'Default',
+        imageUrl: '',
+        isOwned: false,
+        isDuplicate: false,
+        duplicateCount: 0,
+        albumId,
+        lastModified: new Date().getTime(),
+      };
+      
+      newStickers.push(newSticker);
+    });
+  }
   
   if (newStickers.length === 0) {
     console.warn('No new stickers to import');
@@ -61,13 +67,26 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
   }
   
   try {
-    // Save to server first - this is important to ensure data is persisted to Supabase
+    // Save to server in batches of 50 to prevent large payloads
     console.log(`Adding ${newStickers.length} new stickers to server for album ${albumId}`);
-    const saveResult = await saveStickerBatch(newStickers);
     
-    if (!saveResult) {
-      console.error("Failed to save stickers to Supabase");
-      throw new Error("Failed to save stickers to Supabase");
+    // Process in smaller batches to reduce payload size
+    const SERVER_BATCH_SIZE = 50;
+    let allSaved = true;
+    
+    for (let i = 0; i < newStickers.length; i += SERVER_BATCH_SIZE) {
+      const batchToSave = newStickers.slice(i, i + SERVER_BATCH_SIZE);
+      const saveResult = await saveStickerBatch(batchToSave);
+      
+      if (!saveResult) {
+        console.error(`Failed to save batch ${i / SERVER_BATCH_SIZE + 1}`);
+        allSaved = false;
+      }
+    }
+    
+    if (!allSaved) {
+      console.error("Failed to save some stickers to Supabase");
+      throw new Error("Failed to save some stickers to Supabase");
     }
     
     // Update local state after successful server save
@@ -91,14 +110,6 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
         
         // Dispatch a general refresh event
         window.dispatchEvent(new CustomEvent('forceRefresh'));
-        
-        // Additional event at a longer delay to catch components that might initialize later
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-            detail: { albumId, count: newStickers.length } 
-          }));
-          window.dispatchEvent(new CustomEvent('forceRefresh'));
-        }, 500);
       }
     }, 100);
     

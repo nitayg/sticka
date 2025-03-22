@@ -32,6 +32,34 @@ const ImportStickers = ({ albumId, onImportComplete }: ImportStickersProps) => {
     }
   };
 
+  const processFileLocally = async (file: File): Promise<[number | string, string, string][]> => {
+    const text = await file.text();
+    const rows = text.split('\n').filter(row => row.trim());
+    
+    // Process CSV data client-side to reduce server load
+    return rows.map(row => {
+      const columns = row.split(',').map(col => col.trim());
+      const stickerNumber = columns[0];
+      const name = columns[1] || '';
+      const team = columns[2] || '';
+      
+      // Check if the number contains any non-numeric characters
+      const isAlphanumeric = /[^0-9]/.test(stickerNumber);
+      
+      // If it's alphanumeric (like "L1"), keep it as a string
+      // Otherwise parse it as a number
+      const number = isAlphanumeric 
+        ? stickerNumber 
+        : parseInt(stickerNumber, 10);
+      
+      if (typeof number === 'number' && isNaN(number)) {
+        throw new Error(`שגיאה בפרסור המספר בשורה: ${row}`);
+      }
+      
+      return [number, name, team] as [number | string, string, string];
+    });
+  };
+
   const handleImport = async () => {
     if (!file) {
       toast({
@@ -45,37 +73,43 @@ const ImportStickers = ({ albumId, onImportComplete }: ImportStickersProps) => {
     setIsLoading(true);
 
     try {
-      const text = await file.text();
-      const rows = text.split('\n').filter(row => row.trim());
+      // Check file size - reject if too large
+      if (file.size > 1024 * 1024) { // 1MB limit
+        throw new Error("קובץ גדול מדי. הגודל המקסימלי הוא 1MB");
+      }
+
+      // Process file locally first to validate format
+      const stickersData = await processFileLocally(file);
       
-      // מעבר על כל שורה וחילוץ הנתונים
-      const stickersData: [number | string, string, string][] = rows.map(row => {
-        const columns = row.split(',').map(col => col.trim());
-        const stickerNumber = columns[0];
-        const name = columns[1] || '';
-        const team = columns[2] || '';
+      // If too many stickers, warn the user
+      if (stickersData.length > 500) {
+        toast({
+          title: "אזהרה",
+          description: `מספר גדול של מדבקות (${stickersData.length}). הייבוא עלול להימשך זמן רב.`,
+        });
+      }
+      
+      // Import in batches to prevent overwhelming the server
+      const BATCH_SIZE = 100;
+      let importedCount = 0;
+      
+      for (let i = 0; i < stickersData.length; i += BATCH_SIZE) {
+        const batchToImport = stickersData.slice(i, i + BATCH_SIZE);
+        const newStickers = await importStickersFromCSV(albumId, batchToImport);
+        importedCount += newStickers.length;
         
-        // Check if the number contains any non-numeric characters
-        const isAlphanumeric = /[^0-9]/.test(stickerNumber);
-        
-        // If it's alphanumeric (like "L1"), keep it as a string
-        // Otherwise parse it as a number
-        const number = isAlphanumeric 
-          ? stickerNumber 
-          : parseInt(stickerNumber, 10);
-        
-        if (typeof number === 'number' && isNaN(number)) {
-          throw new Error(`שגיאה בפרסור המספר בשורה: ${row}`);
+        // Update progress for large imports
+        if (stickersData.length > BATCH_SIZE && i + BATCH_SIZE < stickersData.length) {
+          toast({
+            title: "התקדמות ייבוא",
+            description: `יובאו ${importedCount} מדבקות מתוך ${stickersData.length}`,
+          });
         }
-        
-        return [number, name, team] as [number | string, string, string];
-      });
-      
-      const newStickers = await importStickersFromCSV(albumId, stickersData);
+      }
       
       toast({
         title: "הייבוא הושלם בהצלחה",
-        description: `יובאו ${newStickers.length} מדבקות חדשות`
+        description: `יובאו ${importedCount} מדבקות חדשות`
       });
 
       setOpen(false);
@@ -119,6 +153,9 @@ const ImportStickers = ({ albumId, onImportComplete }: ImportStickersProps) => {
             />
             <p className="text-sm text-muted-foreground mt-1">
               פורמט: מספר מדבקה, שם שחקן, שם קבוצה
+            </p>
+            <p className="text-xs text-muted-foreground">
+              מגבלת גודל: 1MB, מומלץ עד 500 מדבקות בקובץ אחד
             </p>
           </div>
         </div>

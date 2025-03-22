@@ -9,6 +9,21 @@ export const filterDeleted = <T>(items: T[]): T[] => {
   });
 };
 
+// Keep track of pending saves to batch them
+let pendingSaves: Record<string, any[]> = {
+  'albums': [],
+  'stickers': [],
+  'users': [],
+  'exchangeOffers': []
+};
+
+let saveTimers: Record<string, NodeJS.Timeout | null> = {
+  'albums': null,
+  'stickers': null,
+  'users': null,
+  'exchangeOffers': null
+};
+
 // Save data directly to Supabase without using localStorage
 export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void => {
   try {
@@ -17,10 +32,21 @@ export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void
     // Store data in memory storage first
     setMemoryStorage(key, data);
     
-    // Sync to Supabase always
+    // Sync to Supabase using batching
     if (syncToCloud && isConnected) {
-      console.log(`Syncing ${key} to Supabase`);
-      sendToSupabase(key, data);
+      // Add to pending saves for batching
+      if (Array.isArray(data)) {
+        pendingSaves[key] = [...pendingSaves[key], ...data];
+      } else {
+        pendingSaves[key] = [...pendingSaves[key], data];
+      }
+      
+      // Set up batch timer if not already set
+      if (!saveTimers[key]) {
+        saveTimers[key] = setTimeout(() => {
+          processPendingSaves(key);
+        }, 2000); // Wait 2 seconds to collect more saves
+      }
       
       // Trigger a sync-start event to show indicator
       if (typeof window !== 'undefined') {
@@ -33,6 +59,24 @@ export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void
     
   } catch (error) {
     console.error(`Error saving ${key} to storage:`, error);
+  }
+};
+
+// Process any pending saves for a specific entity type
+const processPendingSaves = async (key: string) => {
+  if (!pendingSaves[key].length) return;
+  
+  const dataToSave = [...pendingSaves[key]];
+  pendingSaves[key] = [];
+  saveTimers[key] = null;
+  
+  console.log(`Processing batch of ${dataToSave.length} ${key} to save`);
+  
+  try {
+    // Send to Supabase in batches
+    await sendToSupabase(key, dataToSave);
+  } catch (error) {
+    console.error(`Error sending ${key} batch to Supabase:`, error);
   }
 };
 
@@ -61,26 +105,11 @@ const dispatchDataChangeEvents = <T>(key: string, data: T): void => {
     
     // Also dispatch forceRefresh for components that might not listen to stickerDataChanged
     window.dispatchEvent(new CustomEvent('forceRefresh'));
-    
-    // Add a staggered sequence of refresh events to ensure all components get updated
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('stickerDataChanged'));
-      window.dispatchEvent(new CustomEvent('forceRefresh'));
-    }, 100);
-    
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('forceRefresh'));
-    }, 500);
   } 
   else if (key === 'albums') {
     console.log('Dispatching albumDataChanged event after saving albums');
     window.dispatchEvent(new CustomEvent('albumDataChanged'));
     window.dispatchEvent(new CustomEvent('forceRefresh'));
-    
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('albumDataChanged'));
-      window.dispatchEvent(new CustomEvent('forceRefresh'));
-    }, 200);
   }
 };
 
@@ -125,6 +154,15 @@ export const getIsConnected = () => isConnected;
 
 // Export isConnected setter for sync-manager
 export const setIsConnected = (value: boolean) => {
+  // If connection state changed from offline to online, process any pending saves
+  if (!isConnected && value) {
+    Object.keys(pendingSaves).forEach(key => {
+      if (pendingSaves[key].length > 0) {
+        processPendingSaves(key);
+      }
+    });
+  }
+  
   isConnected = value;
 };
 
@@ -140,6 +178,19 @@ export const clearAllStorageData = (): void => {
     // Clear in-memory storage as well
     for (const key in memoryStorage) {
       delete memoryStorage[key];
+    }
+    
+    // Clear pending saves
+    for (const key in pendingSaves) {
+      pendingSaves[key] = [];
+    }
+    
+    // Clear save timers
+    for (const key in saveTimers) {
+      if (saveTimers[key]) {
+        clearTimeout(saveTimers[key]!);
+        saveTimers[key] = null;
+      }
     }
     
     console.log('Cleared all in-memory storage data');
@@ -163,27 +214,38 @@ import {
 import { Album, Sticker, User, ExchangeOffer } from '../types';
 
 // Sync data to Supabase
-export const sendToSupabase = async <T>(key: string, data: T): Promise<void> => {
-  if (Array.isArray(data)) {
-    console.log(`Sending ${data.length} items to Supabase for key: ${key}`);
+export const sendToSupabase = async <T>(key: string, data: T[]): Promise<void> => {
+  if (!Array.isArray(data) || data.length === 0) {
+    console.log(`No data to send to Supabase for key: ${key}`);
+    return;
+  }
+  
+  console.log(`Sending ${data.length} items to Supabase for key: ${key}`);
+  
+  // Batch data in chunks of 50 to prevent large payloads
+  const BATCH_SIZE = 50;
+  
+  for (let i = 0; i < data.length; i += BATCH_SIZE) {
+    const batch = data.slice(i, i + BATCH_SIZE);
     
-    // Save the data to Supabase based on the key
     try {
+      let success = false;
+      
       switch (key) {
         case 'albums':
-          await saveAlbumBatch(data as Album[]);
+          success = await saveAlbumBatch(batch as Album[]);
           break;
           
         case 'stickers':
-          await saveStickerBatch(data as Sticker[]);
+          success = await saveStickerBatch(batch as Sticker[]);
           break;
           
         case 'users':
-          await saveUserBatch(data as User[]);
+          success = await saveUserBatch(batch as User[]);
           break;
           
         case 'exchangeOffers':
-          await saveExchangeOfferBatch(data as ExchangeOffer[]);
+          success = await saveExchangeOfferBatch(batch as ExchangeOffer[]);
           break;
           
         default:
@@ -191,14 +253,15 @@ export const sendToSupabase = async <T>(key: string, data: T): Promise<void> => 
           return;
       }
       
-      // Dispatch success event
-      window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_COMPLETE));
+      if (!success) {
+        console.error(`Failed to save batch ${i / BATCH_SIZE + 1} for ${key}`);
+      }
       
     } catch (error) {
-      console.error(`Error sending data to Supabase (${key}):`, error);
-      window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_ERROR, { 
-        detail: { error } 
-      }));
+      console.error(`Error sending batch ${i / BATCH_SIZE + 1} of ${key} to Supabase:`, error);
     }
   }
+  
+  // Dispatch success event
+  window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_COMPLETE));
 };

@@ -4,6 +4,55 @@ import { getStickerData, setStickerData, getStickersByAlbumId } from './basic-op
 import { updateSticker } from './crud-operations';
 import { saveStickerBatch } from '../supabase/stickers';
 
+// Queue for batching sticker updates
+let updateQueue: Sticker[] = [];
+let updateTimerId: NodeJS.Timeout | null = null;
+
+// Process the update queue
+const processUpdateQueue = async () => {
+  if (updateQueue.length === 0) return;
+  
+  const batchToProcess = [...updateQueue];
+  updateQueue = [];
+  
+  console.log(`Processing batch of ${batchToProcess.length} sticker updates`);
+  
+  try {
+    // Save to Supabase in one batch operation
+    await saveStickerBatch(batchToProcess);
+    
+    // Update local data
+    const allStickers = getStickerData();
+    const updatedStickers = allStickers.map(sticker => {
+      const updatedSticker = batchToProcess.find(s => s.id === sticker.id);
+      return updatedSticker || sticker;
+    });
+    
+    setStickerData(updatedStickers);
+    
+    // Trigger UI refresh
+    window.dispatchEvent(new CustomEvent('stickerDataChanged'));
+    window.dispatchEvent(new CustomEvent('forceRefresh'));
+  } catch (error) {
+    console.error('Error processing sticker update batch:', error);
+  }
+};
+
+// Queue a sticker update and return immediately
+const queueStickerUpdate = (sticker: Sticker): void => {
+  // Replace any existing update for this sticker
+  updateQueue = updateQueue.filter(s => s.id !== sticker.id);
+  updateQueue.push(sticker);
+  
+  // Set a timer to process updates if not already set
+  if (!updateTimerId) {
+    updateTimerId = setTimeout(() => {
+      updateTimerId = null;
+      processUpdateQueue();
+    }, 500); // Wait 500ms to batch updates
+  }
+};
+
 // Toggle owned status
 export const toggleStickerOwned = async (id: string): Promise<Sticker | null> => {
   try {
@@ -15,8 +64,23 @@ export const toggleStickerOwned = async (id: string): Promise<Sticker | null> =>
       return null;
     }
     
-    // שימוש בפונקציית העדכון המעודכנת שתעדכן גם בשרת
-    return await updateSticker(id, { isOwned: !sticker.isOwned });
+    // Update sticker data
+    const updatedSticker = { 
+      ...sticker, 
+      isOwned: !sticker.isOwned,
+      lastModified: new Date().getTime()
+    };
+    
+    // Immediately update UI
+    const updatedStickers = stickers.map(s => 
+      s.id === id ? updatedSticker : s
+    );
+    setStickerData(updatedStickers);
+    
+    // Queue the update to be sent to server
+    queueStickerUpdate(updatedSticker);
+    
+    return updatedSticker;
   } catch (error) {
     console.error(`Error toggling sticker owned status: ${error}`);
     throw error;
@@ -45,18 +109,31 @@ export const toggleStickerDuplicate = async (id: string): Promise<Sticker | null
     
     const isDuplicate = duplicateCount > 0;
     
-    // שימוש בפונקציית העדכון המעודכנת שתעדכן גם בשרת
-    return await updateSticker(id, { 
-      isDuplicate, 
-      duplicateCount: isDuplicate ? duplicateCount : 0 
-    });
+    // Update sticker data
+    const updatedSticker = {
+      ...sticker,
+      isDuplicate,
+      duplicateCount: isDuplicate ? duplicateCount : 0,
+      lastModified: new Date().getTime()
+    };
+    
+    // Immediately update UI
+    const updatedStickers = stickers.map(s => 
+      s.id === id ? updatedSticker : s
+    );
+    setStickerData(updatedStickers);
+    
+    // Queue the update to be sent to server
+    queueStickerUpdate(updatedSticker);
+    
+    return updatedSticker;
   } catch (error) {
     console.error(`Error toggling sticker duplicate status: ${error}`);
     throw error;
   }
 };
 
-// Add stickers to inventory
+// Add stickers to inventory with batching
 export const addStickersToInventory = (albumId: string, stickerNumbers: (number | string)[]): { newlyOwned: (number | string)[], duplicatesUpdated: (number | string)[], notFound: (number | string)[] } => {
   const stickers = getStickerData();
   const albumStickers = stickers.filter(s => s.albumId === albumId);
@@ -76,7 +153,11 @@ export const addStickersToInventory = (albumId: string, stickerNumbers: (number 
     
     if (!sticker.isOwned) {
       // Mark as owned for the first time
-      const updatedSticker = { ...sticker, isOwned: true };
+      const updatedSticker = { 
+        ...sticker, 
+        isOwned: true,
+        lastModified: new Date().getTime()
+      };
       stickersToUpdate.push(updatedSticker);
       newlyOwned.push(number);
     } else {
@@ -84,7 +165,8 @@ export const addStickersToInventory = (albumId: string, stickerNumbers: (number 
       const updatedSticker = {
         ...sticker,
         isDuplicate: true,
-        duplicateCount: (sticker.duplicateCount || 0) + 1
+        duplicateCount: (sticker.duplicateCount || 0) + 1,
+        lastModified: new Date().getTime()
       };
       stickersToUpdate.push(updatedSticker);
       duplicatesUpdated.push(number);
@@ -96,21 +178,27 @@ export const addStickersToInventory = (albumId: string, stickerNumbers: (number 
   }
   
   try {
-    // שמירה בשרת - כעת נעשה בצורה שאינה חוסמת
-    console.log(`Updating ${stickersToUpdate.length} stickers in inventory on server`);
-    saveStickerBatch(stickersToUpdate).catch(error => {
-      console.error(`Error updating stickers inventory on server: ${error}`);
-    });
-    
-    // עדכון מקומי בלי להמתין לתשובה מהשרת
-    const updatedStickers = stickers.map(sticker => {
+    // Immediately update UI
+    const updatedAllStickers = stickers.map(sticker => {
       const updatedSticker = stickersToUpdate.find(s => s.id === sticker.id);
       return updatedSticker || sticker;
     });
     
-    setStickerData(updatedStickers);
+    setStickerData(updatedAllStickers);
     
-    // Trigger events
+    // Save to server in background - don't wait for response
+    console.log(`Updating ${stickersToUpdate.length} stickers in inventory`);
+    
+    // Send updates in batches of 50
+    const BATCH_SIZE = 50;
+    for (let i = 0; i < stickersToUpdate.length; i += BATCH_SIZE) {
+      const batch = stickersToUpdate.slice(i, i + BATCH_SIZE);
+      saveStickerBatch(batch).catch(error => {
+        console.error(`Error updating stickers batch ${i / BATCH_SIZE + 1}:`, error);
+      });
+    }
+    
+    // Trigger UI refresh
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent('forceRefresh'));
       window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
@@ -118,7 +206,7 @@ export const addStickersToInventory = (albumId: string, stickerNumbers: (number 
     
     return { newlyOwned, duplicatesUpdated, notFound };
   } catch (error) {
-    console.error(`Error updating stickers inventory: ${error}`);
+    console.error(`Error updating stickers inventory:`, error);
     return { newlyOwned: [], duplicatesUpdated: [], notFound: [] };
   }
 };
