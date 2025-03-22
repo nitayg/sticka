@@ -2,53 +2,64 @@
 import { getStickerData, setStickerData } from './basic-operations';
 import { saveStickerBatch } from '../supabase/stickers';
 
-// Update team name across all stickers (needed by team management components)
-export const updateTeamNameAcrossStickers = (oldTeamName: string, newTeamName: string, newTeamLogo: string): number => {
-  const allStickers = getStickerData();
-  let updatedCount = 0;
-  let updatedStickers = allStickers;
-  
+// Update team name across all stickers
+export const updateTeamNameAcrossStickers = async (
+  oldTeamName: string, 
+  newTeamName: string, 
+  teamLogo?: string
+): Promise<boolean> => {
   try {
-    // Find stickers to update
-    const stickersToUpdate = [];
+    const stickers = getStickerData();
+    const stickersToUpdate = stickers.filter(sticker => sticker.team === oldTeamName);
     
-    updatedStickers = allStickers.map(sticker => {
-      if (sticker.team === oldTeamName) {
-        updatedCount++;
-        const updatedSticker = {
-          ...sticker,
-          team: newTeamName,
-          teamLogo: newTeamLogo || sticker.teamLogo,
-          lastModified: new Date().getTime()
-        };
-        stickersToUpdate.push(updatedSticker);
-        return updatedSticker;
-      }
-      return sticker;
-    });
-    
-    if (updatedCount === 0) {
-      return 0; // No stickers to update
+    if (stickersToUpdate.length === 0) {
+      console.log(`No stickers found with team name: ${oldTeamName}`);
+      return false;
     }
     
-    // עדכון בשרת תחילה (באופן אסינכרוני)
-    console.log(`Updating team name for ${updatedCount} stickers on server`);
-    saveStickerBatch(stickersToUpdate).catch(error => {
-      console.error(`Error updating team name across stickers on server: ${error}`);
-    });
+    console.log(`Updating team name from ${oldTeamName} to ${newTeamName} for ${stickersToUpdate.length} stickers`);
     
-    // עדכון מקומי מיידי
-    setStickerData(updatedStickers);
-    
-    // Trigger events
-    window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-      detail: { action: 'updateTeam', count: updatedCount } 
+    // Update team name and logo (if provided)
+    const updatedStickers = stickersToUpdate.map(sticker => ({
+      ...sticker,
+      team: newTeamName,
+      teamLogo: teamLogo || sticker.teamLogo,
+      lastModified: new Date().getTime()
     }));
-    window.dispatchEvent(new CustomEvent('forceRefresh'));
     
-    return updatedCount;
+    // Save to server first
+    console.log(`Saving ${updatedStickers.length} stickers with updated team name to server`);
+    const saveResult = await saveStickerBatch(updatedStickers);
+    
+    if (!saveResult) {
+      console.error(`Failed to update team name on server`);
+      return false;
+    }
+    
+    // Update local state after server update
+    const allUpdatedStickers = stickers.map(sticker => 
+      sticker.team === oldTeamName ? 
+        {
+          ...sticker, 
+          team: newTeamName, 
+          teamLogo: teamLogo || sticker.teamLogo,
+          lastModified: new Date().getTime()
+        } : 
+        sticker
+    );
+    
+    setStickerData(allUpdatedStickers);
+    
+    // Trigger sticker data changed event
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+        detail: { action: 'updateTeamName' } 
+      }));
+    }
+    
+    return true;
   } catch (error) {
-    console.error(`Error updating team name across stickers: ${error}`);
-    return 0;
+    console.error(`Error updating team name: ${error}`);
+    return false;
   }
 };

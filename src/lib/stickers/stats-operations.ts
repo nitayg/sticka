@@ -1,30 +1,22 @@
 
 import { getStickerData } from './basic-operations';
 
-// Get album statistics
-export const getStats = () => {
+// Get collection statistics
+export const getStats = (albumId?: string) => {
   const stickers = getStickerData();
+  const filteredStickers = albumId 
+    ? stickers.filter(sticker => sticker.albumId === albumId)
+    : stickers;
   
-  const totalStickers = stickers.length;
-  const ownedStickers = stickers.filter(s => s.isOwned).length;
-  const duplicateStickers = stickers.filter(s => s.isDuplicate).length;
-  const neededStickers = totalStickers - ownedStickers;
-  const completionPercentage = totalStickers > 0 
-    ? Math.round((ownedStickers / totalStickers) * 100) 
-    : 0;
+  const owned = filteredStickers.filter(sticker => sticker.isOwned).length;
+  const duplicates = filteredStickers.reduce(
+    (count, sticker) => count + (sticker.isOwned && sticker.isDuplicate ? (sticker.duplicateCount || 0) : 0),
+    0
+  );
   
-  // Return in both formats for compatibility
   return {
-    // New format
-    totalStickers,
-    ownedStickers,
-    duplicateStickers,
-    neededStickers,
-    completionPercentage,
-    // Old format for backward compatibility
-    total: totalStickers,
-    owned: ownedStickers,
-    needed: neededStickers,
-    duplicates: duplicateStickers
+    total: filteredStickers.length,
+    owned,
+    duplicates
   };
 };
