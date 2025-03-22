@@ -57,13 +57,13 @@ export const toggleStickerDuplicate = async (id: string): Promise<Sticker | null
 };
 
 // Add stickers to inventory
-export const addStickersToInventory = (albumId: string, stickerNumbers: number[]): { newlyOwned: number[], duplicatesUpdated: number[], notFound: number[] } => {
+export const addStickersToInventory = (albumId: string, stickerNumbers: (number | string)[]): { newlyOwned: (number | string)[], duplicatesUpdated: (number | string)[], notFound: (number | string)[] } => {
   const stickers = getStickerData();
   const albumStickers = stickers.filter(s => s.albumId === albumId);
   
-  const newlyOwned: number[] = [];
-  const duplicatesUpdated: number[] = [];
-  const notFound: number[] = [];
+  const newlyOwned: (number | string)[] = [];
+  const duplicatesUpdated: (number | string)[] = [];
+  const notFound: (number | string)[] = [];
   const stickersToUpdate: Sticker[] = [];
   
   stickerNumbers.forEach(number => {

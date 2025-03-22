@@ -49,7 +49,7 @@ const ImportStickers = ({ albumId, onImportComplete }: ImportStickersProps) => {
       const rows = text.split('\n').filter(row => row.trim());
       
       // מעבר על כל שורה וחילוץ הנתונים
-      const stickersData = rows.map(row => {
+      const stickersData: [number | string, string, string][] = rows.map(row => {
         const columns = row.split(',').map(col => col.trim());
         const stickerNumber = columns[0];
         const name = columns[1] || '';
