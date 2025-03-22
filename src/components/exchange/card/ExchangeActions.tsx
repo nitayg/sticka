@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { ArrowLeftRight, RefreshCw, CheckCircle, Trash } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import StickerIntakeForm from "@/components/StickerIntakeForm";
+import { StickerIntakeForm } from "@/components/sticker-intake";
 import { exchangeOffers } from "@/lib/data";
 import { useInventoryStore } from "@/store/useInventoryStore";
 import UpdateExchangeDialog from "../UpdateExchangeDialog";
