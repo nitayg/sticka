@@ -27,9 +27,13 @@ export const useStickerSort = (stickers: Sticker[]) => {
     const sorted = [...stickers];
     sorted.sort((a, b) => {
       if (sortConfig.key === "number") {
+        // Handle both string and number types for sorting
+        const numA = typeof a.number === 'string' ? parseInt(a.number.replace(/\D/g, ''), 10) || 0 : a.number;
+        const numB = typeof b.number === 'string' ? parseInt(b.number.replace(/\D/g, ''), 10) || 0 : b.number;
+        
         return sortConfig.direction === "ascending" 
-          ? a.number - b.number 
-          : b.number - a.number;
+          ? numA - numB 
+          : numB - numA;
       } else if (sortConfig.key === "name") {
         const nameA = a.name || "";
         const nameB = b.name || "";

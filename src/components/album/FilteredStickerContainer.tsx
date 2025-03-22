@@ -140,9 +140,13 @@ const FilteredStickerContainer = ({
     // Filter by number range
     if (activeTab === "number" && selectedRange) {
       const [rangeStart, rangeEnd] = selectedRange.split('-').map(Number);
-      filtered = filtered.filter(sticker => 
-        sticker.number >= rangeStart && sticker.number <= rangeEnd
-      );
+      filtered = filtered.filter(sticker => {
+        // Handle both string and number sticker numbers
+        const stickerNum = typeof sticker.number === 'string' 
+          ? parseInt(sticker.number.replace(/\D/g, ''), 10) || 0 
+          : sticker.number;
+        return stickerNum >= rangeStart && stickerNum <= rangeEnd;
+      });
     } 
     // Filter by team
     else if ((activeTab === "team" || activeTab === "manage") && selectedTeam) {
@@ -150,7 +154,12 @@ const FilteredStickerContainer = ({
     }
     
     // Sort stickers by number
-    filtered = [...filtered].sort((a, b) => a.number - b.number);
+    filtered = [...filtered].sort((a, b) => {
+      // Handle both string and number values for sorting
+      const numA = typeof a.number === 'string' ? parseInt(a.number.replace(/\D/g, ''), 10) || 0 : a.number;
+      const numB = typeof b.number === 'string' ? parseInt(b.number.replace(/\D/g, ''), 10) || 0 : b.number;
+      return numA - numB;
+    });
     
     return filtered;
   }, [stickers, directStickers, localDirectFetch, activeTab, selectedRange, selectedTeam]);

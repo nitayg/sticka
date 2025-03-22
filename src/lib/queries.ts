@@ -24,9 +24,13 @@ export const fetchStickersByFilter = (albumId: string, filter: string | null, fi
   
   if (filterType === 'range') {
     const [rangeStart, rangeEnd] = filter.split('-').map(Number);
-    return stickers.filter(sticker => 
-      sticker.number >= rangeStart && sticker.number <= rangeEnd
-    );
+    return stickers.filter(sticker => {
+      // Handle string or number sticker numbers by converting to numeric value
+      const numericValue = typeof sticker.number === 'string' 
+        ? parseInt(sticker.number.replace(/\D/g, ''), 10) || 0
+        : sticker.number;
+      return numericValue >= rangeStart && numericValue <= rangeEnd;
+    });
   }
   
   if (filterType === 'team') {

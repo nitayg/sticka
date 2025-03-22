@@ -36,7 +36,12 @@ export const useAlbumData = ({
       console.log(`Hook found ${albumStickers.length} stickers for album ${selectedAlbumId}`);
       
       // Sort stickers by number before returning
-      return [...albumStickers].sort((a, b) => a.number - b.number);
+      return [...albumStickers].sort((a, b) => {
+        // Handle both string and number types
+        const numA = typeof a.number === 'string' ? parseInt(a.number.replace(/\D/g, ''), 10) || 0 : a.number;
+        const numB = typeof b.number === 'string' ? parseInt(b.number.replace(/\D/g, ''), 10) || 0 : b.number;
+        return numA - numB;
+      });
     },
     enabled: !!selectedAlbumId
   });
@@ -68,13 +73,22 @@ export const useAlbumData = ({
     relevantExchanges.forEach(exchange => {
       // Find stickers that the user will receive
       const stickerNumbers = Array.isArray(exchange.wantedStickerId)
-        ? exchange.wantedStickerId.map(id => parseInt(id))
+        ? exchange.wantedStickerId.map(id => {
+            // Handle both string and number types
+            return typeof id === 'string' ? parseInt(id, 10) : id;
+          })
         : [];
       
       stickerNumbers.forEach(number => {
         if (isNaN(number)) return;
         
-        const sticker = stickers.find(s => s.number === number);
+        const sticker = stickers.find(s => {
+          if (typeof s.number === 'string' && typeof number === 'number') {
+            return parseInt(s.number.replace(/\D/g, ''), 10) === number;
+          }
+          return s.number === number;
+        });
+        
         if (sticker) {
           map[sticker.id] = {
             person: exchange.userName,
@@ -123,7 +137,12 @@ export const useAlbumData = ({
     
     const ranges = new Set<string>();
     stickers.forEach(sticker => {
-      const hundred = Math.floor(sticker.number / 100) * 100;
+      // Convert string numbers to numeric for range calculation
+      const numericValue = typeof sticker.number === 'string' 
+        ? parseInt(sticker.number.replace(/\D/g, ''), 10) || 0
+        : sticker.number;
+        
+      const hundred = Math.floor(numericValue / 100) * 100;
       const rangeEnd = hundred + 99;
       ranges.add(`${hundred}-${rangeEnd}`);
     });

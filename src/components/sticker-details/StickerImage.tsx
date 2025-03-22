@@ -13,7 +13,7 @@ interface StickerImageProps {
   imageUrl?: string;
   fallbackImage?: string;
   alt: string;
-  stickerNumber?: number;
+  stickerNumber?: number | string;
   showImage?: boolean;
   isOwned?: boolean;
   isDuplicate?: boolean;
