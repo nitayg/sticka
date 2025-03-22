@@ -74,7 +74,13 @@ const ImportExcelDialog = ({
       }
       
       console.log("Importing data:", dataToImport);
+      // Wait for the import function to complete using await
       const result = await importStickersFromCSV(selectedAlbum, dataToImport);
+      console.log("Import result:", result);
+      
+      if (!result || result.length === 0) {
+        throw new Error("שגיאה בייבוא המדבקות לשרת");
+      }
       
       setOpen(false);
       setFile(null);
@@ -84,6 +90,13 @@ const ImportExcelDialog = ({
         title: "ייבוא הושלם בהצלחה",
         description: `יובאו ${result.length} מדבקות בהצלחה`,
       });
+      
+      // Trigger refresh events
+      window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+        detail: { albumId: selectedAlbum, action: 'import', count: result.length } 
+      }));
+      window.dispatchEvent(new CustomEvent('forceRefresh'));
+      window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
       
       onImportComplete();
     } catch (error) {

@@ -29,6 +29,7 @@ export const fetchStickersByFilter = (albumId: string, filter: string | null, fi
       const numericValue = typeof sticker.number === 'string' 
         ? parseInt(sticker.number.replace(/\D/g, ''), 10) || 0
         : sticker.number;
+      
       return numericValue >= rangeStart && numericValue <= rangeEnd;
     });
   }

@@ -66,13 +66,16 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
   }
   
   try {
-    // שמירה בשרת תחילה
+    // Save to server first - this is important to ensure data is persisted to Supabase
     console.log(`Adding ${newStickers.length} new stickers to server for album ${albumId}`);
-    await saveStickerBatch(newStickers).catch(error => {
-      console.error(`Error importing stickers to server: ${error}`);
-    });
+    const saveResult = await saveStickerBatch(newStickers);
     
-    // Update local state without waiting for server response
+    if (!saveResult) {
+      console.error("Failed to save stickers to Supabase");
+      throw new Error("Failed to save stickers to Supabase");
+    }
+    
+    // Update local state after successful server save
     const allStickers = getStickerData();
     const updatedStickers = [...allStickers, ...newStickers];
     setStickerData(updatedStickers);
@@ -106,7 +109,7 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
     
     return newStickers;
   } catch (error) {
-    console.error(`Error importing stickers: ${error}`);
-    return [];
+    console.error(`Error importing stickers:`, error);
+    throw error;
   }
 };
