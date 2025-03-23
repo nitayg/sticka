@@ -15,10 +15,10 @@ interface InventoryDataState {
   setSelectedAlbumId: (albumId: string) => void;
   handleRefresh: () => void;
   handleAlbumChange: (albumId: string) => void;
-  handleStickerIntake: (albumId: string, stickerNumbers: number[]) => {
-    newlyOwned: number[];
-    duplicatesUpdated: number[];
-    notFound: number[];
+  handleStickerIntake: (albumId: string, stickerNumbers: (number | string)[]) => {
+    newlyOwned: (number | string)[];
+    duplicatesUpdated: (number | string)[];
+    notFound: (number | string)[];
   };
   updateTransactionMap: (albumId: string) => void;
 }

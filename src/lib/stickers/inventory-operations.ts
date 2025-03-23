@@ -134,7 +134,14 @@ export const toggleStickerDuplicate = async (id: string): Promise<Sticker | null
 };
 
 // Add stickers to inventory with batching
-export const addStickersToInventory = (albumId: string, stickerNumbers: (number | string)[]): { newlyOwned: (number | string)[], duplicatesUpdated: (number | string)[], notFound: (number | string)[] } => {
+export const addStickersToInventory = (
+  albumId: string, 
+  stickerNumbers: (number | string)[]
+): { 
+  newlyOwned: (number | string)[], 
+  duplicatesUpdated: (number | string)[], 
+  notFound: (number | string)[] 
+} => {
   const stickers = getStickerData();
   const albumStickers = stickers.filter(s => s.albumId === albumId);
   

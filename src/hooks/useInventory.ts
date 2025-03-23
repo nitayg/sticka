@@ -99,7 +99,7 @@ export default function useInventory() {
     setSelectedAlbumId(albumId);
   };
 
-  const handleStickerIntake = (albumId: string, stickerNumbers: number[]) => {
+  const handleStickerIntake = (albumId: string, stickerNumbers: (number | string)[]) => {
     const results = addStickersToInventory(albumId, stickerNumbers);
     
     const totalUpdated = results.newlyOwned.length + results.duplicatesUpdated.length;
@@ -123,6 +123,8 @@ export default function useInventory() {
     handleRefresh();
     
     window.dispatchEvent(new CustomEvent('albumDataChanged'));
+    
+    return results;
   };
 
   return {
