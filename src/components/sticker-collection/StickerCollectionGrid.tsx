@@ -1,9 +1,6 @@
 
 import { ReactNode, useEffect, useState, useRef, Children, isValidElement } from 'react';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useHorizontalScroll } from '@/hooks/use-horizontal-scroll';
 
 interface StickerCollectionGridProps {
   viewMode: 'grid' | 'list' | 'compact';
@@ -19,7 +16,6 @@ const StickerCollectionGrid = ({
   const [rowCount, setRowCount] = useState(3);
   const itemRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const { containerRef, showLeftArrow, showRightArrow, scrollLeft, scrollRight } = useHorizontalScroll();
 
   // גבהים קבועים (תתאים אם צריך)
   const HEADER_HEIGHT = 56; // h-14
@@ -97,61 +93,35 @@ const StickerCollectionGrid = ({
   }
 
   return (
-    <div className="relative">
+    <div
+      className={cn(
+        "overflow-x-auto pb-4 px-2 scrollbar-hide transition-all duration-300 backdrop-blur-sm",
+        viewMode === 'compact' && "max-h-full",
+        viewMode === 'list' && "max-h-full",
+        viewMode === 'grid' && "max-h-full",
+        activeFilter && "pt-1"
+      )}
+      style={{ direction: 'rtl' }}
+    >
       <div
+        ref={gridRef}
         className={cn(
-          "overflow-x-auto pb-4 px-2 scrollbar-hide transition-all duration-300 backdrop-blur-sm",
-          viewMode === 'compact' && "max-h-full",
-          viewMode === 'list' && "max-h-full",
-          viewMode === 'grid' && "max-h-full",
-          activeFilter && "pt-1"
+          "transition-all duration-300 ease-in-out",
+          viewMode === 'list' && "grid grid-flow-col auto-cols-max grid-list-gap animate-stagger-fade",
+          viewMode === 'compact' && "grid grid-flow-col grid-compact-gap animate-stagger-fade",
+          viewMode === 'grid' && "grid grid-flow-col grid-card-gap animate-stagger-fade",
+          `grid-rows-${rowCount}`
         )}
-        style={{ direction: 'rtl' }}
-        ref={containerRef}
+        style={{
+          gridTemplateRows: `repeat(${rowCount}, auto)`,
+          gap: getGapSize() + 'px',
+          direction: 'rtl',
+          overflow: 'visible', // מונע חיתוך של תאים בשורה האחרונה
+          paddingBottom: '80px' // מוסיף פדינג בתחתית הגריד
+        }}
       >
-        <div
-          ref={gridRef}
-          className={cn(
-            "transition-all duration-300 ease-in-out",
-            viewMode === 'list' && "grid grid-flow-col auto-cols-max grid-list-gap animate-stagger-fade",
-            viewMode === 'compact' && "grid grid-flow-col grid-compact-gap animate-stagger-fade",
-            viewMode === 'grid' && "grid grid-flow-col grid-card-gap animate-stagger-fade",
-            `grid-rows-${rowCount}`
-          )}
-          style={{
-            gridTemplateRows: `repeat(${rowCount}, auto)`,
-            gap: getGapSize() + 'px',
-            direction: 'rtl',
-            overflow: 'visible', // מונע חיתוך של תאים בשורה האחרונה
-            paddingBottom: '80px' // מוסיף פדינג בתחתית הגריד
-          }}
-        >
-          {modifiedChildren}
-        </div>
+        {modifiedChildren}
       </div>
-      
-      {/* Navigation arrows for desktop */}
-      {showLeftArrow && (
-        <Button
-          size="icon"
-          variant="secondary"
-          className="absolute left-0 top-1/2 transform -translate-y-1/2 rounded-full opacity-90 shadow-md z-10"
-          onClick={scrollLeft}
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
-      )}
-      
-      {showRightArrow && (
-        <Button
-          size="icon"
-          variant="secondary"
-          className="absolute right-0 top-1/2 transform -translate-y-1/2 rounded-full opacity-90 shadow-md z-10"
-          onClick={scrollRight}
-        >
-          <ChevronRight className="h-5 w-5" />
-        </Button>
-      )}
     </div>
   );
 };
