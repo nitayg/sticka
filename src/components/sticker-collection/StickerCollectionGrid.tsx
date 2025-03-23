@@ -1,6 +1,8 @@
 
 import { ReactNode, useEffect, useState, useRef, Children, isValidElement } from 'react';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
+import HorizontalScrollContainer from '@/components/ui/horizontal-scroll-container';
 
 interface StickerCollectionGridProps {
   viewMode: 'grid' | 'list' | 'compact';
@@ -16,6 +18,7 @@ const StickerCollectionGrid = ({
   const [rowCount, setRowCount] = useState(3);
   const itemRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   // גבהים קבועים (תתאים אם צריך)
   const HEADER_HEIGHT = 56; // h-14
@@ -92,6 +95,37 @@ const StickerCollectionGrid = ({
     }
   }
 
+  // For desktop view, change to a horizontally scrollable container
+  if (!isMobile) {
+    return (
+      <div className={cn(
+        "pb-4 px-2 transition-all duration-300 animate-fade-in",
+        activeFilter && "pt-1"
+      )}>
+        <HorizontalScrollContainer 
+          className="gap-2 py-1 px-1" 
+          showArrows={true}
+          arrowsPosition="sides"
+        >
+          {childrenArray.map((child, index) => (
+            <div 
+              key={index} 
+              className={cn(
+                "flex-shrink-0 snap-start",
+                viewMode === "grid" && "w-[180px]",
+                viewMode === "list" && "w-[250px]",
+                viewMode === "compact" && "w-[100px]"
+              )}
+            >
+              {child}
+            </div>
+          ))}
+        </HorizontalScrollContainer>
+      </div>
+    );
+  }
+
+  // Mobile view - vertical grid layout
   return (
     <div
       className={cn(
