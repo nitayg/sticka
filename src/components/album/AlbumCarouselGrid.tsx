@@ -1,10 +1,11 @@
 
-import React, { useRef, useEffect, useState } from "react";
+import React from "react";
 import { Album } from "@/lib/types";
-import { ChevronLeft, ChevronRight, PlusCircle } from "lucide-react";
-import { Button } from "../ui/button";
+import { PlusCircle } from "lucide-react";
 import AlbumGridItem from "./AlbumGridItem";
 import AddAlbumForm from "@/components/add-album-form";
+import HorizontalScrollContainer from "@/components/ui/horizontal-scroll-container";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AlbumCarouselGridProps {
   albums: Album[];
@@ -19,100 +20,17 @@ const AlbumCarouselGrid = ({
   onAlbumChange,
   onEdit
 }: AlbumCarouselGridProps) => {
-  const carouselRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
   const isRtl = document.dir === 'rtl' || document.documentElement.lang === 'he';
   
-  // Check direction
-  useEffect(() => {
-    if (carouselRef.current) {
-      carouselRef.current.dir = isRtl ? 'rtl' : 'ltr';
-    }
-  }, [isRtl]);
-  
-  // Scroll to selected album when it changes
-  useEffect(() => {
-    if (carouselRef.current && selectedAlbumId) {
-      const selectedElement = carouselRef.current.querySelector(`[data-album-id="${selectedAlbumId}"]`);
-      if (selectedElement) {
-        // Calculate scroll position
-        const containerWidth = carouselRef.current.offsetWidth;
-        const elementOffset = isRtl 
-          ? carouselRef.current.scrollWidth - selectedElement.getBoundingClientRect().right + carouselRef.current.getBoundingClientRect().right - containerWidth
-          : selectedElement.getBoundingClientRect().left - carouselRef.current.getBoundingClientRect().left;
-        const scrollPosition = carouselRef.current.scrollLeft + elementOffset - (containerWidth / 2) + (selectedElement.clientWidth / 2);
-        
-        carouselRef.current.scrollTo({
-          left: scrollPosition,
-          behavior: 'smooth'
-        });
-      }
-    }
-  }, [selectedAlbumId, isRtl]);
-
-  // Scroll functions
-  const scrollCarousel = (direction: 'left' | 'right') => {
-    if (carouselRef.current) {
-      const scrollAmount = carouselRef.current.clientWidth * 0.75;
-      const newScrollPosition = carouselRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
-      
-      carouselRef.current.scrollTo({
-        left: newScrollPosition,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  const scrollLeft = () => {
-    scrollCarousel(isRtl ? 'right' : 'left');
-  };
-
-  const scrollRight = () => {
-    scrollCarousel(isRtl ? 'left' : 'right');
-  };
-
-  // Check if arrows should be shown
-  const [showLeftArrow, setShowLeftArrow] = useState(false);
-  const [showRightArrow, setShowRightArrow] = useState(false);
-
-  useEffect(() => {
-    const checkScrollable = () => {
-      if (carouselRef.current) {
-        const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
-        const maxScrollLeft = scrollWidth - clientWidth;
-        
-        // Update arrow state based on RTL
-        if (isRtl) {
-          setShowLeftArrow(Math.abs(scrollLeft) < maxScrollLeft - 10);
-          setShowRightArrow(scrollLeft < -10);
-        } else {
-          setShowLeftArrow(scrollLeft > 10);
-          setShowRightArrow(scrollLeft < maxScrollLeft - 10);
-        }
-      }
-    };
-
-    checkScrollable();
-    const carousel = carouselRef.current;
-    if (carousel) {
-      carousel.addEventListener('scroll', checkScrollable);
-      window.addEventListener('resize', checkScrollable);
-    }
-
-    return () => {
-      if (carousel) {
-        carousel.removeEventListener('scroll', checkScrollable);
-        window.removeEventListener('resize', checkScrollable);
-      }
-    };
-  }, [isRtl]);
-
   // Render albums in carousel style
   return (
     <div className="relative mt-2">
-      <div 
-        ref={carouselRef}
-        className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-2 py-1 px-1"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      <HorizontalScrollContainer 
+        className="gap-2 py-1 px-1"
+        rtl={isRtl}
+        showArrows={!isMobile}
+        arrowsPosition="sides"
       >
         {/* Add Album Button */}
         <div className="relative min-w-[120px] h-[180px] flex-shrink-0 rounded-xl overflow-hidden border-2 border-dashed border-muted-foreground/30 flex items-center justify-center cursor-pointer group hover:border-primary/50 transition-colors">
@@ -129,7 +47,7 @@ const AlbumCarouselGrid = ({
           <div
             key={album.id}
             data-album-id={album.id}
-            className="fb-story-item min-w-[120px] h-[180px]"
+            className="fb-story-item min-w-[120px] h-[180px] flex-shrink-0 snap-start"
           >
             <AlbumGridItem
               id={album.id}
@@ -141,30 +59,7 @@ const AlbumCarouselGrid = ({
             />
           </div>
         ))}
-      </div>
-      
-      {/* Navigation buttons */}
-      {showLeftArrow && (
-        <Button
-          size="icon"
-          variant="secondary"
-          className="absolute left-0 top-1/2 transform -translate-y-1/2 rounded-full opacity-90 shadow-md"
-          onClick={scrollLeft}
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
-      )}
-      
-      {showRightArrow && (
-        <Button
-          size="icon"
-          variant="secondary"
-          className="absolute right-0 top-1/2 transform -translate-y-1/2 rounded-full opacity-90 shadow-md"
-          onClick={scrollRight}
-        >
-          <ChevronRight className="h-5 w-5" />
-        </Button>
-      )}
+      </HorizontalScrollContainer>
     </div>
   );
 };
