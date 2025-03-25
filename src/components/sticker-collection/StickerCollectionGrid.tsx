@@ -22,6 +22,8 @@ const StickerCollectionGrid = ({
   const isMobile = useIsMobile();
   const [showLeftScroll, setShowLeftScroll] = useState(false);
   const [showRightScroll, setShowRightScroll] = useState(false);
+  const [isHoveringLeft, setIsHoveringLeft] = useState(false);
+  const [isHoveringRight, setIsHoveringRight] = useState(false);
 
   // גבהים קבועים (תתאים אם צריך)
   const HEADER_HEIGHT = 56; // h-14
@@ -125,6 +127,27 @@ const StickerCollectionGrid = ({
     }
   };
 
+  // Mouse hover handlers for scroll buttons
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isMobile || !containerRef.current) return;
+    
+    const container = containerRef.current;
+    const { left, width } = container.getBoundingClientRect();
+    const mouseX = e.clientX - left;
+    const hoverZoneWidth = width * 0.1; // 10% of the container width
+    
+    // Show left button when hovering over left 10% of the grid
+    setIsHoveringLeft(mouseX <= hoverZoneWidth && showLeftScroll);
+    
+    // Show right button when hovering over right 10% of the grid
+    setIsHoveringRight(mouseX >= width - hoverZoneWidth && showRightScroll);
+  };
+  
+  const handleMouseLeave = () => {
+    setIsHoveringLeft(false);
+    setIsHoveringRight(false);
+  };
+
   // התאמת ילדים עם ref
   let modifiedChildren = children;
   const childrenArray = Children.toArray(children);
@@ -151,7 +174,9 @@ const StickerCollectionGrid = ({
         viewMode === 'grid' && "max-h-full",
         activeFilter && "pt-1"
       )}
-      style={{ direction: 'rtl' }}
+      style={{ direction: 'rtl', position: 'relative' }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
     >
       <div
         ref={gridRef}
@@ -173,25 +198,35 @@ const StickerCollectionGrid = ({
         {modifiedChildren}
       </div>
 
-      {/* Scroll buttons - only visible on desktop */}
+      {/* Full-height scroll buttons - desktop only */}
       {!isMobile && showLeftScroll && (
-        <button 
+        <div 
+          className={cn(
+            "hidden lg:flex absolute left-0 top-0 h-full w-10 z-10 items-center justify-center",
+            "bg-gradient-to-r from-black/50 to-transparent",
+            "transition-opacity duration-300",
+            isHoveringLeft ? "opacity-100" : "opacity-0"
+          )}
           onClick={scrollLeft}
-          className="hidden lg:flex absolute left-2 top-1/2 -translate-y-1/2 z-10 items-center justify-center w-10 h-10 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
           aria-label="Scroll left"
         >
-          <ChevronLeft size={24} />
-        </button>
+          <ChevronLeft size={24} className="text-white" />
+        </div>
       )}
       
       {!isMobile && showRightScroll && (
-        <button 
+        <div 
+          className={cn(
+            "hidden lg:flex absolute right-0 top-0 h-full w-10 z-10 items-center justify-center",
+            "bg-gradient-to-l from-black/50 to-transparent",
+            "transition-opacity duration-300",
+            isHoveringRight ? "opacity-100" : "opacity-0"
+          )}
           onClick={scrollRight}
-          className="hidden lg:flex absolute right-2 top-1/2 -translate-y-1/2 z-10 items-center justify-center w-10 h-10 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
           aria-label="Scroll right"
         >
-          <ChevronRight size={24} />
-        </button>
+          <ChevronRight size={24} className="text-white" />
+        </div>
       )}
     </div>
   );
