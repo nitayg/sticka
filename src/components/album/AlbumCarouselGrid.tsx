@@ -5,8 +5,6 @@ import { ChevronLeft, ChevronRight, PlusCircle } from "lucide-react";
 import { Button } from "../ui/button";
 import AlbumGridItem from "./AlbumGridItem";
 import AddAlbumForm from "@/components/add-album-form";
-import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AlbumCarouselGridProps {
   albums: Album[];
@@ -23,9 +21,6 @@ const AlbumCarouselGrid = ({
 }: AlbumCarouselGridProps) => {
   const carouselRef = useRef<HTMLDivElement>(null);
   const isRtl = document.dir === 'rtl' || document.documentElement.lang === 'he';
-  const isMobile = useIsMobile();
-  const [isHoveringLeft, setIsHoveringLeft] = useState(false);
-  const [isHoveringRight, setIsHoveringRight] = useState(false);
   
   // Check direction
   useEffect(() => {
@@ -110,33 +105,10 @@ const AlbumCarouselGrid = ({
       }
     };
   }, [isRtl]);
-  
-  // Mouse hover handlers for scroll buttons
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isMobile || !carouselRef.current) return;
-    
-    const container = carouselRef.current;
-    const { left, width } = container.getBoundingClientRect();
-    const mouseX = e.clientX - left;
-    const hoverZoneWidth = width * 0.1; // 10% of the container width
-    
-    // Show left button when hovering over left 10% of the carousel
-    setIsHoveringLeft(mouseX <= hoverZoneWidth && showLeftArrow);
-    
-    // Show right button when hovering over right 10% of the carousel
-    setIsHoveringRight(mouseX >= width - hoverZoneWidth && showRightArrow);
-  };
-  
-  const handleMouseLeave = () => {
-    setIsHoveringLeft(false);
-    setIsHoveringRight(false);
-  };
 
   // Render albums in carousel style
   return (
-    <div className="relative mt-2"
-         onMouseMove={handleMouseMove}
-         onMouseLeave={handleMouseLeave}>
+    <div className="relative mt-2">
       <div 
         ref={carouselRef}
         className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-2 py-1 px-1"
@@ -171,35 +143,27 @@ const AlbumCarouselGrid = ({
         ))}
       </div>
       
-      {/* Full-height scroll buttons - desktop only */}
-      {!isMobile && showLeftArrow && (
-        <div
-          className={cn(
-            "hidden lg:flex absolute left-0 top-0 h-full w-10 z-10 items-center justify-center",
-            "bg-gradient-to-r from-black/50 to-transparent",
-            "transition-opacity duration-300",
-            isHoveringLeft ? "opacity-100" : "opacity-0"
-          )}
+      {/* Navigation buttons */}
+      {showLeftArrow && (
+        <Button
+          size="icon"
+          variant="secondary"
+          className="absolute left-0 top-1/2 transform -translate-y-1/2 rounded-full opacity-90 shadow-md"
           onClick={scrollLeft}
-          aria-label="Scroll left"
         >
-          <ChevronLeft className="h-5 w-5 text-white" />
-        </div>
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
       )}
       
-      {!isMobile && showRightArrow && (
-        <div
-          className={cn(
-            "hidden lg:flex absolute right-0 top-0 h-full w-10 z-10 items-center justify-center",
-            "bg-gradient-to-l from-black/50 to-transparent",
-            "transition-opacity duration-300",
-            isHoveringRight ? "opacity-100" : "opacity-0"
-          )}
+      {showRightArrow && (
+        <Button
+          size="icon"
+          variant="secondary"
+          className="absolute right-0 top-1/2 transform -translate-y-1/2 rounded-full opacity-90 shadow-md"
           onClick={scrollRight}
-          aria-label="Scroll right"
         >
-          <ChevronRight className="h-5 w-5 text-white" />
-        </div>
+          <ChevronRight className="h-5 w-5" />
+        </Button>
       )}
     </div>
   );

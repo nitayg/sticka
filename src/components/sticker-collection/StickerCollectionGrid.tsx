@@ -1,8 +1,6 @@
 
 import { ReactNode, useEffect, useState, useRef, Children, isValidElement } from 'react';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 interface StickerCollectionGridProps {
   viewMode: 'grid' | 'list' | 'compact';
@@ -18,12 +16,6 @@ const StickerCollectionGrid = ({
   const [rowCount, setRowCount] = useState(3);
   const itemRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const isMobile = useIsMobile();
-  const [showLeftScroll, setShowLeftScroll] = useState(false);
-  const [showRightScroll, setShowRightScroll] = useState(false);
-  const [isHoveringLeft, setIsHoveringLeft] = useState(false);
-  const [isHoveringRight, setIsHoveringRight] = useState(false);
 
   // גבהים קבועים (תתאים אם צריך)
   const HEADER_HEIGHT = 56; // h-14
@@ -84,70 +76,6 @@ const StickerCollectionGrid = ({
     return () => window.removeEventListener('resize', calculateLayout);
   }, [viewMode]);
 
-  // Check scroll buttons visibility
-  useEffect(() => {
-    if (isMobile || !containerRef.current) return;
-
-    const checkScrollButtons = () => {
-      const container = containerRef.current;
-      if (!container) return;
-
-      const { scrollLeft, scrollWidth, clientWidth } = container;
-      setShowLeftScroll(scrollLeft > 10);
-      setShowRightScroll(scrollLeft < scrollWidth - clientWidth - 10);
-    };
-
-    const container = containerRef.current;
-    container.addEventListener('scroll', checkScrollButtons);
-    checkScrollButtons(); // Initial check
-
-    window.addEventListener('resize', checkScrollButtons);
-    return () => {
-      container.removeEventListener('scroll', checkScrollButtons);
-      window.removeEventListener('resize', checkScrollButtons);
-    };
-  }, [isMobile]);
-
-  // Scroll handlers
-  const scrollLeft = () => {
-    if (containerRef.current) {
-      containerRef.current.scrollBy({
-        left: -300,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  const scrollRight = () => {
-    if (containerRef.current) {
-      containerRef.current.scrollBy({
-        left: 300,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  // Mouse hover handlers for scroll buttons
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isMobile || !containerRef.current) return;
-    
-    const container = containerRef.current;
-    const { left, width } = container.getBoundingClientRect();
-    const mouseX = e.clientX - left;
-    const hoverZoneWidth = width * 0.1; // 10% of the container width
-    
-    // Show left button when hovering over left 10% of the grid
-    setIsHoveringLeft(mouseX <= hoverZoneWidth && showLeftScroll);
-    
-    // Show right button when hovering over right 10% of the grid
-    setIsHoveringRight(mouseX >= width - hoverZoneWidth && showRightScroll);
-  };
-  
-  const handleMouseLeave = () => {
-    setIsHoveringLeft(false);
-    setIsHoveringRight(false);
-  };
-
   // התאמת ילדים עם ref
   let modifiedChildren = children;
   const childrenArray = Children.toArray(children);
@@ -166,17 +94,14 @@ const StickerCollectionGrid = ({
 
   return (
     <div
-      ref={containerRef}
       className={cn(
-        "overflow-x-auto pb-4 px-2 scrollbar-hide transition-all duration-300 backdrop-blur-sm relative",
+        "overflow-x-auto pb-4 px-2 scrollbar-hide transition-all duration-300 backdrop-blur-sm",
         viewMode === 'compact' && "max-h-full",
         viewMode === 'list' && "max-h-full",
         viewMode === 'grid' && "max-h-full",
         activeFilter && "pt-1"
       )}
-      style={{ direction: 'rtl', position: 'relative' }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
+      style={{ direction: 'rtl' }}
     >
       <div
         ref={gridRef}
@@ -197,37 +122,6 @@ const StickerCollectionGrid = ({
       >
         {modifiedChildren}
       </div>
-
-      {/* Full-height scroll buttons - desktop only */}
-      {!isMobile && showLeftScroll && (
-        <div 
-          className={cn(
-            "hidden lg:flex absolute left-0 top-0 h-full w-10 z-10 items-center justify-center",
-            "bg-gradient-to-r from-black/50 to-transparent",
-            "transition-opacity duration-300",
-            isHoveringLeft ? "opacity-100" : "opacity-0"
-          )}
-          onClick={scrollLeft}
-          aria-label="Scroll left"
-        >
-          <ChevronLeft size={24} className="text-white" />
-        </div>
-      )}
-      
-      {!isMobile && showRightScroll && (
-        <div 
-          className={cn(
-            "hidden lg:flex absolute right-0 top-0 h-full w-10 z-10 items-center justify-center",
-            "bg-gradient-to-l from-black/50 to-transparent",
-            "transition-opacity duration-300",
-            isHoveringRight ? "opacity-100" : "opacity-0"
-          )}
-          onClick={scrollRight}
-          aria-label="Scroll right"
-        >
-          <ChevronRight size={24} className="text-white" />
-        </div>
-      )}
     </div>
   );
 };
