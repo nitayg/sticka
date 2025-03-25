@@ -1,8 +1,8 @@
 
 import { ReactNode, useEffect, useState, useRef, Children, isValidElement } from 'react';
 import { cn } from '@/lib/utils';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import HorizontalScrollContainer from '@/components/ui/horizontal-scroll-container';
 
 interface StickerCollectionGridProps {
   viewMode: 'grid' | 'list' | 'compact';
@@ -18,7 +18,10 @@ const StickerCollectionGrid = ({
   const [rowCount, setRowCount] = useState(3);
   const itemRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const [showLeftScroll, setShowLeftScroll] = useState(false);
+  const [showRightScroll, setShowRightScroll] = useState(false);
 
   // גבהים קבועים (תתאים אם צריך)
   const HEADER_HEIGHT = 56; // h-14
@@ -79,6 +82,49 @@ const StickerCollectionGrid = ({
     return () => window.removeEventListener('resize', calculateLayout);
   }, [viewMode]);
 
+  // Check scroll buttons visibility
+  useEffect(() => {
+    if (isMobile || !containerRef.current) return;
+
+    const checkScrollButtons = () => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const { scrollLeft, scrollWidth, clientWidth } = container;
+      setShowLeftScroll(scrollLeft > 10);
+      setShowRightScroll(scrollLeft < scrollWidth - clientWidth - 10);
+    };
+
+    const container = containerRef.current;
+    container.addEventListener('scroll', checkScrollButtons);
+    checkScrollButtons(); // Initial check
+
+    window.addEventListener('resize', checkScrollButtons);
+    return () => {
+      container.removeEventListener('scroll', checkScrollButtons);
+      window.removeEventListener('resize', checkScrollButtons);
+    };
+  }, [isMobile]);
+
+  // Scroll handlers
+  const scrollLeft = () => {
+    if (containerRef.current) {
+      containerRef.current.scrollBy({
+        left: -300,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const scrollRight = () => {
+    if (containerRef.current) {
+      containerRef.current.scrollBy({
+        left: 300,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   // התאמת ילדים עם ref
   let modifiedChildren = children;
   const childrenArray = Children.toArray(children);
@@ -95,41 +141,11 @@ const StickerCollectionGrid = ({
     }
   }
 
-  // For desktop view, change to a horizontally scrollable container
-  if (!isMobile) {
-    return (
-      <div className={cn(
-        "pb-4 px-2 transition-all duration-300 animate-fade-in",
-        activeFilter && "pt-1"
-      )}>
-        <HorizontalScrollContainer 
-          className="gap-2 py-1 px-1" 
-          showArrows={true}
-          arrowsPosition="sides"
-        >
-          {childrenArray.map((child, index) => (
-            <div 
-              key={index} 
-              className={cn(
-                "flex-shrink-0 snap-start",
-                viewMode === "grid" && "w-[180px]",
-                viewMode === "list" && "w-[250px]",
-                viewMode === "compact" && "w-[100px]"
-              )}
-            >
-              {child}
-            </div>
-          ))}
-        </HorizontalScrollContainer>
-      </div>
-    );
-  }
-
-  // Mobile view - vertical grid layout
   return (
     <div
+      ref={containerRef}
       className={cn(
-        "overflow-x-auto pb-4 px-2 scrollbar-hide transition-all duration-300 backdrop-blur-sm",
+        "overflow-x-auto pb-4 px-2 scrollbar-hide transition-all duration-300 backdrop-blur-sm relative",
         viewMode === 'compact' && "max-h-full",
         viewMode === 'list' && "max-h-full",
         viewMode === 'grid' && "max-h-full",
@@ -156,6 +172,27 @@ const StickerCollectionGrid = ({
       >
         {modifiedChildren}
       </div>
+
+      {/* Scroll buttons - only visible on desktop */}
+      {!isMobile && showLeftScroll && (
+        <button 
+          onClick={scrollLeft}
+          className="hidden lg:flex absolute left-2 top-1/2 -translate-y-1/2 z-10 items-center justify-center w-10 h-10 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+          aria-label="Scroll left"
+        >
+          <ChevronLeft size={24} />
+        </button>
+      )}
+      
+      {!isMobile && showRightScroll && (
+        <button 
+          onClick={scrollRight}
+          className="hidden lg:flex absolute right-2 top-1/2 -translate-y-1/2 z-10 items-center justify-center w-10 h-10 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+          aria-label="Scroll right"
+        >
+          <ChevronRight size={24} />
+        </button>
+      )}
     </div>
   );
 };
