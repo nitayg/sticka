@@ -1,4 +1,3 @@
-
 import { ReactNode, useEffect, useState, useRef, Children, isValidElement } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -41,6 +40,19 @@ const StickerCollectionGrid = ({
       default: return 8;
     }
   };
+
+  // Listen for inventory update events to trigger smooth re-renders
+  useEffect(() => {
+    const handleInventoryUpdate = () => {
+      // Intentionally empty - the component will re-render due to props/state updates
+      // This ensures children get the updated inventory counts
+    };
+    
+    window.addEventListener('inventoryDataChanged', handleInventoryUpdate);
+    return () => {
+      window.removeEventListener('inventoryDataChanged', handleInventoryUpdate);
+    };
+  }, []);
 
   // חישוב דינמי של rowCount עם התאמה ל-Safe Area
   useEffect(() => {

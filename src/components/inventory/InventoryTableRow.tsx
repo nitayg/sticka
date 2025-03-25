@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Plus, Minus } from "lucide-react";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
@@ -23,8 +23,29 @@ const InventoryTableRow = ({
   onToggleSelection,
   onUpdateInventory
 }: InventoryTableRowProps) => {
-  const inventoryCount = sticker.isOwned ? (sticker.duplicateCount || 0) + 1 : 0;
+  // Local state for optimistic UI updates
+  const [localInventoryCount, setLocalInventoryCount] = useState<number>(
+    sticker.isOwned ? (sticker.duplicateCount || 0) + 1 : 0
+  );
+  
+  // Update local state when sticker prop changes
+  useEffect(() => {
+    setLocalInventoryCount(sticker.isOwned ? (sticker.duplicateCount || 0) + 1 : 0);
+  }, [sticker.isOwned, sticker.duplicateCount]);
+
   const isEven = index % 2 === 0;
+
+  const handleUpdateInventory = (increment: boolean) => {
+    // Update local state immediately for optimistic UI
+    if (increment) {
+      setLocalInventoryCount(prev => prev + 1);
+    } else if (localInventoryCount > 0) {
+      setLocalInventoryCount(prev => prev - 1);
+    }
+    
+    // Call the actual update function
+    onUpdateInventory(sticker, increment);
+  };
 
   return (
     <tr 
@@ -56,7 +77,7 @@ const InventoryTableRow = ({
             className="h-7 w-7 rounded-full"
             onClick={(e) => {
               e.stopPropagation();
-              onUpdateInventory(sticker, false);
+              handleUpdateInventory(false);
             }}
             disabled={!sticker.isOwned}
           >
@@ -65,9 +86,9 @@ const InventoryTableRow = ({
           
           <span className={cn(
             "font-medium w-5 text-center",
-            inventoryCount === 0 ? "text-red-500" : "text-green-500"
+            localInventoryCount === 0 ? "text-red-500" : "text-green-500"
           )}>
-            {inventoryCount}
+            {localInventoryCount}
           </span>
           
           <Button
@@ -76,7 +97,7 @@ const InventoryTableRow = ({
             className="h-7 w-7 rounded-full"
             onClick={(e) => {
               e.stopPropagation();
-              onUpdateInventory(sticker, true);
+              handleUpdateInventory(true);
             }}
           >
             <Plus className="h-3.5 w-3.5" />
