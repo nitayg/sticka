@@ -6,6 +6,7 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/comp
 import { useToast } from "@/components/ui/use-toast";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { deleteAlbum } from "@/lib/album-operations";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AlbumGridItemProps {
   id: string;
@@ -19,7 +20,9 @@ interface AlbumGridItemProps {
 const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: AlbumGridItemProps) => {
   const [hovered, setHovered] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -35,6 +38,7 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
 
   const confirmDelete = async () => {
     try {
+      setIsDeleting(true);
       const success = await deleteAlbum(id);
       
       if (success) {
@@ -43,6 +47,11 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
           description: `האלבום "${name}" נמחק בהצלחה`,
         });
         
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['albums'] });
+        queryClient.invalidateQueries({ queryKey: ['stickers'] });
+        
+        // Dispatch event for other components to know about the change
         window.dispatchEvent(new CustomEvent('albumDataChanged'));
       } else {
         throw new Error("Failed to delete album");
@@ -55,6 +64,7 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
         variant: "destructive",
       });
     } finally {
+      setIsDeleting(false);
       setShowDeleteDialog(false);
     }
   };
@@ -110,6 +120,7 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
                   <button 
                     className="p-1.5 bg-white/90 rounded-full hover:bg-white text-gray-800 transition-transform hover:scale-110 shadow-lg"
                     onClick={handleDelete}
+                    disabled={isDeleting}
                   >
                     <Trash size={16} />
                   </button>
@@ -146,7 +157,20 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-row-reverse justify-end gap-2">
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90 transition-colors">מחק</AlertDialogAction>
+            <AlertDialogAction 
+              onClick={confirmDelete} 
+              className="bg-destructive hover:bg-destructive/90 transition-colors"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  מוחק...
+                </span>
+              ) : (
+                "מחק"
+              )}
+            </AlertDialogAction>
             <AlertDialogCancel className="transition-colors">ביטול</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
