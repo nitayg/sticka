@@ -7,6 +7,7 @@ import { NavigationItem } from "@/lib/types";
 import { useTheme } from "@/hooks/use-theme";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LayoutProps {
   children: ReactNode;
@@ -18,6 +19,7 @@ const Layout = ({ children }: LayoutProps) => {
   const [isScrollingDown, setIsScrollingDown] = useState(false);
   const { theme } = useTheme();
   const location = useLocation();
+  const isMobile = useIsMobile();
   
   // Track if we're on the main album view to control overflow behavior
   const isAlbumView = location.pathname === "/";
@@ -65,7 +67,7 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <div className={cn(
       "min-h-screen bg-background flex flex-col w-full", 
-      isAlbumView && "overflow-hidden", // שינוי מ-prevent-scroll ל-overflow-hidden
+      isMobile && isAlbumView && "overflow-hidden", // רק מוביילים צריכים מניעת גלילה
       "dir-rtl" // Ensure RTL direction
     )}>
       {/* Mobile Header */}
@@ -85,11 +87,11 @@ const Layout = ({ children }: LayoutProps) => {
         {/* Main Content */}
         <main className={cn(
           "flex-1 pt-14 pb-24 w-full", 
-          isAlbumView ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"
+          isMobile && isAlbumView ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"
         )}>
           <div className={cn(
             "max-w-4xl mx-auto px-1",
-            isAlbumView ? "h-[calc(100vh-9.5rem)] overflow-hidden" : ""
+            isMobile && isAlbumView ? "h-[calc(100vh-9.5rem)] overflow-hidden" : ""
           )}>
             {children}
           </div>
