@@ -5,14 +5,14 @@ import { Album } from "@/lib/types";
 import AlbumCarousel from "./inventory/AlbumCarousel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, SwapHorizontal, Search } from "lucide-react";
-import AddExchangeDialog from "./exchanges/AddExchangeDialog";
+import { Plus, ArrowLeftRight, Search } from "lucide-react"; // החלפתי SwapHorizontal ב-ArrowLeftRight
+import AddExchangeDialog from "./exchange/AddExchangeDialog"; // תיקנתי את הנתיב
 import { useToast } from "@/components/ui/use-toast";
 import { Card } from "@/components/ui/card";
-import ExchangeCardContent from "./exchanges/ExchangeCardContent";
-import { EmptyState } from "./ui/empty-state";
-import { LoadingSpinner } from "./ui/loading";
-import UpdateExchangeDialog from "./exchanges/UpdateExchangeDialog";
+import ExchangeCard from "./exchange/card"; // החלפתי ExchangeCardContent ב-ExchangeCard
+import EmptyState from "../EmptyState"; // תיקנתי את הנתיב
+import { LoadingSpinner } from "./ui/loading"; // תיקנתי את הנתיב
+import UpdateExchangeDialog from "./exchange/UpdateExchangeDialog"; // תיקנתי את הנתיב
 import {
   fetchExchangeOffers,
   saveExchangeOffer,
@@ -233,7 +233,7 @@ const ExchangeView = () => {
               <div className="space-y-4">
                 {myExchanges.map(exchange => (
                   <Card key={exchange.id} className="transition-all hover:shadow-md">
-                    <ExchangeCardContent
+                    <ExchangeCard
                       exchange={exchange}
                       onUpdate={() => {
                         setSelectedExchange(exchange);
@@ -250,7 +250,7 @@ const ExchangeView = () => {
               <EmptyState
                 title="אין לך הצעות החלפה"
                 description="הוסף הצעת החלפה חדשה כדי להתחיל"
-                icon={<SwapHorizontal className="h-12 w-12 text-muted-foreground" />}
+                icon={<ArrowLeftRight className="h-12 w-12 text-muted-foreground" />}
               />
             )}
           </TabsContent>
@@ -273,7 +273,7 @@ const ExchangeView = () => {
               <div className="space-y-4">
                 {availableExchanges.map(exchange => (
                   <Card key={exchange.id} className="transition-all hover:shadow-md">
-                    <ExchangeCardContent
+                    <ExchangeCard
                       exchange={exchange}
                       onUpdate={undefined}
                       onDelete={undefined}
