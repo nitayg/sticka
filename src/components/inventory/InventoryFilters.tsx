@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Album } from "@/lib/types";
 import AlbumCarousel from "./AlbumCarousel";
@@ -42,10 +41,8 @@ const InventoryFilters = ({
   showImages,
   setShowImages
 }: InventoryFiltersProps) => {
-  // Function to handle album edit
   const handleAlbumEdit = (albumId: string) => {
     console.log("Album edit functionality:", albumId);
-    // This is a placeholder function for album editing
   };
 
   return (
