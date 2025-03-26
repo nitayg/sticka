@@ -9,7 +9,7 @@ interface AlbumCarouselProps {
   albums: Album[];
   selectedAlbumId: string;
   onAlbumChange: (albumId: string) => void;
-  onAlbumEdit: () => void;
+  onAlbumEdit?: () => void;
 }
 
 const AlbumCarousel = ({ 
@@ -35,7 +35,7 @@ const AlbumCarousel = ({
   const handleSaveAlbum = () => {
     setShowEditForm(false);
     setAlbumToEdit(null);
-    onAlbumEdit();
+    if (onAlbumEdit) onAlbumEdit();
   };
 
   return (
@@ -49,7 +49,6 @@ const AlbumCarousel = ({
       
       {showEditForm && albumToEdit && (
         <EditAlbumForm
-          albumId={albumToEdit}
           onAlbumAdded={handleSaveAlbum}
           onCancel={() => setShowEditForm(false)}
         />

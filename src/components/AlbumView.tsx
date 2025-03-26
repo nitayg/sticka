@@ -91,11 +91,12 @@ const AlbumView = () => {
   
   return (
     <>
-      <AlbumEventHandler onDataChange={() => setRefreshKey(prev => prev + 1)} />
+      {selectedAlbum && <AlbumEventHandler album={selectedAlbum} onDataChange={() => setRefreshKey(prev => prev + 1)} />}
       
       <div className="flex flex-col h-full pt-14 pb-16">
         <AlbumHeader 
-          album={selectedAlbum} 
+          albums={[selectedAlbum]} 
+          selectedAlbumId={selectedAlbum.id}
           viewMode={viewMode} 
           setViewMode={setViewMode}
           showImages={showImages}
@@ -113,15 +114,21 @@ const AlbumView = () => {
         </div>
         
         <FilteredStickerContainer 
-          albumId={selectedAlbumId} 
+          stickers={[]} 
+          selectedAlbumId={selectedAlbumId}
+          activeTab="number"
+          selectedRange={null}
+          selectedTeam={null}
+          showAllAlbumStickers={false}
           viewMode={viewMode}
           showImages={showImages}
+          onRefresh={() => setRefreshKey(prev => prev + 1)}
+          transactionMap={{}}
         />
       </div>
       
       {showEditForm && albumToEdit && (
         <EditAlbumForm 
-          albumId={albumToEdit}
           onAlbumAdded={handleSaveAlbum}
           onCancel={() => setShowEditForm(false)}
         />

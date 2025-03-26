@@ -3,9 +3,19 @@ import { supabase } from '../supabase';
 import { syncWithSupabase } from './sync-manager';
 import { StorageEvents } from './constants';
 
+// Track active channel to prevent multiple subscriptions
+let activeChannel: any = null;
+
 // Set up real-time subscriptions to Supabase with improved error handling
 export const setupRealtimeSubscriptions = () => {
   console.log('Setting up real-time subscriptions...');
+  
+  // If we already have an active channel, unsubscribe from it first
+  if (activeChannel) {
+    console.log('Closing previous realtime channel');
+    activeChannel.unsubscribe();
+    activeChannel = null;
+  }
   
   // Create a channel for all tables with improved configuration
   const channel = supabase.channel('public:all-changes', {
@@ -56,7 +66,7 @@ export const setupRealtimeSubscriptions = () => {
   
   // Enhanced subscription with online/offline detection
   const subscribeToChannel = () => {
-    channel.subscribe((status) => {
+    channel.subscribe((status: string) => {
       console.log('Supabase channel status:', status);
       switch (status) {
         case 'SUBSCRIBED':
@@ -109,15 +119,25 @@ export const setupRealtimeSubscriptions = () => {
     // when the connection is restored
   });
   
+  // Store the active channel for reference
+  activeChannel = channel;
+  
   return channel;
 };
 
 // Helper function to manually reconnect channel (can be exported for manual reconnection)
 export const reconnectRealtimeChannel = (channel: ReturnType<typeof supabase.channel>) => {
-  if (channel.state !== 'joined') {
+  if (!activeChannel) {
+    console.log('No active channel, creating new connection');
+    return setupRealtimeSubscriptions();
+  }
+  
+  if (activeChannel.state !== 'joined') {
     console.log('Manually reconnecting realtime channel...');
-    channel.subscribe();
+    activeChannel.subscribe();
   } else {
     console.log('Channel already subscribed, no action needed');
   }
+  
+  return activeChannel;
 };
