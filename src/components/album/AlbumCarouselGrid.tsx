@@ -1,10 +1,13 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import { Album } from "@/lib/types";
-import { ChevronLeft, ChevronRight, PlusCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, PlusCircle, Pencil, Check, X } from "lucide-react";
 import { Button } from "../ui/button";
 import AlbumGridItem from "./AlbumGridItem";
 import AddAlbumForm from "@/components/add-album-form";
+import { useAlbumOrderStore } from "@/store/useAlbumOrderStore";
+import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
+import { cn } from "@/lib/utils";
 
 interface AlbumCarouselGridProps {
   albums: Album[];
@@ -21,6 +24,33 @@ const AlbumCarouselGrid = ({
 }: AlbumCarouselGridProps) => {
   const carouselRef = useRef<HTMLDivElement>(null);
   const isRtl = document.dir === 'rtl' || document.documentElement.lang === 'he';
+  
+  // Album order state
+  const { 
+    orderedAlbumIds, 
+    isEditModeActive,
+    reorderAlbum,
+    toggleEditMode,
+    setEditMode,
+    initializeOrder
+  } = useAlbumOrderStore();
+  
+  // Order the albums based on our stored order
+  const orderedAlbums = [...albums].sort((a, b) => {
+    const indexA = orderedAlbumIds.indexOf(a.id);
+    const indexB = orderedAlbumIds.indexOf(b.id);
+    
+    // If album not in order list, put at end
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    
+    return indexA - indexB;
+  });
+  
+  // Initialize album order if needed
+  useEffect(() => {
+    initializeOrder();
+  }, [albums, initializeOrder]);
   
   // Check direction
   useEffect(() => {
@@ -106,42 +136,136 @@ const AlbumCarouselGrid = ({
     };
   }, [isRtl]);
 
+  // Handle drag end event
+  const handleDragEnd = (result: DropResult) => {
+    const { source, destination } = result;
+    
+    // Dropped outside the list
+    if (!destination) {
+      return;
+    }
+    
+    // If position changed
+    if (source.index !== destination.index) {
+      reorderAlbum(source.index, destination.index);
+    }
+  };
+
+  const handleCancel = () => {
+    initializeOrder(); // Reset to original order
+    setEditMode(false);
+  };
+
   // Render albums in carousel style
   return (
     <div className="relative mt-2">
-      <div 
-        ref={carouselRef}
-        className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-2 py-1 px-1"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        {/* Add Album Button */}
-        <div className="relative min-w-[120px] h-[180px] flex-shrink-0 rounded-xl overflow-hidden border-2 border-dashed border-muted-foreground/30 flex items-center justify-center cursor-pointer group hover:border-primary/50 transition-colors">
-          <AddAlbumForm iconOnly>
-            <div className="flex flex-col items-center justify-center h-full w-full text-muted-foreground group-hover:text-primary transition-colors">
-              <PlusCircle className="h-14 w-14" />
-              <span className="text-sm mt-2">הוסף אלבום</span>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="album-carousel" direction="horizontal">
+          {(provided) => (
+            <div 
+              ref={(el) => {
+                // Assign both refs
+                provided.innerRef(el);
+                // @ts-ignore - This is fine, we're just assigning multiple refs
+                carouselRef.current = el;
+              }}
+              className={cn(
+                "flex overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-2 py-1 px-1",
+                isEditModeActive && "pb-8" // Extra space for instruction text
+              )}
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              {...provided.droppableProps}
+            >
+              {/* Add Album Button */}
+              <div className="relative min-w-[120px] h-[180px] flex-shrink-0 rounded-xl overflow-hidden border-2 border-dashed border-muted-foreground/30 flex items-center justify-center cursor-pointer group hover:border-primary/50 transition-colors">
+                <AddAlbumForm iconOnly onAlbumAdded={initializeOrder}>
+                  <div className="flex flex-col items-center justify-center h-full w-full text-muted-foreground group-hover:text-primary transition-colors">
+                    <PlusCircle className="h-14 w-14" />
+                    <span className="text-sm mt-2">הוסף אלבום</span>
+                  </div>
+                </AddAlbumForm>
+
+                {/* Edit Button */}
+                <div className="absolute top-2 left-2 flex gap-2">
+                  {!isEditModeActive ? (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors"
+                      onClick={toggleEditMode}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 rounded-full bg-green-800 hover:bg-green-700 transition-colors"
+                        onClick={toggleEditMode}
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 rounded-full bg-red-800 hover:bg-red-700 transition-colors"
+                        onClick={handleCancel}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+              
+              {/* Album Items */}
+              {orderedAlbums.map((album, index) => (
+                <Draggable 
+                  key={album.id} 
+                  draggableId={album.id} 
+                  index={index}
+                  isDragDisabled={!isEditModeActive}
+                >
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      data-album-id={album.id}
+                      className={cn(
+                        "fb-story-item min-w-[120px] h-[180px] transition-all",
+                        snapshot.isDragging && "opacity-80 shadow-lg z-10"
+                      )}
+                      style={{
+                        ...provided.draggableProps.style,
+                        cursor: isEditModeActive ? 'grab' : 'pointer'
+                      }}
+                    >
+                      <AlbumGridItem
+                        id={album.id}
+                        name={album.name}
+                        coverImage={album.coverImage}
+                        isSelected={selectedAlbumId === album.id}
+                        onSelect={() => !isEditModeActive && onAlbumChange(album.id)}
+                        onEdit={() => !isEditModeActive && onEdit(album.id)}
+                      />
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
             </div>
-          </AddAlbumForm>
+          )}
+        </Droppable>
+      </DragDropContext>
+      
+      {/* Reordering instructions */}
+      {isEditModeActive && (
+        <div className="absolute bottom-0 left-0 right-0 text-center text-sm text-muted-foreground">
+          גרור כדי לשנות סדר
         </div>
-        
-        {/* Album Items */}
-        {albums.map((album) => (
-          <div
-            key={album.id}
-            data-album-id={album.id}
-            className="fb-story-item min-w-[120px] h-[180px]"
-          >
-            <AlbumGridItem
-              id={album.id}
-              name={album.name}
-              coverImage={album.coverImage}
-              isSelected={selectedAlbumId === album.id}
-              onSelect={() => onAlbumChange(album.id)}
-              onEdit={() => onEdit(album.id)}
-            />
-          </div>
-        ))}
-      </div>
+      )}
       
       {/* Navigation buttons */}
       {showLeftArrow && (

@@ -9,6 +9,7 @@ import { deleteAlbum } from "@/lib/album-operations";
 import { useQueryClient } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
 import { getStats } from "@/lib/stickers/stats-operations";
+import { useAlbumOrderStore } from "@/store/useAlbumOrderStore";
 
 interface AlbumGridItemProps {
   id: string;
@@ -25,6 +26,7 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isEditModeActive } = useAlbumOrderStore();
   
   // Calculate completion percentage for this album
   const stats = getStats(id);
@@ -34,14 +36,16 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onEdit) {
+    if (onEdit && !isEditModeActive) {
       onEdit(id);
     }
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setShowDeleteDialog(true);
+    if (!isEditModeActive) {
+      setShowDeleteDialog(true);
+    }
   };
 
   const confirmDelete = async () => {
@@ -85,7 +89,8 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
           "border relative",
           isSelected 
             ? "border-2 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]" 
-            : "border-gray-800 hover:border-gray-700"
+            : "border-gray-800 hover:border-gray-700",
+          isEditModeActive && "cursor-grab"
         )}
         onClick={onSelect}
         onMouseEnter={() => setHovered(true)}
@@ -108,7 +113,7 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent transition-opacity duration-300 group-hover:opacity-80" />
 
           <TooltipProvider>
-            <div className={`absolute top-2 right-2 flex gap-1 transition-all duration-300 ${hovered ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'}`}>
+            <div className={`absolute top-2 right-2 flex gap-1 transition-all duration-300 ${(hovered && !isEditModeActive) ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'}`}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button 
@@ -159,7 +164,7 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
         </div>
         
         {/* Selection indicator */}
-        {isSelected && (
+        {isSelected && !isEditModeActive && (
           <div className="absolute top-0 left-0 w-0 h-0 border-t-[24px] border-l-[24px] border-blue-500 border-r-transparent border-b-transparent">
             <div className="absolute -top-[18px] -left-[14px] text-white text-[10px]">✓</div>
           </div>

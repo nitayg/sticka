@@ -1,0 +1,18 @@
+
+/* Drag and drop styling */
+.dragging {
+  opacity: 0.8;
+  cursor: grabbing !important;
+  transform: scale(1.05);
+  z-index: 100;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Add dropping placeholder styling */
+.drop-placeholder {
+  border: 2px dashed var(--primary);
+  background-color: var(--primary-foreground);
+  opacity: 0.2;
+  border-radius: 0.5rem;
+}
+

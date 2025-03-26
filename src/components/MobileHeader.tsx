@@ -6,6 +6,8 @@ import SettingsButton from "./settings/SettingsButton";
 import ViewModeToggle from "./ViewModeToggle";
 import { useAlbumStore } from "@/store/useAlbumStore";
 import SyncIndicator from "./SyncIndicator";
+import { useAlbumOrderStore } from "@/store/useAlbumOrderStore";
+import { useEffect } from "react";
 
 interface MobileHeaderProps {
   isMenuOpen: boolean;
@@ -15,6 +17,14 @@ interface MobileHeaderProps {
 const MobileHeader = ({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) => {
   const { theme, setTheme } = useTheme();
   const { viewMode, setViewMode, showImages, setShowImages } = useAlbumStore();
+  const { isEditModeActive, setEditMode } = useAlbumOrderStore();
+  
+  // Ensure edit mode is disabled when navigating away
+  useEffect(() => {
+    return () => {
+      setEditMode(false);
+    };
+  }, [setEditMode]);
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
