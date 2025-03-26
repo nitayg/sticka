@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useCallback } from "react";
 import { useAlbumStore } from "@/store/useAlbumStore";
 import { getAllAlbums } from "@/lib/data";
 import { Album, ExchangeOffer } from "@/lib/types";
@@ -10,7 +11,7 @@ import AddExchangeDialog from "./exchange/AddExchangeDialog";
 import { useToast } from "@/components/ui/use-toast";
 import { Card } from "@/components/ui/card";
 import ExchangeCard from "./exchange/card";
-import EmptyState from "./EmptyState"; // תיקנתי את הנתיב מ-../EmptyState ל-./EmptyState
+import EmptyState from "./EmptyState";
 import { LoadingSpinner } from "./ui/loading";
 import UpdateExchangeDialog from "./exchange/UpdateExchangeDialog";
 import {
@@ -32,6 +33,11 @@ const ExchangeView = () => {
   const { toast } = useToast();
   const [refreshData, setRefreshData] = useState(false);
   
+  // Use useCallback to prevent infinite rendering
+  const handleRefreshData = useCallback(() => {
+    setRefreshData(prev => !prev);
+  }, []);
+
   useEffect(() => {
     const allAlbums = getAllAlbums();
     setAlbums(allAlbums);
@@ -40,55 +46,53 @@ const ExchangeView = () => {
     }
   }, [setSelectedAlbumId, selectedAlbumId]);
   
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!selectedAlbumId) return;
-      
-      setLoading(true);
-      try {
-        const allExchanges = await fetchExchangeOffers() || [];
-        
-        // Filter exchanges based on the selected album
-        const albumExchanges = allExchanges.filter(exchange => exchange.albumId === selectedAlbumId);
-        
-        // Filter exchanges based on the current user (assuming you have a way to identify the current user)
-        const currentUserId = "user-001"; // Replace with the actual user ID
-        const myExchanges = albumExchanges.filter(exchange => exchange.userId === currentUserId);
-        const availableExchanges = albumExchanges.filter(exchange => exchange.userId !== currentUserId);
-        
-        // Further filter based on status
-        const filterByStatus = (exchanges: ExchangeOffer[]) => {
-          if (filterStatus === "active") {
-            return exchanges.filter(exchange => exchange.status === "active");
-          } else if (filterStatus === "completed") {
-            return exchanges.filter(exchange => exchange.status === "completed");
-          }
-          return exchanges;
-        };
-        
-        setMyExchanges(filterByStatus(myExchanges));
-        setAvailableExchanges(filterByStatus(availableExchanges));
-      } catch (error) {
-        console.error("Failed to fetch exchanges:", error);
-        toast({
-          title: "Failed to fetch exchanges",
-          description: "There was an error fetching the exchange offers.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Use useCallback for fetching data to prevent infinite loops
+  const fetchData = useCallback(async () => {
+    if (!selectedAlbumId) return;
     
+    setLoading(true);
+    try {
+      const allExchanges = await fetchExchangeOffers() || [];
+      
+      // Filter exchanges based on the selected album
+      const albumExchanges = allExchanges.filter(exchange => exchange.albumId === selectedAlbumId);
+      
+      // Filter exchanges based on the current user (assuming you have a way to identify the current user)
+      const currentUserId = "user-001"; // Replace with the actual user ID
+      const myExchanges = albumExchanges.filter(exchange => exchange.userId === currentUserId);
+      const availableExchanges = albumExchanges.filter(exchange => exchange.userId !== currentUserId);
+      
+      // Further filter based on status
+      const filterByStatus = (exchanges: ExchangeOffer[]) => {
+        if (filterStatus === "active") {
+          return exchanges.filter(exchange => exchange.status === "active");
+        } else if (filterStatus === "completed") {
+          return exchanges.filter(exchange => exchange.status === "completed");
+        }
+        return exchanges;
+      };
+      
+      setMyExchanges(filterByStatus(myExchanges));
+      setAvailableExchanges(filterByStatus(availableExchanges));
+    } catch (error) {
+      console.error("Failed to fetch exchanges:", error);
+      toast({
+        title: "Failed to fetch exchanges",
+        description: "There was an error fetching the exchange offers.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedAlbumId, filterStatus, toast]);
+  
+  // Separate effect for fetching data to avoid infinite loops
+  useEffect(() => {
     fetchData();
-  }, [selectedAlbumId, filterStatus, refreshData, toast]);
+  }, [fetchData, refreshData]);
   
   const handleAlbumChange = (albumId: string) => {
     setSelectedAlbumId(albumId);
-  };
-  
-  const handleRefreshData = () => {
-    setRefreshData(prev => !prev);
   };
   
   const handleDeleteExchange = async (exchangeId: string) => {
@@ -137,6 +141,7 @@ const ExchangeView = () => {
         ...exchange,
         status: "completed",
       };
+      
       const success = await saveExchangeOffer(updatedExchange);
       
       if (success) {
@@ -210,7 +215,7 @@ const ExchangeView = () => {
               albums={albums}
               selectedAlbumId={selectedAlbumId}
               onAlbumChange={handleAlbumChange}
-              onAlbumEdit={() => handleRefreshData()}
+              onAlbumEdit={handleRefreshData}
             />
             
             {/* Filter Controls */}
@@ -270,7 +275,7 @@ const ExchangeView = () => {
               albums={albums}
               selectedAlbumId={selectedAlbumId}
               onAlbumChange={handleAlbumChange}
-              onAlbumEdit={() => handleRefreshData()}
+              onAlbumEdit={handleRefreshData}
             />
             
             {/* Exchange Cards for Available Exchanges */}

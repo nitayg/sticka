@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import { Album } from "@/lib/types";
 import { ChevronLeft, ChevronRight, PlusCircle, Pencil, Check, X } from "lucide-react";
 import { Button } from "../ui/button";
@@ -8,6 +8,7 @@ import AddAlbumForm from "@/components/add-album-form";
 import { useAlbumOrderStore } from "@/store/useAlbumOrderStore";
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import { cn } from "@/lib/utils";
+import "../../styles/drag-and-drop.css";
 
 interface AlbumCarouselGridProps {
   albums: Album[];
@@ -61,26 +62,26 @@ const AlbumCarouselGrid = ({
   
   // Scroll to selected album when it changes
   useEffect(() => {
-    if (carouselRef.current && selectedAlbumId) {
-      const selectedElement = carouselRef.current.querySelector(`[data-album-id="${selectedAlbumId}"]`);
-      if (selectedElement) {
-        // Calculate scroll position
-        const containerWidth = carouselRef.current.offsetWidth;
-        const elementOffset = isRtl 
-          ? carouselRef.current.scrollWidth - selectedElement.getBoundingClientRect().right + carouselRef.current.getBoundingClientRect().right - containerWidth
-          : selectedElement.getBoundingClientRect().left - carouselRef.current.getBoundingClientRect().left;
-        const scrollPosition = carouselRef.current.scrollLeft + elementOffset - (containerWidth / 2) + (selectedElement.clientWidth / 2);
-        
-        carouselRef.current.scrollTo({
-          left: scrollPosition,
-          behavior: 'smooth'
-        });
-      }
+    if (!carouselRef.current || !selectedAlbumId) return;
+    
+    const selectedElement = carouselRef.current.querySelector(`[data-album-id="${selectedAlbumId}"]`);
+    if (selectedElement) {
+      // Calculate scroll position
+      const containerWidth = carouselRef.current.offsetWidth;
+      const elementOffset = isRtl 
+        ? carouselRef.current.scrollWidth - selectedElement.getBoundingClientRect().right + carouselRef.current.getBoundingClientRect().right - containerWidth
+        : selectedElement.getBoundingClientRect().left - carouselRef.current.getBoundingClientRect().left;
+      const scrollPosition = carouselRef.current.scrollLeft + elementOffset - (containerWidth / 2) + (selectedElement.clientWidth / 2);
+      
+      carouselRef.current.scrollTo({
+        left: scrollPosition,
+        behavior: 'smooth'
+      });
     }
   }, [selectedAlbumId, isRtl]);
 
   // Scroll functions
-  const scrollCarousel = (direction: 'left' | 'right') => {
+  const scrollCarousel = useCallback((direction: 'left' | 'right') => {
     if (carouselRef.current) {
       const scrollAmount = carouselRef.current.clientWidth * 0.75;
       const newScrollPosition = carouselRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
@@ -90,37 +91,37 @@ const AlbumCarouselGrid = ({
         behavior: 'smooth'
       });
     }
-  };
+  }, []);
 
-  const scrollLeft = () => {
+  const scrollLeft = useCallback(() => {
     scrollCarousel(isRtl ? 'right' : 'left');
-  };
+  }, [isRtl, scrollCarousel]);
 
-  const scrollRight = () => {
+  const scrollRight = useCallback(() => {
     scrollCarousel(isRtl ? 'left' : 'right');
-  };
+  }, [isRtl, scrollCarousel]);
 
   // Check if arrows should be shown
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(false);
 
-  useEffect(() => {
-    const checkScrollable = () => {
-      if (carouselRef.current) {
-        const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
-        const maxScrollLeft = scrollWidth - clientWidth;
-        
-        // Update arrow state based on RTL
-        if (isRtl) {
-          setShowLeftArrow(Math.abs(scrollLeft) < maxScrollLeft - 10);
-          setShowRightArrow(scrollLeft < -10);
-        } else {
-          setShowLeftArrow(scrollLeft > 10);
-          setShowRightArrow(scrollLeft < maxScrollLeft - 10);
-        }
+  const checkScrollable = useCallback(() => {
+    if (carouselRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+      const maxScrollLeft = scrollWidth - clientWidth;
+      
+      // Update arrow state based on RTL
+      if (isRtl) {
+        setShowLeftArrow(Math.abs(scrollLeft) < maxScrollLeft - 10);
+        setShowRightArrow(scrollLeft < -10);
+      } else {
+        setShowLeftArrow(scrollLeft > 10);
+        setShowRightArrow(scrollLeft < maxScrollLeft - 10);
       }
-    };
+    }
+  }, [isRtl]);
 
+  useEffect(() => {
     checkScrollable();
     const carousel = carouselRef.current;
     if (carousel) {
@@ -134,10 +135,10 @@ const AlbumCarouselGrid = ({
         window.removeEventListener('resize', checkScrollable);
       }
     };
-  }, [isRtl]);
+  }, [checkScrollable]);
 
   // Handle drag end event
-  const handleDragEnd = (result: DropResult) => {
+  const handleDragEnd = useCallback((result: DropResult) => {
     const { source, destination } = result;
     
     // Dropped outside the list
@@ -149,12 +150,12 @@ const AlbumCarouselGrid = ({
     if (source.index !== destination.index) {
       reorderAlbum(source.index, destination.index);
     }
-  };
+  }, [reorderAlbum]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     initializeOrder(); // Reset to original order
     setEditMode(false);
-  };
+  }, [initializeOrder, setEditMode]);
 
   // Render albums in carousel style
   return (
@@ -192,7 +193,10 @@ const AlbumCarouselGrid = ({
                       size="icon"
                       variant="ghost"
                       className="h-8 w-8 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors"
-                      onClick={toggleEditMode}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleEditMode();
+                      }}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -202,7 +206,10 @@ const AlbumCarouselGrid = ({
                         size="icon"
                         variant="ghost"
                         className="h-8 w-8 rounded-full bg-green-800 hover:bg-green-700 transition-colors"
-                        onClick={toggleEditMode}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleEditMode();
+                        }}
                       >
                         <Check className="h-4 w-4" />
                       </Button>
@@ -210,7 +217,10 @@ const AlbumCarouselGrid = ({
                         size="icon"
                         variant="ghost"
                         className="h-8 w-8 rounded-full bg-red-800 hover:bg-red-700 transition-colors"
-                        onClick={handleCancel}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCancel();
+                        }}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -235,7 +245,7 @@ const AlbumCarouselGrid = ({
                       data-album-id={album.id}
                       className={cn(
                         "fb-story-item min-w-[120px] h-[180px] transition-all",
-                        snapshot.isDragging && "opacity-80 shadow-lg z-10"
+                        snapshot.isDragging && "dragging"
                       )}
                       style={{
                         ...provided.draggableProps.style,

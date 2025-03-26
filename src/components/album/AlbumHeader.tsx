@@ -1,14 +1,16 @@
+
 import React from "react";
 import { Album } from "@/lib/types";
 
-type ViewMode = "grid" | "list"; // אני מגדיר את הטייפ הזה כאן כי הוא לא מוגדר בקבצים ששלחת
+// Define the type properly
+export type ViewMode = "grid" | "list" | "compact";
 
 interface AlbumHeaderProps {
   albums: Album[];
-  viewMode: ViewMode;
-  setViewMode: (mode: ViewMode) => void;
-  showImages: boolean;
-  setShowImages: (show: boolean) => void;
+  viewMode?: ViewMode;
+  setViewMode?: (mode: ViewMode) => void;
+  showImages?: boolean;
+  setShowImages?: (show: boolean) => void;
   onRefresh: () => void;
 }
 

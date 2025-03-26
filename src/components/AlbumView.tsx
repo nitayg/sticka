@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAlbumStore } from "@/store/useAlbumStore";
 import { getAllAlbums } from "@/lib/data";
 import { Album } from "@/lib/types";
@@ -17,6 +17,10 @@ const AlbumView = () => {
   const { selectedAlbumId, setSelectedAlbumId, viewMode, setViewMode, showImages, setShowImages } = useAlbumStore();
   const [refreshKey, setRefreshKey] = useState(0);
   const { orderedAlbumIds, initializeOrder } = useAlbumOrderStore();
+  
+  const handleRefresh = useCallback(() => {
+    setRefreshKey(prev => prev + 1);
+  }, []);
   
   // Get all albums and update state
   useEffect(() => {
@@ -49,29 +53,29 @@ const AlbumView = () => {
   
   useEffect(() => {
     const handleAlbumDataChanged = () => {
-      setRefreshKey(prev => prev + 1);
+      handleRefresh();
     };
     
     window.addEventListener('albumDataChanged', handleAlbumDataChanged);
     return () => {
       window.removeEventListener('albumDataChanged', handleAlbumDataChanged);
     };
-  }, []);
+  }, [handleRefresh]);
   
-  const handleAlbumChange = (albumId: string) => {
+  const handleAlbumChange = useCallback((albumId: string) => {
     setSelectedAlbumId(albumId);
-  };
+  }, [setSelectedAlbumId]);
   
-  const handleEditAlbum = (albumId: string) => {
+  const handleEditAlbum = useCallback((albumId: string) => {
     setAlbumToEdit(albumId);
     setShowEditForm(true);
-  };
+  }, []);
   
-  const handleSaveAlbum = () => {
+  const handleSaveAlbum = useCallback(() => {
     setShowEditForm(false);
-    setRefreshKey(prev => prev + 1);
+    handleRefresh();
     setAlbumToEdit(null);
-  };
+  }, [handleRefresh]);
   
   // If no albums, show empty state
   if (albums.length === 0) {
@@ -91,16 +95,12 @@ const AlbumView = () => {
   
   return (
     <>
-      {selectedAlbum && <AlbumEventHandler album={selectedAlbum} onDataChange={() => setRefreshKey(prev => prev + 1)} />}
+      {selectedAlbum && <AlbumEventHandler album={selectedAlbum} onDataChange={handleRefresh} />}
       
       <div className="flex flex-col h-full pt-14 pb-16">
         <AlbumHeader 
           albums={[selectedAlbum]} 
-          viewMode={viewMode} 
-          setViewMode={setViewMode}
-          showImages={showImages}
-          setShowImages={setShowImages}
-          onRefresh={() => setRefreshKey(prev => prev + 1)}
+          onRefresh={handleRefresh}
         />
         
         <div className="px-2">
@@ -121,7 +121,7 @@ const AlbumView = () => {
           showAllAlbumStickers={false}
           viewMode={viewMode}
           showImages={showImages}
-          onRefresh={() => setRefreshKey(prev => prev + 1)}
+          onRefresh={handleRefresh}
           transactionMap={{}}
         />
       </div>
@@ -129,7 +129,6 @@ const AlbumView = () => {
       {showEditForm && albumToEdit && (
         <EditAlbumForm 
           onAlbumAdded={handleSaveAlbum}
-          onCancel={() => setShowEditForm(false)}
           albumId={albumToEdit}
         />
       )}

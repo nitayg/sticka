@@ -29,10 +29,20 @@ export const useAlbumOrderStore = create<AlbumOrderState>()(
       setOrderedAlbumIds: (albumIds) => set({ orderedAlbumIds: albumIds }),
       
       reorderAlbum: (fromIndex, toIndex) => set((state) => {
+        // Get a copy of the current ordered album IDs
         const newOrder = [...state.orderedAlbumIds];
+        
+        // Perform the reordering using array splice
         const [movedItem] = newOrder.splice(fromIndex, 1);
         newOrder.splice(toIndex, 0, movedItem);
         
+        console.log(`Reordering album from index ${fromIndex} to ${toIndex}`, {
+          movedItem,
+          oldOrder: state.orderedAlbumIds,
+          newOrder
+        });
+        
+        // Update the state with the new order
         return { orderedAlbumIds: newOrder };
       }),
       
@@ -45,28 +55,39 @@ export const useAlbumOrderStore = create<AlbumOrderState>()(
       initializeOrder: () => {
         const { orderedAlbumIds } = get();
         const allAlbums = getAllAlbums();
+        const allAlbumIds = allAlbums.map(album => album.id);
+        
+        console.log("Initializing album order", {
+          currentOrderedIds: orderedAlbumIds,
+          allAlbumIds
+        });
         
         // If we already have ordered IDs, make sure they include all current albums
         if (orderedAlbumIds.length > 0) {
-          const currentAlbumIds = allAlbums.map(album => album.id);
-          
           // Find new albums that aren't in our ordered list
-          const newAlbumIds = currentAlbumIds.filter(
+          const newAlbumIds = allAlbumIds.filter(
             id => !orderedAlbumIds.includes(id)
           );
           
           // Filter out deleted albums that are still in our order
           const validOrderedIds = orderedAlbumIds.filter(
-            id => currentAlbumIds.includes(id)
+            id => allAlbumIds.includes(id)
           );
           
           // If we have any changes, update the order
           if (newAlbumIds.length > 0 || validOrderedIds.length !== orderedAlbumIds.length) {
-            set({ orderedAlbumIds: [...validOrderedIds, ...newAlbumIds] });
+            const newOrderedIds = [...validOrderedIds, ...newAlbumIds];
+            console.log("Updating album order", {
+              validOrderedIds,
+              newAlbumIds,
+              newOrderedIds
+            });
+            set({ orderedAlbumIds: newOrderedIds });
           }
         } else {
           // Initialize with current album order
-          set({ orderedAlbumIds: allAlbums.map(album => album.id) });
+          console.log("Setting initial album order", allAlbumIds);
+          set({ orderedAlbumIds: allAlbumIds });
         }
       }
     }),
