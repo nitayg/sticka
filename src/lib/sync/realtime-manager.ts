@@ -80,48 +80,57 @@ export const setupRealtimeConnection = (): RealtimeChannel => {
     syncFromCloud();
   });
   
-  // פונקציה לרישום לערוץ
-  const subscribeToChannel = () => {
-    channel.subscribe((status) => {
-      console.log('Supabase channel status:', status);
-      switch (status) {
-        case 'SUBSCRIBED':
-          console.log('Successfully subscribed to real-time updates');
-          break;
-        case 'TIMED_OUT':
-          console.error('Subscription timed out, will retry...');
-          setTimeout(subscribeToChannel, 5000);
-          break;
-        case 'CHANNEL_ERROR':
-          console.error('Failed to subscribe to real-time updates');
-          setTimeout(subscribeToChannel, 5000);
-          break;
-        case 'CLOSED':
-          if (navigator.onLine) {
-            console.log('Channel closed, attempting to reconnect...');
-            setTimeout(subscribeToChannel, 3000);
-          } else {
-            console.log('Browser is offline, will reconnect when online');
-            const handleOnline = () => {
-              console.log('Browser is online again, resubscribing...');
-              window.removeEventListener('online', handleOnline);
-              subscribeToChannel();
-            };
-            window.addEventListener('online', handleOnline);
+  // פונקציה לרישום לערוץ בעזרת הבטחה
+  const subscribeToChannel = async (): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject('Subscription timed out');
+      }, 10000); // 10-second timeout
+      
+      try {
+        channel.subscribe((status) => {
+          clearTimeout(timeout);
+          console.log('Supabase channel status:', status);
+          
+          if (status === 'SUBSCRIBED') {
+            console.log('Successfully subscribed to real-time updates');
+            resolve(status);
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('Failed to subscribe to real-time updates');
+            reject(status);
+          } else if (status === 'TIMED_OUT') {
+            console.error('Subscription timed out');
+            reject(status);
           }
-          break;
+        });
+      } catch (error) {
+        clearTimeout(timeout);
+        console.error('Error subscribing to channel:', error);
+        reject(error);
       }
     });
   };
   
-  // רישום ראשוני
-  subscribeToChannel();
+  // רישום ראשוני עם טיפול בשגיאות
+  subscribeToChannel().catch(error => {
+    console.error('Initial subscription failed:', error);
+    
+    // Try reconnecting once after a delay
+    if (navigator.onLine) {
+      console.log('Will attempt to reconnect in 5 seconds...');
+      setTimeout(() => {
+        if (activeChannel === channel) {  // Only retry if this is still the active channel
+          reconnectRealtimeChannel();
+        }
+      }, 5000);
+    }
+  });
   
   // הגדרת מאזינים למצב רשת
   window.addEventListener('online', () => {
     console.log('Browser is online again, checking subscription...');
-    if (channel.state !== 'joined') {
-      subscribeToChannel();
+    if (activeChannel === channel && channel.state !== 'joined') {
+      reconnectRealtimeChannel();
     }
   });
   
@@ -146,7 +155,15 @@ export const reconnectRealtimeChannel = () => {
   
   if (activeChannel.state !== 'joined') {
     console.log('Manually reconnecting realtime channel...');
-    activeChannel.subscribe();
+    try {
+      // Create a new subscription to replace the old one
+      activeChannel.unsubscribe();
+      return setupRealtimeConnection();
+    } catch (error) {
+      console.error('Error during channel reconnection:', error);
+      // If reconnection fails, try creating a completely new channel
+      return setupRealtimeConnection();
+    }
   } else {
     console.log('Channel already subscribed, no action needed');
   }

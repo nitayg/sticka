@@ -96,7 +96,6 @@ const AlbumView = () => {
       <div className="flex flex-col h-full pt-14 pb-16">
         <AlbumHeader 
           albums={[selectedAlbum]} 
-          selectedAlbumId={selectedAlbum.id}
           viewMode={viewMode} 
           setViewMode={setViewMode}
           showImages={showImages}
@@ -131,6 +130,7 @@ const AlbumView = () => {
         <EditAlbumForm 
           onAlbumAdded={handleSaveAlbum}
           onCancel={() => setShowEditForm(false)}
+          albumId={albumToEdit}
         />
       )}
     </>

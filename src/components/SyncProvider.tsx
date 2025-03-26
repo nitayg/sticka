@@ -3,7 +3,7 @@
  * SyncProvider
  * קומפוננטה אחראית על אתחול מערכת הסנכרון והפצת אירועים
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { initializeSync, StorageEvents, setAlbumData, setStickerData } from '@/lib/sync';
 
@@ -15,6 +15,7 @@ interface SyncProviderProps {
 const SyncProvider = ({ children, notifications = false }: SyncProviderProps) => {
   const { toast } = useToast();
   const [isInitialized, setIsInitialized] = useState(false);
+  const isInitializing = useRef(false);
 
   // Limit the frequency of data change events
   const useThrottledEventListener = (eventName: string, handler: (event: any) => void) => {
@@ -36,16 +37,26 @@ const SyncProvider = ({ children, notifications = false }: SyncProviderProps) =>
   };
 
   useEffect(() => {
+    // Prevent multiple initialization attempts
+    if (isInitialized || isInitializing.current) return;
+    
     // אתחול מערכת הסנכרון
     const initSync = async () => {
-      await initializeSync();
-      setIsInitialized(true);
-      
-      if (notifications) {
-        toast({
-          title: "סנכרון מוכן",
-          description: "נתונים יסונכרנו בין מכשירים ובין לשוניות באופן אוטומטי",
-        });
+      isInitializing.current = true;
+      try {
+        await initializeSync();
+        setIsInitialized(true);
+        
+        if (notifications) {
+          toast({
+            title: "סנכרון מוכן",
+            description: "נתונים יסונכרנו בין מכשירים ובין לשוניות באופן אוטומטי",
+          });
+        }
+      } catch (error) {
+        console.error("Error initializing sync:", error);
+      } finally {
+        isInitializing.current = false;
       }
     };
     

@@ -10,24 +10,24 @@ import './styles/animations.css'
 import './styles/pwa.css'
 import './styles/smooth-animations.css'
 import SyncIndicator from './components/SyncIndicator.tsx'
-import { initializeFromStorage, syncWithSupabase } from './lib/sync'
+import { initializeFromStorage } from './lib/sync'
 
 // Log the app version and initialization
 console.log('App starting - initializing...');
 
-// Initialize Supabase synchronization
-initializeFromStorage()
-  .then(() => {
+// Initialize Supabase synchronization once
+const initApp = async () => {
+  try {
+    console.log('Initializing Supabase connection...');
+    await initializeFromStorage();
     console.log('Supabase connection initialized');
-    // Force a sync after initialization to make sure we have the latest data
-    return syncWithSupabase(true);
-  })
-  .then(() => {
-    console.log('Initial sync complete');
-  })
-  .catch(err => {
+  } catch (err) {
     console.error('Failed to initialize Supabase:', err);
-  });
+  }
+};
+
+// Start initialization process
+initApp();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

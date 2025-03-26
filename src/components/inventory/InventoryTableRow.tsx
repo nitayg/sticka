@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Plus, Minus } from "lucide-react";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
@@ -28,14 +28,18 @@ const InventoryTableRow = ({
     sticker.isOwned ? (sticker.duplicateCount || 0) + 1 : 0
   );
   
-  // Update local state when sticker prop changes
+  // Update local state when sticker prop changes, but avoid unnecessary updates
   useEffect(() => {
-    setLocalInventoryCount(sticker.isOwned ? (sticker.duplicateCount || 0) + 1 : 0);
-  }, [sticker.isOwned, sticker.duplicateCount]);
+    const newCount = sticker.isOwned ? (sticker.duplicateCount || 0) + 1 : 0;
+    if (localInventoryCount !== newCount) {
+      setLocalInventoryCount(newCount);
+    }
+  }, [sticker.isOwned, sticker.duplicateCount, sticker.id]);
 
   const isEven = index % 2 === 0;
 
-  const handleUpdateInventory = (increment: boolean) => {
+  // Memoize handler to prevent recreating it on each render
+  const handleUpdateInventory = useCallback((increment: boolean) => {
     // Update local state immediately for optimistic UI
     if (increment) {
       setLocalInventoryCount(prev => prev + 1);
@@ -45,7 +49,7 @@ const InventoryTableRow = ({
     
     // Call the actual update function
     onUpdateInventory(sticker, increment);
-  };
+  }, [sticker, localInventoryCount, onUpdateInventory]);
 
   return (
     <tr 
@@ -108,4 +112,4 @@ const InventoryTableRow = ({
   );
 };
 
-export default InventoryTableRow;
+export default React.memo(InventoryTableRow);

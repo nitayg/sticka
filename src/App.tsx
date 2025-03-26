@@ -1,5 +1,5 @@
 
-import { Suspense, lazy, useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState, useRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,7 +7,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/hooks/use-theme";
 import SplashScreen from "@/components/SplashScreen";
 import ManifestUpdater from "@/components/settings/ManifestUpdater";
-import { initializeFromStorage } from "@/lib/sync";
 
 // Lazy-load the main Index component
 const Index = lazy(() => import("./pages/Index"));
@@ -45,40 +44,33 @@ const queryClient = new QueryClient({
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [isAppReady, setIsAppReady] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-  
-  // Initialize Supabase and synchronize data
-  useEffect(() => {
-    const initSupabase = async () => {
-      try {
-        setIsSyncing(true);
-        await initializeFromStorage();
-        setIsSyncing(false);
-        setIsAppReady(true);
-        
-        // Listen for sync-complete events
-        const handleSyncComplete = () => {
-          queryClient.invalidateQueries();
-        };
-        
-        window.addEventListener('sync-complete', handleSyncComplete);
-        
-        return () => {
-          window.removeEventListener('sync-complete', handleSyncComplete);
-        };
-      } catch (error) {
-        console.error("Error initializing Supabase:", error);
-        setIsSyncing(false);
-        setIsAppReady(true);
-      }
-    };
-    
-    initSupabase();
-  }, []);
+  const syncRegistered = useRef(false);
   
   // החלת הגדרות ה-manifest המותאמות בטעינת האפליקציה
   useEffect(() => {
     ManifestUpdater.applyManifestOverrides();
+  }, []);
+
+  // Set up listener for sync-complete events only once
+  useEffect(() => {
+    if (syncRegistered.current) return;
+    
+    const handleSyncComplete = () => {
+      queryClient.invalidateQueries();
+    };
+    
+    window.addEventListener('sync-complete', handleSyncComplete);
+    syncRegistered.current = true;
+    
+    // We'll eventually mark the app as ready after a short delay
+    const timer = setTimeout(() => {
+      setIsAppReady(true);
+    }, 1000);
+    
+    return () => {
+      window.removeEventListener('sync-complete', handleSyncComplete);
+      clearTimeout(timer);
+    };
   }, []);
 
   const handleSplashComplete = () => {
