@@ -48,16 +48,16 @@ const SplashScreen = ({ onComplete, minDisplayTime = 2500 }: SplashScreenProps) 
       <div className="w-full max-w-md px-8 flex flex-col items-center space-y-8 text-center relative z-10">
         <div className="flex flex-col items-center space-y-6">
           <div className="relative">
-            <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping opacity-75 scale-110"></div>
+            <div className="absolute inset-0 bg-yellow-500/20 rounded-full animate-ping opacity-75 scale-110"></div>
             <img
-              src="/lovable-uploads/46e6bbf0-717d-461d-95e4-1584072c6ff0.png"
+              src="/lovable-uploads/65da5d4b-d831-4275-952d-d4ec3c19726e.png"
               alt="Logo"
               className="w-32 h-32 logo-animation relative z-10"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full animate-pulse opacity-75 scale-125 blur-xl"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-yellow-500/10 rounded-full animate-pulse opacity-75 scale-125 blur-xl"></div>
           </div>
           
-          <h1 className="text-4xl font-bold text-white smooth-fade-in delay-300 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-100">
+          <h1 className="text-4xl font-bold text-white smooth-fade-in delay-300 bg-clip-text text-transparent bg-gradient-to-r from-white to-yellow-100">
             STICKA
           </h1>
           
@@ -65,15 +65,15 @@ const SplashScreen = ({ onComplete, minDisplayTime = 2500 }: SplashScreenProps) 
             אוסף המדבקות שלי
           </p>
           
-          <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-blue-300 rounded-full mt-4 smooth-fade-in delay-800"></div>
+          <div className="w-24 h-1 bg-gradient-to-r from-yellow-500 to-yellow-300 rounded-full mt-4 smooth-fade-in delay-800"></div>
         </div>
       </div>
       
       <div className="absolute bottom-12 w-full flex justify-center">
         <div className="flex space-x-2 smooth-fade-in delay-900">
-          <span className="animate-bounce h-2 w-2 rounded-full bg-blue-500 delay-100"></span>
-          <span className="animate-bounce h-2 w-2 rounded-full bg-blue-400 delay-200"></span>
-          <span className="animate-bounce h-2 w-2 rounded-full bg-blue-300 delay-300"></span>
+          <span className="animate-bounce h-2 w-2 rounded-full bg-yellow-500 delay-100"></span>
+          <span className="animate-bounce h-2 w-2 rounded-full bg-yellow-400 delay-200"></span>
+          <span className="animate-bounce h-2 w-2 rounded-full bg-yellow-300 delay-300"></span>
         </div>
       </div>
     </div>

@@ -1,41 +1,78 @@
-
-import { getAllAlbums } from "@/lib/data";
-import ViewModeToggle from "../ViewModeToggle";
+import React from "react";
+import { Album } from "@/lib/types";
 import AlbumCarousel from "./AlbumCarousel";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 interface InventoryFiltersProps {
+  albums: Album[];
   selectedAlbumId: string;
   onAlbumChange: (albumId: string) => void;
-  viewMode: "grid" | "list" | "compact";
-  setViewMode: (mode: "grid" | "list" | "compact") => void;
-  showImages: boolean;
-  setShowImages: (show: boolean) => void;
+  searchValue: string;
+  setSearchValue: (value: string) => void;
+  showCompleted: boolean;
+  setShowCompleted: (show: boolean) => void;
+  showMissing: boolean;
+  setShowMissing: (show: boolean) => void;
+  showDuplicated: boolean;
+  setShowDuplicated: (show: boolean) => void;
 }
 
 const InventoryFilters = ({
+  albums,
   selectedAlbumId,
   onAlbumChange,
-  viewMode,
-  setViewMode,
-  showImages,
-  setShowImages
+  searchValue,
+  setSearchValue,
+  showCompleted,
+  setShowCompleted,
+  showMissing,
+  setShowMissing,
+  showDuplicated,
+  setShowDuplicated,
 }: InventoryFiltersProps) => {
-  const albums = getAllAlbums();
-
   return (
-    <div className="flex flex-col gap-2 py-1">
+    <div className="space-y-4 mb-4 py-1">
       <AlbumCarousel 
-        albums={albums}
-        selectedAlbumId={selectedAlbumId}
+        albums={albums} 
+        selectedAlbumId={selectedAlbumId} 
         onAlbumChange={onAlbumChange}
+        onAlbumEdit={() => {}} // Providing empty function to satisfy the prop requirement
       />
-      <div className="flex justify-start">
-        <ViewModeToggle 
-          viewMode={viewMode} 
-          setViewMode={setViewMode}
-          showImages={showImages}
-          setShowImages={setShowImages}
+      
+      <Input
+        type="search"
+        placeholder="חיפוש..."
+        value={searchValue}
+        onChange={(e) => setSearchValue(e.target.value)}
+      />
+
+      <div className="flex items-center space-x-2 rtl:space-x-reverse">
+        <Switch
+          id="completed"
+          checked={showCompleted}
+          onCheckedChange={setShowCompleted}
         />
+        <Label htmlFor="completed">הושלמו</Label>
+      </div>
+
+      <div className="flex items-center space-x-2 rtl:space-x-reverse">
+        <Switch
+          id="missing"
+          checked={showMissing}
+          onCheckedChange={setShowMissing}
+        />
+        <Label htmlFor="missing">חסרים</Label>
+      </div>
+
+      <div className="flex items-center space-x-2 rtl:space-x-reverse">
+        <Switch
+          id="duplicated"
+          checked={showDuplicated}
+          onCheckedChange={setShowDuplicated}
+        />
+        <Label htmlFor="duplicated">כפולים</Label>
       </div>
     </div>
   );

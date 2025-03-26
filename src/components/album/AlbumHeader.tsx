@@ -22,7 +22,7 @@ const AlbumHeader = ({
   setShowImages,
   onRefresh
 }: AlbumHeaderProps) => {
-  const selectedAlbum = albums[0]; // מאחר שאתה מעביר מערך עם אלבום אחד, אני לוקח את הראשון
+  const selectedAlbum = albums && albums.length > 0 ? albums[0] : null; // Handle empty albums array
   
   if (!selectedAlbum) return null;
   
