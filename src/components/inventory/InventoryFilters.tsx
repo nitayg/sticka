@@ -1,9 +1,11 @@
+
 import React from "react";
 import { Album } from "@/lib/types";
 import AlbumCarousel from "./AlbumCarousel";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { ViewMode } from "@/components/album/AlbumHeader";
 
 interface InventoryFiltersProps {
   albums: Album[];
@@ -17,6 +19,10 @@ interface InventoryFiltersProps {
   setShowMissing: (show: boolean) => void;
   showDuplicated: boolean;
   setShowDuplicated: (show: boolean) => void;
+  viewMode?: ViewMode;
+  setViewMode?: (mode: ViewMode) => void;
+  showImages?: boolean;
+  setShowImages?: (show: boolean) => void;
 }
 
 const InventoryFilters = ({
@@ -31,14 +37,24 @@ const InventoryFilters = ({
   setShowMissing,
   showDuplicated,
   setShowDuplicated,
+  viewMode,
+  setViewMode,
+  showImages,
+  setShowImages
 }: InventoryFiltersProps) => {
+  // Function to handle album edit
+  const handleAlbumEdit = () => {
+    console.log("Album edit functionality");
+    // This is a placeholder function for album editing
+  };
+
   return (
     <div className="space-y-4 mb-4 py-1">
       <AlbumCarousel 
         albums={albums} 
         selectedAlbumId={selectedAlbumId} 
         onAlbumChange={onAlbumChange}
-        onAlbumEdit={() => {}} // Providing empty function to satisfy the prop requirement
+        onAlbumEdit={handleAlbumEdit}
       />
       
       <Input

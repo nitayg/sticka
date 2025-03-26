@@ -7,6 +7,7 @@ export type ViewMode = "grid" | "list" | "compact";
 
 interface AlbumHeaderProps {
   albums: Album[];
+  selectedAlbumId?: string;
   viewMode?: ViewMode;
   setViewMode?: (mode: ViewMode) => void;
   showImages?: boolean;
@@ -16,13 +17,16 @@ interface AlbumHeaderProps {
 
 const AlbumHeader = ({ 
   albums,
+  selectedAlbumId,
   viewMode,
   setViewMode,
   showImages,
   setShowImages,
   onRefresh
 }: AlbumHeaderProps) => {
-  const selectedAlbum = albums && albums.length > 0 ? albums[0] : null; // Handle empty albums array
+  const selectedAlbum = selectedAlbumId 
+    ? albums.find(album => album.id === selectedAlbumId) 
+    : (albums && albums.length > 0 ? albums[0] : null);
   
   if (!selectedAlbum) return null;
   

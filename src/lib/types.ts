@@ -1,3 +1,4 @@
+
 import { LucideIcon } from "lucide-react";
 
 export interface Sticker {
@@ -52,7 +53,7 @@ export interface ExchangeOffer {
   offeredStickerName: string;
   wantedStickerId: string[];
   wantedStickerName: string;
-  status: "pending" | "accepted" | "declined";
+  status: "pending" | "accepted" | "declined" | "active" | "completed";  // Added "active" and "completed"
   exchangeMethod?: "pickup" | "mail" | "other";
   location?: string;
   phone?: string;

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,10 +19,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { z } from "zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { storeAlbum } from "@/lib/sticker-operations";
+import { addAlbum } from "@/lib/album-operations";
 
 interface AddAlbumFormProps {
-  children?: React.ReactNode;
+  children?: ReactNode;
   iconOnly?: boolean;
   onAlbumAdded: (albumId: string) => void;
 }
@@ -50,13 +50,13 @@ const AddAlbumForm = ({ children, iconOnly = false, onAlbumAdded }: AddAlbumForm
     setIsLoading(true);
     try {
       const albumId = uuidv4();
-      await storeAlbum({
+      await addAlbum({
         id: albumId,
         name: albumName,
         description: albumDescription,
-        imageUrl: albumImage,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        coverImage: albumImage,
+        totalStickers: 0,
+        year: new Date().getFullYear().toString()
       });
 
       toast({
@@ -112,20 +112,23 @@ const AddAlbumForm = ({ children, iconOnly = false, onAlbumAdded }: AddAlbumForm
         {/* Form step 1: Basic info */}
         {formStep === 1 && (
           <AlbumBasicInfo
-            albumName={albumName}
-            setAlbumName={setAlbumName}
-            albumDescription={albumDescription}
-            setAlbumDescription={setAlbumDescription}
+            name={albumName}
+            setName={setAlbumName}
+            description={albumDescription}
+            setDescription={setAlbumDescription}
           />
         )}
 
         {/* Form step 2: Image upload */}
         {formStep === 2 && (
-          <AlbumImageUploader albumImage={albumImage} setAlbumImage={setAlbumImage} />
+          <AlbumImageUploader
+            imageUrl={albumImage}
+            onImageChange={setAlbumImage}
+          />
         )}
 
         {/* Form step 3: CSV import */}
-        {formStep === 3 && <CsvImportField setCsvData={setCsvData} />}
+        {formStep === 3 && <CsvImportField csvContent={csvData} setCsvContent={setCsvData} />}
 
         <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-between sm:space-x-2">
           {formStep > 1 && (

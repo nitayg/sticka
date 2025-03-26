@@ -16,9 +16,10 @@ interface AddExchangeDialogProps {
   onClose: () => void;
   selectedAlbumId: string;
   onExchangeAdded: () => void;
+  isOpen?: boolean;
 }
 
-const AddExchangeDialog = ({ onClose, selectedAlbumId, onExchangeAdded }: AddExchangeDialogProps) => {
+const AddExchangeDialog = ({ onClose, selectedAlbumId, onExchangeAdded, isOpen }: AddExchangeDialogProps) => {
   const [personName, setPersonName] = useState("");
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");

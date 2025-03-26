@@ -18,9 +18,10 @@ interface UpdateExchangeDialogProps {
   onClose: () => void;
   exchange: any;
   onUpdate: () => void;
+  onExchangeUpdated?: () => void;
 }
 
-const UpdateExchangeDialog = ({ isOpen, onClose, exchange, onUpdate }: UpdateExchangeDialogProps) => {
+const UpdateExchangeDialog = ({ isOpen, onClose, exchange, onUpdate, onExchangeUpdated }: UpdateExchangeDialogProps) => {
   const [personName, setPersonName] = useState("");
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
@@ -52,7 +53,7 @@ const UpdateExchangeDialog = ({ isOpen, onClose, exchange, onUpdate }: UpdateExc
     stickersToReceive,
     stickersToGive,
     onClose,
-    onUpdate
+    onUpdate: onExchangeUpdated || onUpdate
   });
   
   return (
