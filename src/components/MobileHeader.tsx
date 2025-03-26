@@ -28,7 +28,7 @@ const MobileHeader = ({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) => {
           <div className="relative group">
             <div className="absolute -inset-1 rounded-full opacity-0 group-hover:opacity-100 bg-blue-500/20 blur-lg transition-opacity duration-300"></div>
             <img 
-              src="https://i.ibb.co/KpX4ZN1J/NEW-LOGO.png" 
+              src="/lovable-uploads/46e6bbf0-717d-461d-95e4-1584072c6ff0.png" 
               alt="STICKA Logo" 
               className="h-8 relative z-10 hover:scale-105 transition-transform duration-300" 
             />
