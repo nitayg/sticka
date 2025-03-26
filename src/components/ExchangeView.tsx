@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useAlbumStore } from "@/store/useAlbumStore";
 import { getAllAlbums } from "@/lib/data";
-import { Album } from "@/lib/types";
+import { Album, ExchangeOffer } from "@/lib/types";
 import AlbumCarousel from "./inventory/AlbumCarousel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, ArrowLeftRight, Search } from "lucide-react"; // החלפתי SwapHorizontal ב-ArrowLeftRight
-import AddExchangeDialog from "./exchange/AddExchangeDialog"; // תיקנתי את הנתיב
+import { Plus, ArrowLeftRight, Search } from "lucide-react";
+import AddExchangeDialog from "./exchange/AddExchangeDialog";
 import { useToast } from "@/components/ui/use-toast";
 import { Card } from "@/components/ui/card";
-import ExchangeCard from "./exchange/card"; // החלפתי ExchangeCardContent ב-ExchangeCard
-import EmptyState from "../EmptyState"; // תיקנתי את הנתיב
-import { LoadingSpinner } from "./ui/loading"; // תיקנתי את הנתיב
-import UpdateExchangeDialog from "./exchange/UpdateExchangeDialog"; // תיקנתי את הנתיב
+import ExchangeCard from "./exchange/card";
+import EmptyState from "./EmptyState"; // תיקנתי את הנתיב מ-../EmptyState ל-./EmptyState
+import { LoadingSpinner } from "./ui/loading";
+import UpdateExchangeDialog from "./exchange/UpdateExchangeDialog";
 import {
   fetchExchangeOffers,
   saveExchangeOffer,
@@ -24,9 +24,9 @@ const ExchangeView = () => {
   const { selectedAlbumId, setSelectedAlbumId } = useAlbumStore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
-  const [selectedExchange, setSelectedExchange] = useState<any>(null);
-  const [myExchanges, setMyExchanges] = useState<any[]>([]);
-  const [availableExchanges, setAvailableExchanges] = useState<any[]>([]);
+  const [selectedExchange, setSelectedExchange] = useState<ExchangeOffer | null>(null);
+  const [myExchanges, setMyExchanges] = useState<ExchangeOffer[]>([]);
+  const [availableExchanges, setAvailableExchanges] = useState<ExchangeOffer[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState<"active" | "completed">("active");
   const { toast } = useToast();
@@ -57,7 +57,7 @@ const ExchangeView = () => {
         const availableExchanges = albumExchanges.filter(exchange => exchange.userId !== currentUserId);
         
         // Further filter based on status
-        const filterByStatus = (exchanges: any[]) => {
+        const filterByStatus = (exchanges: ExchangeOffer[]) => {
           if (filterStatus === "active") {
             return exchanges.filter(exchange => exchange.status === "active");
           } else if (filterStatus === "completed") {
@@ -119,16 +119,25 @@ const ExchangeView = () => {
   
   const handleCompleteExchange = async (exchangeId: string) => {
     try {
+      // Find the exchange to get all its properties
+      const exchange = myExchanges.find(ex => ex.id === exchangeId);
+      if (!exchange) {
+        throw new Error("Exchange not found");
+      }
+
       // Optimistically update the UI
       setMyExchanges(prevExchanges =>
-        prevExchanges.map(exchange =>
-          exchange.id === exchangeId ? { ...exchange, status: "completed" } : exchange
+        prevExchanges.map(ex =>
+          ex.id === exchangeId ? { ...ex, status: "completed" } : ex
         )
       );
       
-      // Update the exchange offer in Supabase
-      const updatedExchange = { status: "completed" };
-      const success = await saveExchangeOffer({ id: exchangeId, ...updatedExchange });
+      // Update the exchange offer in Supabase with all required fields
+      const updatedExchange: ExchangeOffer = {
+        ...exchange,
+        status: "completed",
+      };
+      const success = await saveExchangeOffer(updatedExchange);
       
       if (success) {
         toast({
@@ -144,8 +153,8 @@ const ExchangeView = () => {
         });
         // Revert the UI update if the Supabase update fails
         setMyExchanges(prevExchanges =>
-          prevExchanges.map(exchange =>
-            exchange.id === exchangeId ? { ...exchange, status: "active" } : exchange
+          prevExchanges.map(ex =>
+            ex.id === exchangeId ? { ...ex, status: "active" } : ex
           )
         );
       }
@@ -158,8 +167,8 @@ const ExchangeView = () => {
       });
       // Revert the UI update if an error occurs
       setMyExchanges(prevExchanges =>
-        prevExchanges.map(exchange =>
-          exchange.id === exchangeId ? { ...exchange, status: "active" } : exchange
+        prevExchanges.map(ex =>
+          ex.id === exchangeId ? { ...ex, status: "active" } : ex
         )
       );
     }
