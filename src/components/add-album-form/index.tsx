@@ -1,5 +1,4 @@
-
-import { useState, ReactNode, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { 
   Dialog, 
@@ -16,17 +15,20 @@ import AlbumImageUploader from "./AlbumImageUploader";
 import { generateId } from "@/lib/utils";
 import { useAlbumStore } from "@/store/useAlbumStore";
 import { useToast } from "@/components/ui/use-toast";
-import { addAlbum } from "@/lib/album-operations";
+import { addAlbum, updateAlbum } from "@/lib/album-operations"; // הוספתי ייבוא של updateAlbum
 import { importStickersFromCSV } from "@/lib/sticker-operations";
 import { parseCSV } from "@/utils/csv-parser";
+import { getAllAlbums } from "@/lib/data"; // הוספתי ייבוא כדי לקבל את פרטי האלבום לעריכה
 
 interface AddAlbumFormProps {
   onAlbumAdded?: () => void;
+  onCancel?: () => void; // הוספתי את הפרופ הזה
+  albumId?: string; // הוספתי את הפרופ הזה כדי לתמוך בעריכה
   iconOnly?: boolean;
   children?: ReactNode;
 }
 
-const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumFormProps) => {
+const AddAlbumForm = ({ onAlbumAdded, onCancel, albumId, iconOnly = false, children }: AddAlbumFormProps) => {
   const [open, setOpen] = useState(false);
   const { handleAlbumChange } = useAlbumStore();
   const { toast } = useToast();
@@ -40,6 +42,21 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
   const [activeTab, setActiveTab] = useState("details");
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // טעינת נתוני אלבום קיים אם albumId מסופק
+  useEffect(() => {
+    if (albumId && open) {
+      const albums = getAllAlbums();
+      const albumToEdit = albums.find(album => album.id === albumId);
+      if (albumToEdit) {
+        setName(albumToEdit.name);
+        setDescription(albumToEdit.description || "");
+        setYear(albumToEdit.year || new Date().getFullYear().toString());
+        setTotalStickers(albumToEdit.totalStickers.toString());
+        setImageUrl(albumToEdit.coverImage || "");
+      }
+    }
+  }, [albumId, open]);
   
   const handleSubmit = async () => {
     if (!name) {
@@ -54,10 +71,9 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
     setIsSubmitting(true);
     
     try {
-      const newAlbumId = generateId();
-      console.log("Creating new album with ID:", newAlbumId);
+      let newAlbumId = albumId || generateId(); // אם יש albumId, משתמשים בו; אחרת יוצרים חדש
       
-      const newAlbum = {
+      const albumData = {
         id: newAlbumId,
         name,
         description,
@@ -66,16 +82,21 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
         coverImage: imageUrl,
       };
       
-      // Add album to storage and Supabase
-      await addAlbum(newAlbum);
-      console.log("Album created successfully:", newAlbum);
+      // עדכון או הוספת אלבום
+      if (albumId) {
+        await updateAlbum(albumData); // עדכון אלבום קיים
+        console.log("Album updated successfully:", albumData);
+      } else {
+        await addAlbum(albumData); // הוספת אלבום חדש
+        console.log("Album created successfully:", albumData);
+      }
       
       // Keep track if we imported any stickers
       let stickersImported = false;
       let importedCount = 0;
       
-      // Process CSV data if provided
-      if (csvContent) {
+      // Process CSV data if provided (רק בעת יצירת אלבום חדש)
+      if (csvContent && !albumId) {
         try {
           console.log("Processing CSV content, length:", csvContent.length);
           
@@ -155,16 +176,20 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
         }
       }
       
-      // Select the new album automatically
-      handleAlbumChange(newAlbumId);
+      // Select the new album automatically (רק בעת יצירת אלבום חדש)
+      if (!albumId) {
+        handleAlbumChange(newAlbumId);
+      }
       
       // Close dialog and reset form
       setOpen(false);
       resetForm();
       
       toast({
-        title: "אלבום נוסף בהצלחה",
-        description: `האלבום "${name}" נוסף בהצלחה${stickersImported ? ` ו-${importedCount} מדבקות יובאו` : ''}`,
+        title: albumId ? "אלבום עודכן בהצלחה" : "אלבום נוסף בהצלחה",
+        description: albumId 
+          ? `האלבום "${name}" עודכן בהצלחה`
+          : `האלבום "${name}" נוסף בהצלחה${stickersImported ? ` ו-${importedCount} מדבקות יובאו` : ''}`,
       });
       
       // Run the callback if provided
@@ -176,17 +201,21 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
       window.dispatchEvent(new CustomEvent('albumDataChanged'));
       
       // Trigger sticker data changed event specifically for this album
-      window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-        detail: { albumId: newAlbumId, count: importedCount } 
-      }));
+      if (!albumId) {
+        window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+          detail: { albumId: newAlbumId, count: importedCount } 
+        }));
+      }
       
       // Add a small delay and refresh again to ensure stickers are loaded
       setTimeout(() => {
         console.log("Triggering delayed refresh events");
         window.dispatchEvent(new CustomEvent('forceRefresh'));
-        window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-          detail: { albumId: newAlbumId, count: importedCount } 
-        }));
+        if (!albumId) {
+          window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+            detail: { albumId: newAlbumId, count: importedCount } 
+          }));
+        }
       }, 500);
       
       // Add another longer delay for final refresh
@@ -195,7 +224,7 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
         window.dispatchEvent(new CustomEvent('forceRefresh'));
         window.dispatchEvent(new CustomEvent('albumDataChanged'));
         
-        if (stickersImported) {
+        if (stickersImported && !albumId) {
           window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
             detail: { albumId: newAlbumId, count: importedCount } 
           }));
@@ -203,10 +232,10 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
       }, 1500);
       
     } catch (error) {
-      console.error("Error adding album:", error);
+      console.error("Error adding/updating album:", error);
       toast({
-        title: "שגיאה בהוספת אלבום",
-        description: "אירעה שגיאה בעת הוספת האלבום",
+        title: "שגיאה בעדכון/הוספת אלבום",
+        description: "אירעה שגיאה בעת עדכון/הוספת האלבום",
         variant: "destructive",
       });
     } finally {
@@ -252,14 +281,14 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] text-right" dir="rtl">
         <DialogHeader>
-          <DialogTitle>הוספת אלבום חדש</DialogTitle>
+          <DialogTitle>{albumId ? "עריכת אלבום" : "הוספת אלבום חדש"}</DialogTitle>
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
           <TabsList className="grid grid-cols-3 mb-4">
             <TabsTrigger value="details">פרטי אלבום</TabsTrigger>
             <TabsTrigger value="image">תמונה</TabsTrigger>
-            <TabsTrigger value="csv">ייבוא מדבקות</TabsTrigger>
+            <TabsTrigger value="csv" disabled={!!albumId}>ייבוא מדבקות</TabsTrigger>
           </TabsList>
           
           <TabsContent value="details" className="space-y-4 mt-2">
@@ -290,13 +319,24 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
           </TabsContent>
         </Tabs>
         
-        <Button 
-          onClick={handleSubmit} 
-          disabled={isSubmitting}
-          className="w-full mt-4 bg-interactive hover:bg-interactive-hover text-interactive-foreground"
-        >
-          {isSubmitting ? "מוסיף אלבום..." : "הוסף אלבום"}
-        </Button>
+        <div className="flex justify-between mt-4">
+          {onCancel && (
+            <Button 
+              variant="outline" 
+              onClick={onCancel}
+              disabled={isSubmitting}
+            >
+              ביטול
+            </Button>
+          )}
+          <Button 
+            onClick={handleSubmit} 
+            disabled={isSubmitting}
+            className="bg-interactive hover:bg-interactive-hover text-interactive-foreground"
+          >
+            {isSubmitting ? (albumId ? "מעדכן אלבום..." : "מוסיף אלבום...") : (albumId ? "עדכן אלבום" : "הוסף אלבום")}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
