@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { Album } from "@/lib/types";
 import { Grid, List, Plus, Settings } from "lucide-react";
@@ -11,7 +10,7 @@ interface AlbumCarouselProps {
   albums: Album[];
   selectedAlbumId: string;
   onAlbumChange: (albumId: string) => void;
-  onAlbumEdit: () => void;
+  onAlbumEdit: (albumId: string) => void;
 }
 
 const AlbumCarousel: React.FC<AlbumCarouselProps> = ({
@@ -23,12 +22,10 @@ const AlbumCarousel: React.FC<AlbumCarouselProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { orderedAlbumIds } = useAlbumOrderStore();
 
-  // Order the albums based on our stored order
   const orderedAlbums = [...albums].sort((a, b) => {
     const indexA = orderedAlbumIds.indexOf(a.id);
     const indexB = orderedAlbumIds.indexOf(b.id);
     
-    // If album not in order list, put at end
     if (indexA === -1) return 1;
     if (indexB === -1) return -1;
     
@@ -36,7 +33,6 @@ const AlbumCarousel: React.FC<AlbumCarouselProps> = ({
   });
 
   useEffect(() => {
-    // Scroll the selected album into view
     if (scrollContainerRef.current && selectedAlbumId) {
       const selectedButton = scrollContainerRef.current.querySelector(
         `[data-album-id="${selectedAlbumId}"]`
@@ -85,7 +81,7 @@ const AlbumCarousel: React.FC<AlbumCarouselProps> = ({
       </div>
 
       <div className="absolute -top-1 left-0 flex items-center gap-1">
-        <AddAlbumForm iconOnly onAlbumAdded={onAlbumEdit}>
+        <AddAlbumForm iconOnly onAlbumAdded={() => onAlbumEdit(selectedAlbumId)}>
           <Button
             size="icon"
             variant="ghost"
