@@ -17,7 +17,7 @@ interface UpdateExchangeDialogProps {
   isOpen: boolean;
   onClose: () => void;
   exchange: any;
-  onUpdate: () => void;
+  onUpdate?: () => void;
   onExchangeUpdated?: () => void;
 }
 
@@ -53,7 +53,7 @@ const UpdateExchangeDialog = ({ isOpen, onClose, exchange, onUpdate, onExchangeU
     stickersToReceive,
     stickersToGive,
     onClose,
-    onUpdate: onExchangeUpdated || onUpdate
+    onUpdate: onExchangeUpdated || onUpdate || (() => {})
   });
   
   return (

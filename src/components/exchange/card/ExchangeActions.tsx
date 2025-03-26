@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Check, Edit, Trash } from "lucide-react";
@@ -5,7 +6,7 @@ import { ExchangeOffer } from "@/lib/types";
 
 interface ExchangeActionsProps {
   exchange: ExchangeOffer;
-  onRefresh: () => void;
+  onRefresh?: () => void;
   isOwner?: boolean;
   onUpdate?: () => void;
   onDelete?: () => void;
@@ -14,7 +15,7 @@ interface ExchangeActionsProps {
 
 const ExchangeActions = ({ 
   exchange, 
-  onRefresh, 
+  onRefresh,
   isOwner,
   onUpdate,
   onDelete,

@@ -43,8 +43,8 @@ const InventoryFilters = ({
   setShowImages
 }: InventoryFiltersProps) => {
   // Function to handle album edit
-  const handleAlbumEdit = () => {
-    console.log("Album edit functionality");
+  const handleAlbumEdit = (albumId: string) => {
+    console.log("Album edit functionality:", albumId);
     // This is a placeholder function for album editing
   };
 

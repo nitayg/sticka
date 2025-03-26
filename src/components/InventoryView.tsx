@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "./Header";
@@ -33,6 +34,10 @@ const InventoryView = () => {
   
   const { toast } = useToast();
   const [reportFormat, setReportFormat] = useState<'numbers' | 'names'>('numbers');
+  const [searchValue, setSearchValue] = useState("");
+  const [showCompleted, setShowCompleted] = useState(true);
+  const [showMissing, setShowMissing] = useState(true);
+  const [showDuplicated, setShowDuplicated] = useState(true);
   
   const { data: albums = [], isLoading: isAlbumsLoading } = useQuery({
     queryKey: ['albums'],
@@ -161,8 +166,17 @@ const InventoryView = () => {
       />
       
       <InventoryFilters
+        albums={albums}
         selectedAlbumId={selectedAlbumId}
         onAlbumChange={handleAlbumChange}
+        searchValue={searchValue}
+        setSearchValue={setSearchValue}
+        showCompleted={showCompleted}
+        setShowCompleted={setShowCompleted}
+        showMissing={showMissing}
+        setShowMissing={setShowMissing}
+        showDuplicated={showDuplicated}
+        setShowDuplicated={setShowDuplicated}
         viewMode={viewMode}
         setViewMode={setViewMode}
         showImages={showImages}

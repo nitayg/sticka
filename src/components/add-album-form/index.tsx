@@ -25,9 +25,10 @@ interface AddAlbumFormProps {
   children?: ReactNode;
   iconOnly?: boolean;
   onAlbumAdded: (albumId: string) => void;
+  albumId?: string;
 }
 
-const AddAlbumForm = ({ children, iconOnly = false, onAlbumAdded }: AddAlbumFormProps) => {
+const AddAlbumForm = ({ children, iconOnly = false, onAlbumAdded, albumId }: AddAlbumFormProps) => {
   const [open, setOpen] = useState(false);
   const [formStep, setFormStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,6 +36,8 @@ const AddAlbumForm = ({ children, iconOnly = false, onAlbumAdded }: AddAlbumForm
   const [albumDescription, setAlbumDescription] = useState("");
   const [albumImage, setAlbumImage] = useState("");
   const [csvData, setCsvData] = useState<string | null>(null);
+  const [year, setYear] = useState(new Date().getFullYear().toString());
+  const [totalStickers, setTotalStickers] = useState("0");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -44,6 +47,8 @@ const AddAlbumForm = ({ children, iconOnly = false, onAlbumAdded }: AddAlbumForm
     setAlbumDescription("");
     setAlbumImage("");
     setCsvData(null);
+    setYear(new Date().getFullYear().toString());
+    setTotalStickers("0");
   };
 
   const handleSubmit = async () => {
@@ -55,8 +60,8 @@ const AddAlbumForm = ({ children, iconOnly = false, onAlbumAdded }: AddAlbumForm
         name: albumName,
         description: albumDescription,
         coverImage: albumImage,
-        totalStickers: 0,
-        year: new Date().getFullYear().toString()
+        totalStickers: parseInt(totalStickers) || 0,
+        year: year
       });
 
       toast({
@@ -116,6 +121,10 @@ const AddAlbumForm = ({ children, iconOnly = false, onAlbumAdded }: AddAlbumForm
             setName={setAlbumName}
             description={albumDescription}
             setDescription={setAlbumDescription}
+            year={year}
+            setYear={setYear}
+            totalStickers={totalStickers}
+            setTotalStickers={setTotalStickers}
           />
         )}
 
