@@ -7,6 +7,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { deleteAlbum } from "@/lib/album-operations";
 import { useQueryClient } from "@tanstack/react-query";
+import { Progress } from "@/components/ui/progress";
+import { getStats } from "@/lib/stickers/stats-operations";
 
 interface AlbumGridItemProps {
   id: string;
@@ -23,6 +25,12 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Calculate completion percentage for this album
+  const stats = getStats(id);
+  const completionPercentage = stats.total > 0 
+    ? Math.round((stats.owned / stats.total) * 100) 
+    : 0;
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -132,11 +140,21 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
             </div>
           </TooltipProvider>
 
-          <div className="absolute bottom-0 left-0 right-0 p-3 text-sm font-medium text-white transition-all duration-300 group-hover:pb-4">
-            <div className="smooth-fade-in">{name}</div>
-            {hovered && (
-              <div className="text-xs text-gray-300 mt-1 smooth-fade-in">לחץ לבחירה</div>
-            )}
+          {/* Completion progress bar at the bottom */}
+          <div className="absolute bottom-0 left-0 right-0 h-[20%] bg-black/40">
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="w-[90%] relative">
+                <Progress 
+                  value={completionPercentage} 
+                  className="h-2.5 bg-gray-800/50 overflow-hidden"
+                />
+                {hovered && (
+                  <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-xs text-white bg-black/70 px-2 py-0.5 rounded">
+                    {completionPercentage}%
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
         
