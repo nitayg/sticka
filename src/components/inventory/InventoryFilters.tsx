@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Album } from "@/lib/types";
 import AlbumCarousel from "./AlbumCarousel";
@@ -41,6 +42,8 @@ const InventoryFilters = ({
   showImages,
   setShowImages
 }: InventoryFiltersProps) => {
+  // The handleAlbumEdit function needs to accept an albumId parameter
+  // to match the type expected by AlbumCarousel's onAlbumEdit prop
   const handleAlbumEdit = (albumId: string) => {
     console.log("Album edit functionality:", albumId);
   };
