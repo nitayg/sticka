@@ -1,7 +1,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { Album } from "@/lib/types";
-import { Grid, List, Plus, Settings } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAlbumOrderStore } from "@/store/useAlbumOrderStore";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,7 @@ const AlbumCarousel: React.FC<AlbumCarouselProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { orderedAlbumIds } = useAlbumOrderStore();
   const [hasScrolledToSelection, setHasScrolledToSelection] = useState(false);
+  const [isInitialRender, setIsInitialRender] = useState(true);
 
   const orderedAlbums = [...albums].sort((a, b) => {
     const indexA = orderedAlbumIds.indexOf(a.id);
@@ -42,36 +43,34 @@ const AlbumCarousel: React.FC<AlbumCarouselProps> = ({
       ) as HTMLElement;
 
       if (selectedButton) {
-        const containerRect = scrollContainerRef.current.getBoundingClientRect();
-        const buttonRect = selectedButton.getBoundingClientRect();
-
-        if (
-          buttonRect.left < containerRect.left ||
-          buttonRect.right > containerRect.right
-        ) {
-          selectedButton.scrollIntoView({
-            behavior: "smooth",
-            block: "nearest",
-            inline: "center",
-          });
-        }
+        // Only use smooth scrolling after initial render
+        selectedButton.scrollIntoView({
+          behavior: isInitialRender ? "auto" : "smooth",
+          block: "nearest",
+          inline: "center",
+        });
         
         setHasScrolledToSelection(true);
+        setIsInitialRender(false);
       }
     }
-  }, [selectedAlbumId, hasScrolledToSelection]);
+  }, [selectedAlbumId, hasScrolledToSelection, isInitialRender]);
 
   // Reset scroll state if selectedAlbumId changes
   useEffect(() => {
     setHasScrolledToSelection(false);
   }, [selectedAlbumId]);
 
-  // Memoize the album edit handler to prevent recreating it on every render
+  // Memoize the album edit handler
   const handleAlbumEditClick = useCallback(() => {
     if (selectedAlbumId && onAlbumEdit) {
       onAlbumEdit(selectedAlbumId);
     }
   }, [selectedAlbumId, onAlbumEdit]);
+
+  const handleAlbumClick = useCallback((albumId: string) => {
+    onAlbumChange(albumId);
+  }, [onAlbumChange]);
 
   return (
     <div className="relative w-full mb-4">
@@ -90,7 +89,7 @@ const AlbumCarousel: React.FC<AlbumCarouselProps> = ({
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted hover:bg-muted/80 text-foreground"
             )}
-            onClick={() => onAlbumChange(album.id)}
+            onClick={() => handleAlbumClick(album.id)}
           >
             {album.name}
           </button>
@@ -112,4 +111,5 @@ const AlbumCarousel: React.FC<AlbumCarouselProps> = ({
   );
 };
 
+// Use React.memo to prevent unnecessary re-renders
 export default React.memo(AlbumCarousel);

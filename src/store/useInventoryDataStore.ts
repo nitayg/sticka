@@ -36,19 +36,29 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
   },
   
   handleRefresh: () => {
+    // Increment the refresh key to trigger a refresh
     set((state) => ({ refreshKey: state.refreshKey + 1 }));
+    
+    // Use delayed transaction map update to avoid React maximum update depth error
     const { selectedAlbumId } = get();
     if (selectedAlbumId) {
-      get().updateTransactionMap(selectedAlbumId);
+      // Add timeout to break potential update cycles
+      setTimeout(() => {
+        get().updateTransactionMap(selectedAlbumId);
+      }, 100);
     }
   },
   
   handleAlbumChange: (albumId) => {
     set({ selectedAlbumId: albumId });
-    // After setting the album ID, update the transaction map
+    
+    // Use a timeout to prevent update cycles when switching albums
+    // This breaks the potential infinite loop
     setTimeout(() => {
-      get().updateTransactionMap(albumId);
-    }, 0);
+      if (get().selectedAlbumId === albumId) { // Only update if still the selected album
+        get().updateTransactionMap(albumId);
+      }
+    }, 100);
   },
   
   updateTransactionMap: async (albumId) => {
@@ -90,8 +100,10 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
         });
       });
       
-      // Only update state if the component is still mounted
-      set({ transactionMap: newTransactionMap });
+      // Only update state if the component is still mounted and the album is still selected
+      if (get().selectedAlbumId === albumId) {
+        set({ transactionMap: newTransactionMap });
+      }
     } catch (error) {
       console.error('Error updating transaction map:', error);
     }
@@ -101,9 +113,10 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
     const result = addStickersToInventory(albumId, stickerNumbers);
     
     // Schedule a refresh after the current execution completes
+    // Use a timeout to prevent update cycles
     setTimeout(() => {
       get().handleRefresh();
-    }, 0);
+    }, 100);
     
     // Get stickers for logging
     const album = getAlbumById(albumId);
@@ -136,7 +149,7 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
       });
     }
     
-    // Notify other components about the change
+    // Notify other components about the change - but don't trigger multiple updates
     window.dispatchEvent(new CustomEvent('albumDataChanged'));
     window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
     

@@ -5,6 +5,24 @@ import { StorageEvents } from './constants';
 
 // Track active channel to prevent multiple subscriptions
 let activeChannel: any = null;
+// Add debounce mechanism to prevent too frequent syncs
+let syncDebounceTimeout: any = null;
+let eventsReceived = 0;
+
+// Debounced sync function
+const debouncedSync = () => {
+  // Clear any existing timeout
+  if (syncDebounceTimeout) {
+    clearTimeout(syncDebounceTimeout);
+  }
+  
+  // Set a new timeout
+  syncDebounceTimeout = setTimeout(() => {
+    console.log(`Triggering sync after receiving ${eventsReceived} events`);
+    syncWithSupabase();
+    eventsReceived = 0;
+  }, 2000); // 2 second debounce
+};
 
 // Set up real-time subscriptions to Supabase with improved error handling
 export const setupRealtimeSubscriptions = () => {
@@ -20,7 +38,7 @@ export const setupRealtimeSubscriptions = () => {
   // Create a channel for all tables with improved configuration
   const channel = supabase.channel('public:all-changes', {
     config: {
-      broadcast: { self: true },
+      broadcast: { self: false }, // Don't receive your own changes
       presence: { key: 'client-' + Math.floor(Math.random() * 1000000) },
     }
   })
@@ -31,6 +49,8 @@ export const setupRealtimeSubscriptions = () => {
   }, (payload) => {
     console.log('Real-time update for albums:', payload);
     window.dispatchEvent(new CustomEvent(StorageEvents.ALBUMS, { detail: payload }));
+    eventsReceived++;
+    debouncedSync();
   })
   .on('postgres_changes', { 
     event: '*', 
@@ -39,6 +59,8 @@ export const setupRealtimeSubscriptions = () => {
   }, (payload) => {
     console.log('Real-time update for stickers:', payload);
     window.dispatchEvent(new CustomEvent(StorageEvents.STICKERS, { detail: payload }));
+    eventsReceived++;
+    debouncedSync();
   })
   .on('postgres_changes', { 
     event: '*', 
@@ -47,6 +69,8 @@ export const setupRealtimeSubscriptions = () => {
   }, (payload) => {
     console.log('Real-time update for users:', payload);
     window.dispatchEvent(new CustomEvent(StorageEvents.USERS, { detail: payload }));
+    eventsReceived++;
+    debouncedSync();
   })
   .on('postgres_changes', { 
     event: '*', 
@@ -55,6 +79,8 @@ export const setupRealtimeSubscriptions = () => {
   }, (payload) => {
     console.log('Real-time update for exchange offers:', payload);
     window.dispatchEvent(new CustomEvent(StorageEvents.EXCHANGE_OFFERS, { detail: payload }));
+    eventsReceived++;
+    debouncedSync();
   });
   
   // Add system level event handler for reconnection events
