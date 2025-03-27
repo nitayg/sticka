@@ -50,8 +50,11 @@ const InventoryView = () => {
     enabled: !!selectedAlbumId,
   });
   
+  // Use a ref to track if this is the first render to prevent unnecessary updates
+  const [isInitialized, setIsInitialized] = useState(false);
+  
   useEffect(() => {
-    if (albums && albums.length > 0 && !selectedAlbumId) {
+    if (!isInitialized && albums && albums.length > 0 && !selectedAlbumId) {
       // Try to get last selected album from localStorage
       const lastSelectedAlbum = localStorage.getItem('lastSelectedAlbumId');
       if (lastSelectedAlbum && albums.some(album => album.id === lastSelectedAlbum)) {
@@ -59,10 +62,11 @@ const InventoryView = () => {
       } else {
         handleAlbumChange(albums[0].id);
       }
+      setIsInitialized(true);
     }
-  }, [albums, selectedAlbumId, handleAlbumChange]);
+  }, [albums, selectedAlbumId, handleAlbumChange, isInitialized]);
   
-  // Store selected album ID when it changes
+  // Store selected album ID when it changes - use a more controlled approach
   useEffect(() => {
     if (selectedAlbumId) {
       localStorage.setItem('lastSelectedAlbumId', selectedAlbumId);
@@ -106,7 +110,7 @@ const InventoryView = () => {
         description: message,
       });
       
-      handleRefresh();
+      // Don't call handleRefresh here as it's already called in handleStickerIntake
     } catch (error) {
       console.error("Error adding stickers to inventory:", error);
       toast({

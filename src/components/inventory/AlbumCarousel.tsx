@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { Album } from "@/lib/types";
 import { Grid, List, Plus, Settings } from "lucide-react";
@@ -21,6 +22,7 @@ const AlbumCarousel: React.FC<AlbumCarouselProps> = ({
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { orderedAlbumIds } = useAlbumOrderStore();
+  const [hasScrolledToSelection, setHasScrolledToSelection] = useState(false);
 
   const orderedAlbums = [...albums].sort((a, b) => {
     const indexA = orderedAlbumIds.indexOf(a.id);
@@ -32,8 +34,9 @@ const AlbumCarousel: React.FC<AlbumCarouselProps> = ({
     return indexA - indexB;
   });
 
+  // Scroll to selected album only once when component mounts or selection changes
   useEffect(() => {
-    if (scrollContainerRef.current && selectedAlbumId) {
+    if (scrollContainerRef.current && selectedAlbumId && !hasScrolledToSelection) {
       const selectedButton = scrollContainerRef.current.querySelector(
         `[data-album-id="${selectedAlbumId}"]`
       ) as HTMLElement;
@@ -52,9 +55,23 @@ const AlbumCarousel: React.FC<AlbumCarouselProps> = ({
             inline: "center",
           });
         }
+        
+        setHasScrolledToSelection(true);
       }
     }
+  }, [selectedAlbumId, hasScrolledToSelection]);
+
+  // Reset scroll state if selectedAlbumId changes
+  useEffect(() => {
+    setHasScrolledToSelection(false);
   }, [selectedAlbumId]);
+
+  // Memoize the album edit handler to prevent recreating it on every render
+  const handleAlbumEditClick = useCallback(() => {
+    if (selectedAlbumId && onAlbumEdit) {
+      onAlbumEdit(selectedAlbumId);
+    }
+  }, [selectedAlbumId, onAlbumEdit]);
 
   return (
     <div className="relative w-full mb-4">
@@ -81,7 +98,7 @@ const AlbumCarousel: React.FC<AlbumCarouselProps> = ({
       </div>
 
       <div className="absolute -top-1 left-0 flex items-center gap-1">
-        <AddAlbumForm iconOnly onAlbumAdded={() => onAlbumEdit(selectedAlbumId)}>
+        <AddAlbumForm iconOnly onAlbumAdded={handleAlbumEditClick}>
           <Button
             size="icon"
             variant="ghost"
@@ -95,4 +112,4 @@ const AlbumCarousel: React.FC<AlbumCarouselProps> = ({
   );
 };
 
-export default AlbumCarousel;
+export default React.memo(AlbumCarousel);

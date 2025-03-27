@@ -32,7 +32,7 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
   // Actions
   setSelectedAlbumId: (selectedAlbumId) => {
     set({ selectedAlbumId });
-    get().updateTransactionMap(selectedAlbumId);
+    // Don't update transaction map here to avoid circular updates
   },
   
   handleRefresh: () => {
@@ -45,7 +45,10 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
   
   handleAlbumChange: (albumId) => {
     set({ selectedAlbumId: albumId });
-    get().updateTransactionMap(albumId);
+    // After setting the album ID, update the transaction map
+    setTimeout(() => {
+      get().updateTransactionMap(albumId);
+    }, 0);
   },
   
   updateTransactionMap: async (albumId) => {
@@ -56,14 +59,11 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
     try {
       // Get exchange offers from Supabase instead of local state
       const exchangeOffers = await fetchExchangeOffers() || [];
-      console.log('Retrieved exchange offers for transaction map:', exchangeOffers);
       
       // Get relevant exchanges for this album
       const relevantExchanges = exchangeOffers.filter(exchange => 
         exchange.albumId === albumId && !exchange.isDeleted
       );
-      
-      console.log(`Found ${relevantExchanges.length} relevant exchanges for album ${albumId}`);
       
       // Map stickers to their transactions
       relevantExchanges.forEach(exchange => {
@@ -72,14 +72,11 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
           ? exchange.wantedStickerId.map(id => parseInt(id)) 
           : [];
         
-        console.log(`Processing exchange ${exchange.id} with sticker numbers:`, stickerNumbers);
-        
         // Get actual stickers
         const albumStickers = getStickersByAlbumId(albumId);
         
         stickerNumbers.forEach(number => {
           if (isNaN(number)) {
-            console.warn(`Invalid sticker number in exchange ${exchange.id}:`, number);
             return;
           }
           
@@ -89,13 +86,11 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
               person: exchange.userName,
               color: exchange.color || "bg-secondary"
             };
-          } else {
-            console.warn(`Sticker #${number} not found in album ${albumId}`);
           }
         });
       });
       
-      console.log('Updated transaction map:', newTransactionMap);
+      // Only update state if the component is still mounted
       set({ transactionMap: newTransactionMap });
     } catch (error) {
       console.error('Error updating transaction map:', error);
@@ -104,12 +99,13 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
   
   handleStickerIntake: (albumId, stickerNumbers) => {
     const result = addStickersToInventory(albumId, stickerNumbers);
-    get().handleRefresh();
+    
+    // Schedule a refresh after the current execution completes
+    setTimeout(() => {
+      get().handleRefresh();
+    }, 0);
     
     // Get stickers for logging
-    const albumStickers = getStickersByAlbumId(albumId);
-    
-    // Update the most recent log entry with the real results
     const album = getAlbumById(albumId);
     const { addLogEntry } = useIntakeLogStore.getState();
     const logEntries = useIntakeLogStore.getState().intakeLog;
