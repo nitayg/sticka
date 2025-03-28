@@ -24,8 +24,9 @@ interface InventoryDataState {
 }
 
 export const useInventoryDataStore = create<InventoryDataState>((set, get) => {
-  // Track if an update is already in progress to prevent infinite loops
+  // Important flag to prevent infinite loops during updates
   let isUpdatingTransactionMap = false;
+  let albumUpdateInProgress = false;
 
   return {
     // Data state
@@ -44,30 +45,37 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => {
       // Increment the refresh key to trigger a refresh
       set((state) => ({ refreshKey: state.refreshKey + 1 }));
       
-      // Use delayed transaction map update to avoid React maximum update depth error
+      // Use delayed transaction map update with increased timeout
       const { selectedAlbumId } = get();
       if (selectedAlbumId && !isUpdatingTransactionMap) {
-        // Add timeout to break potential update cycles
+        // Add longer timeout to break potential update cycles
         setTimeout(() => {
           get().updateTransactionMap(selectedAlbumId);
-        }, 50);
+        }, 300); // Increased timeout
       }
     },
     
     handleAlbumChange: (albumId) => {
-      // Skip update if already selected
-      if (get().selectedAlbumId === albumId) return;
+      // Skip update if already selected or in progress
+      if (get().selectedAlbumId === albumId || albumUpdateInProgress) return;
+      
+      // Set flag to prevent concurrent updates
+      albumUpdateInProgress = true;
       
       set({ selectedAlbumId: albumId });
       
       // Use a timeout to prevent update cycles when switching albums
-      // This breaks the potential infinite loop
       if (!isUpdatingTransactionMap) {
         setTimeout(() => {
           if (get().selectedAlbumId === albumId) { // Only update if still the selected album
             get().updateTransactionMap(albumId);
           }
-        }, 50);
+          // Reset flag after operation completes
+          albumUpdateInProgress = false;
+        }, 300); // Increased timeout
+      } else {
+        // Make sure to reset flag even if we don't update
+        albumUpdateInProgress = false;
       }
     },
     
@@ -119,6 +127,7 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => {
       } catch (error) {
         console.error('Error updating transaction map:', error);
       } finally {
+        // Always reset the flag when done
         isUpdatingTransactionMap = false;
       }
     },
@@ -131,7 +140,7 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => {
       const handleRefresh = get().handleRefresh;
       setTimeout(() => {
         handleRefresh();
-      }, 50);
+      }, 300); // Increased timeout
       
       // Get stickers for logging
       const album = getAlbumById(albumId);
@@ -164,12 +173,11 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => {
         });
       }
       
-      // Notify other components about the change - but don't trigger multiple updates
-      // Use a custom event to notify other components
+      // Use a custom event with longer timeout to notify other components
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('albumDataChanged'));
         window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
-      }, 100);
+      }, 300); // Increased timeout
       
       // Return the information about which stickers were processed
       return {

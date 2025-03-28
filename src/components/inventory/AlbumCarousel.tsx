@@ -22,10 +22,10 @@ const AlbumCarousel: React.FC<AlbumCarouselProps> = ({
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { orderedAlbumIds } = useAlbumOrderStore();
-  const [hasScrolledToSelection, setHasScrolledToSelection] = useState(false);
-  const [isInitialRender, setIsInitialRender] = useState(true);
+  const [scrollToInitiated, setScrollToInitiated] = useState(false);
+  const [isFirstRender, setIsFirstRender] = useState(true);
 
-  // Prevent re-ordering on every render which could cause infinite loops
+  // Prevent re-ordering on every render by using useMemo
   const orderedAlbums = React.useMemo(() => {
     return [...albums].sort((a, b) => {
       const indexA = orderedAlbumIds.indexOf(a.id);
@@ -38,12 +38,11 @@ const AlbumCarousel: React.FC<AlbumCarouselProps> = ({
     });
   }, [albums, orderedAlbumIds]);
 
-  // Scroll to selected album only once when component mounts or selection changes
+  // Handle scrolling to selected album with proper safeguards
   useEffect(() => {
-    // Skip if no selected album or already scrolled
-    if (!selectedAlbumId || hasScrolledToSelection) return;
+    if (!selectedAlbumId || scrollToInitiated) return;
     
-    // Use RAF to ensure DOM is ready
+    // Use a single RAF call to prevent stack overflow
     const scrollToSelectedAlbum = () => {
       if (scrollContainerRef.current) {
         const selectedButton = scrollContainerRef.current.querySelector(
@@ -51,40 +50,39 @@ const AlbumCarousel: React.FC<AlbumCarouselProps> = ({
         ) as HTMLElement;
 
         if (selectedButton) {
-          // Only use smooth scrolling after initial render
           selectedButton.scrollIntoView({
-            behavior: isInitialRender ? "auto" : "smooth",
+            behavior: isFirstRender ? "auto" : "smooth",
             block: "nearest",
             inline: "center",
           });
           
-          setHasScrolledToSelection(true);
-          if (isInitialRender) {
-            setIsInitialRender(false);
+          // Mark scroll as initiated only after it's done
+          setScrollToInitiated(true);
+          
+          if (isFirstRender) {
+            setIsFirstRender(false);
           }
         }
       }
     };
 
-    // Use requestAnimationFrame to ensure the DOM has been updated
+    // Use a single RAF call that won't cause continuous updates
     requestAnimationFrame(scrollToSelectedAlbum);
-  }, [selectedAlbumId, hasScrolledToSelection, isInitialRender]);
+  }, [selectedAlbumId, scrollToInitiated, isFirstRender]);
 
-  // Reset scroll state if selectedAlbumId changes
+  // Reset scroll state ONLY when selectedAlbumId changes, nothing else
   useEffect(() => {
-    setHasScrolledToSelection(false);
+    setScrollToInitiated(false);
   }, [selectedAlbumId]);
 
-  // Memoize the album edit handler
+  // Memoize handlers to prevent unnecessary re-renders
   const handleAlbumEditClick = useCallback(() => {
     if (selectedAlbumId && onAlbumEdit) {
       onAlbumEdit(selectedAlbumId);
     }
   }, [selectedAlbumId, onAlbumEdit]);
 
-  // Memoize the album click handler
   const handleAlbumClick = useCallback((albumId: string) => {
-    // Prevent unnecessary state updates
     if (albumId !== selectedAlbumId) {
       onAlbumChange(albumId);
     }
@@ -129,5 +127,5 @@ const AlbumCarousel: React.FC<AlbumCarouselProps> = ({
   );
 };
 
-// Use React.memo to prevent unnecessary re-renders
+// Prevent unnecessary re-renders with React.memo
 export default React.memo(AlbumCarousel);

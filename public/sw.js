@@ -24,6 +24,11 @@ self.addEventListener('install', event => {
         );
         return Promise.all(cachePromises);
       })
+      .catch(error => {
+        console.error('Failed to set up cache:', error);
+        // Service worker should still install even if caching fails
+        return Promise.resolve();
+      })
   );
 });
 
@@ -32,7 +37,15 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     fetch(event.request)
       .catch(() => {
-        return caches.match(event.request);
+        return caches.match(event.request)
+          .then(response => {
+            return response || Promise.reject('No match in cache and network failed');
+          })
+          .catch(error => {
+            console.error('Fetch handler failed:', error);
+            // Return a basic response as fallback
+            return new Response('Network error', { status: 408, headers: { 'Content-Type': 'text/plain' } });
+          });
       })
   );
 });
@@ -45,11 +58,16 @@ self.addEventListener('activate', event => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('Deleting outdated cache:', cacheName);
             return caches.delete(cacheName);
           }
           return Promise.resolve();
         })
       );
+    })
+    .catch(error => {
+      console.error('Cache cleanup failed:', error);
+      return Promise.resolve();
     })
   );
 });
@@ -57,4 +75,9 @@ self.addEventListener('activate', event => {
 // Handle errors gracefully
 self.addEventListener('error', (event) => {
   console.error('Service Worker error:', event.message);
+});
+
+// Catch unhandled rejections
+self.addEventListener('unhandledrejection', (event) => {
+  console.error('Unhandled promise rejection in Service Worker:', event.reason);
 });
