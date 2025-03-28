@@ -36,16 +36,6 @@ body {
   display: block;
 }
 
-/* מניעת גלילה לדף הבית */
-.prevent-scroll {
-  overflow: hidden !important;
-  position: fixed;
-  inset: 0;
-  height: 100%;
-  width: 100%;
-  touch-action: none;
-}
-
 /* תמיכה ב-splash screen */
 .splash-screen {
   position: fixed;

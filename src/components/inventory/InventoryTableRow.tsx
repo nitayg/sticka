@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from "react";
+import React from "react";
 import { Plus, Minus } from "lucide-react";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
@@ -23,33 +23,8 @@ const InventoryTableRow = ({
   onToggleSelection,
   onUpdateInventory
 }: InventoryTableRowProps) => {
-  // Local state for optimistic UI updates
-  const [localInventoryCount, setLocalInventoryCount] = useState<number>(
-    sticker.isOwned ? (sticker.duplicateCount || 0) + 1 : 0
-  );
-  
-  // Update local state when sticker prop changes, but avoid unnecessary updates
-  useEffect(() => {
-    const newCount = sticker.isOwned ? (sticker.duplicateCount || 0) + 1 : 0;
-    if (localInventoryCount !== newCount) {
-      setLocalInventoryCount(newCount);
-    }
-  }, [sticker.isOwned, sticker.duplicateCount, sticker.id]);
-
+  const inventoryCount = sticker.isOwned ? (sticker.duplicateCount || 0) + 1 : 0;
   const isEven = index % 2 === 0;
-
-  // Memoize handler to prevent recreating it on each render
-  const handleUpdateInventory = useCallback((increment: boolean) => {
-    // Update local state immediately for optimistic UI
-    if (increment) {
-      setLocalInventoryCount(prev => prev + 1);
-    } else if (localInventoryCount > 0) {
-      setLocalInventoryCount(prev => prev - 1);
-    }
-    
-    // Call the actual update function
-    onUpdateInventory(sticker, increment);
-  }, [sticker, localInventoryCount, onUpdateInventory]);
 
   return (
     <tr 
@@ -81,7 +56,7 @@ const InventoryTableRow = ({
             className="h-7 w-7 rounded-full"
             onClick={(e) => {
               e.stopPropagation();
-              handleUpdateInventory(false);
+              onUpdateInventory(sticker, false);
             }}
             disabled={!sticker.isOwned}
           >
@@ -90,9 +65,9 @@ const InventoryTableRow = ({
           
           <span className={cn(
             "font-medium w-5 text-center",
-            localInventoryCount === 0 ? "text-red-500" : "text-green-500"
+            inventoryCount === 0 ? "text-red-500" : "text-green-500"
           )}>
-            {localInventoryCount}
+            {inventoryCount}
           </span>
           
           <Button
@@ -101,7 +76,7 @@ const InventoryTableRow = ({
             className="h-7 w-7 rounded-full"
             onClick={(e) => {
               e.stopPropagation();
-              handleUpdateInventory(true);
+              onUpdateInventory(sticker, true);
             }}
           >
             <Plus className="h-3.5 w-3.5" />
@@ -112,4 +87,4 @@ const InventoryTableRow = ({
   );
 };
 
-export default React.memo(InventoryTableRow);
+export default InventoryTableRow;

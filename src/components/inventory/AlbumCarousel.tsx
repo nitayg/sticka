@@ -1,131 +1,161 @@
 
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { Album } from "@/lib/types";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useAlbumOrderStore } from "@/store/useAlbumOrderStore";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
-import AddAlbumForm from "@/components/add-album-form";
 
 interface AlbumCarouselProps {
   albums: Album[];
   selectedAlbumId: string;
   onAlbumChange: (albumId: string) => void;
-  onAlbumEdit: (albumId: string) => void;
 }
 
-const AlbumCarousel: React.FC<AlbumCarouselProps> = ({
-  albums,
-  selectedAlbumId,
-  onAlbumChange,
-  onAlbumEdit,
-}) => {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const { orderedAlbumIds } = useAlbumOrderStore();
-  const [scrollToInitiated, setScrollToInitiated] = useState(false);
-  const [isFirstRender, setIsFirstRender] = useState(true);
-
-  // Prevent re-ordering on every render by using useMemo
-  const orderedAlbums = React.useMemo(() => {
-    return [...albums].sort((a, b) => {
-      const indexA = orderedAlbumIds.indexOf(a.id);
-      const indexB = orderedAlbumIds.indexOf(b.id);
-      
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      
-      return indexA - indexB;
-    });
-  }, [albums, orderedAlbumIds]);
-
-  // Handle scrolling to selected album with proper safeguards
+const AlbumCarousel = ({ albums, selectedAlbumId, onAlbumChange }: AlbumCarouselProps) => {
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const isRtl = document.dir === 'rtl' || document.documentElement.lang === 'he';
+  
+  // Check direction
   useEffect(() => {
-    if (!selectedAlbumId || scrollToInitiated) return;
-    
-    // Use a single RAF call to prevent stack overflow
-    const scrollToSelectedAlbum = () => {
-      if (scrollContainerRef.current) {
-        const selectedButton = scrollContainerRef.current.querySelector(
-          `[data-album-id="${selectedAlbumId}"]`
-        ) as HTMLElement;
+    if (carouselRef.current) {
+      carouselRef.current.dir = isRtl ? 'rtl' : 'ltr';
+    }
+  }, [isRtl]);
+  
+  // Scroll to selected album when it changes
+  useEffect(() => {
+    if (carouselRef.current && selectedAlbumId) {
+      const selectedElement = carouselRef.current.querySelector(`[data-album-id="${selectedAlbumId}"]`);
+      if (selectedElement) {
+        // Calculate scroll position
+        const containerWidth = carouselRef.current.offsetWidth;
+        const elementOffset = isRtl 
+          ? carouselRef.current.scrollWidth - selectedElement.getBoundingClientRect().right + carouselRef.current.getBoundingClientRect().right - containerWidth
+          : selectedElement.getBoundingClientRect().left - carouselRef.current.getBoundingClientRect().left;
+        const scrollPosition = carouselRef.current.scrollLeft + elementOffset - (containerWidth / 2) + (selectedElement.clientWidth / 2);
+        
+        carouselRef.current.scrollTo({
+          left: scrollPosition,
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [selectedAlbumId, isRtl]);
 
-        if (selectedButton) {
-          selectedButton.scrollIntoView({
-            behavior: isFirstRender ? "auto" : "smooth",
-            block: "nearest",
-            inline: "center",
-          });
-          
-          // Mark scroll as initiated only after it's done
-          setScrollToInitiated(true);
-          
-          if (isFirstRender) {
-            setIsFirstRender(false);
-          }
+  // Scroll functions
+  const scrollCarousel = (direction: 'left' | 'right') => {
+    if (carouselRef.current) {
+      const scrollAmount = carouselRef.current.clientWidth * 0.75;
+      const newScrollPosition = carouselRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+      
+      carouselRef.current.scrollTo({
+        left: newScrollPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const scrollLeft = () => {
+    scrollCarousel(isRtl ? 'right' : 'left');
+  };
+
+  const scrollRight = () => {
+    scrollCarousel(isRtl ? 'left' : 'right');
+  };
+
+  // Check if arrows should be shown
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(false);
+
+  useEffect(() => {
+    const checkScrollable = () => {
+      if (carouselRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+        const maxScrollLeft = scrollWidth - clientWidth;
+        
+        // Update arrow state based on RTL
+        if (isRtl) {
+          setShowLeftArrow(Math.abs(scrollLeft) < maxScrollLeft - 10);
+          setShowRightArrow(scrollLeft < -10);
+        } else {
+          setShowLeftArrow(scrollLeft > 10);
+          setShowRightArrow(scrollLeft < maxScrollLeft - 10);
         }
       }
     };
 
-    // Use a single RAF call that won't cause continuous updates
-    requestAnimationFrame(scrollToSelectedAlbum);
-  }, [selectedAlbumId, scrollToInitiated, isFirstRender]);
-
-  // Reset scroll state ONLY when selectedAlbumId changes, nothing else
-  useEffect(() => {
-    setScrollToInitiated(false);
-  }, [selectedAlbumId]);
-
-  // Memoize handlers to prevent unnecessary re-renders
-  const handleAlbumEditClick = useCallback(() => {
-    if (selectedAlbumId && onAlbumEdit) {
-      onAlbumEdit(selectedAlbumId);
+    checkScrollable();
+    const carousel = carouselRef.current;
+    if (carousel) {
+      carousel.addEventListener('scroll', checkScrollable);
+      window.addEventListener('resize', checkScrollable);
     }
-  }, [selectedAlbumId, onAlbumEdit]);
 
-  const handleAlbumClick = useCallback((albumId: string) => {
-    if (albumId !== selectedAlbumId) {
-      onAlbumChange(albumId);
-    }
-  }, [onAlbumChange, selectedAlbumId]);
+    return () => {
+      if (carousel) {
+        carousel.removeEventListener('scroll', checkScrollable);
+        window.removeEventListener('resize', checkScrollable);
+      }
+    };
+  }, [isRtl]);
 
+  // Render albums in Facebook stories style
   return (
-    <div className="relative w-full mb-4">
-      <div
-        ref={scrollContainerRef}
-        className="flex overflow-x-auto scrollbar-hide py-2 gap-2"
-        dir="rtl"
+    <div className="relative mt-2">
+      <div 
+        ref={carouselRef}
+        className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-2 py-1 px-1"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {orderedAlbums.map((album) => (
-          <button
+        {albums.map((album) => (
+          <div
             key={album.id}
             data-album-id={album.id}
             className={cn(
-              "flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors",
-              selectedAlbumId === album.id
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted hover:bg-muted/80 text-foreground"
+              "fb-story-item min-w-[90px] h-[160px]",
+              selectedAlbumId === album.id ? "border-2 border-blue-500" : ""
             )}
-            onClick={() => handleAlbumClick(album.id)}
+            onClick={() => onAlbumChange(album.id)}
           >
-            {album.name}
-          </button>
+            {album.coverImage ? (
+              <img 
+                src={album.coverImage} 
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="h-full w-full bg-gray-800 flex items-center justify-center">
+                <span className="text-3xl text-gray-500">?</span>
+              </div>
+            )}
+          </div>
         ))}
       </div>
-
-      <div className="absolute -top-1 left-0 flex items-center gap-1">
-        <AddAlbumForm iconOnly onAlbumAdded={handleAlbumEditClick}>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 rounded-full hover:bg-muted transition-colors flex items-center justify-center"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </AddAlbumForm>
-      </div>
+      
+      {/* Navigation buttons */}
+      {showLeftArrow && (
+        <Button
+          size="icon"
+          variant="secondary"
+          className="absolute left-0 top-1/2 transform -translate-y-1/2 rounded-full opacity-90 shadow-md"
+          onClick={scrollLeft}
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
+      )}
+      
+      {showRightArrow && (
+        <Button
+          size="icon"
+          variant="secondary"
+          className="absolute right-0 top-1/2 transform -translate-y-1/2 rounded-full opacity-90 shadow-md"
+          onClick={scrollRight}
+        >
+          <ChevronRight className="h-5 w-5" />
+        </Button>
+      )}
     </div>
   );
 };
 
-// Prevent unnecessary re-renders with React.memo
-export default React.memo(AlbumCarousel);
+export default AlbumCarousel;

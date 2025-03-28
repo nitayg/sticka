@@ -38,8 +38,6 @@ export const useInventoryActions = (onRefresh: () => void) => {
   // Handle inventory update for a single sticker
   const handleInventoryUpdate = async (sticker: Sticker, increment: boolean) => {
     try {
-      // The UI will update optimistically via local state in InventoryTableRow
-      
       if (!sticker.isOwned && increment) {
         // If not owned and incrementing, toggle to owned
         await toggleStickerOwned(sticker.id);
@@ -67,14 +65,14 @@ export const useInventoryActions = (onRefresh: () => void) => {
         }
       }
 
-      // These events will be picked up by event listeners for syncing
+      // Refresh inventory after update
+      onRefresh();
+
+      // Trigger events for syncing
       window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
         detail: { action: 'update' } 
       }));
       window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
-      
-      // Optional UI refresh (not needed for immediate feedback, but good for syncing with other components)
-      onRefresh();
       
       // Show toast notification
       toast({

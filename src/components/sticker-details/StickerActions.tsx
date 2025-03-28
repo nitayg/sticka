@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash, CheckCircle, XCircle } from "lucide-react";
 import { Sticker } from "@/lib/types";
@@ -25,38 +25,18 @@ const StickerActions = ({
   isDeleting = false,
   isLoading = false
 }: StickerActionsProps) => {
-  // Local state for optimistic UI updates
-  const [localIsOwned, setLocalIsOwned] = useState(sticker.isOwned);
-  const [localIsDuplicate, setLocalIsDuplicate] = useState(sticker.isDuplicate);
-  
-  // Update local state when sticker props change
-  useEffect(() => {
-    setLocalIsOwned(sticker.isOwned);
-    setLocalIsDuplicate(sticker.isDuplicate);
-  }, [sticker.isOwned, sticker.isDuplicate]);
-
-  const handleToggleOwned = () => {
-    setLocalIsOwned(!localIsOwned);
-    onToggleOwned();
-  };
-
-  const handleToggleDuplicate = () => {
-    setLocalIsDuplicate(!localIsDuplicate);
-    onToggleDuplicate();
-  };
-
   return (
     <div className="flex flex-wrap gap-2 my-2">
       <Button
-        variant={localIsOwned ? "destructive" : "default"}
+        variant={sticker.isOwned ? "destructive" : "default"}
         size="sm"
-        onClick={handleToggleOwned}
+        onClick={onToggleOwned}
         className="flex-1"
         disabled={isLoading}
       >
         {isLoading ? (
           <span className="loading loading-spinner loading-xs"></span>
-        ) : localIsOwned ? (
+        ) : sticker.isOwned ? (
           <>
             <XCircle className="h-4 w-4 mr-1" /> סמן כחסר
           </>
@@ -67,17 +47,17 @@ const StickerActions = ({
         )}
       </Button>
 
-      {localIsOwned && (
+      {sticker.isOwned && (
         <Button
-          variant={localIsDuplicate ? "outline" : "secondary"}
+          variant={sticker.isDuplicate ? "outline" : "secondary"}
           size="sm"
-          onClick={handleToggleDuplicate}
+          onClick={onToggleDuplicate}
           className="flex-1"
           disabled={isLoading}
         >
           {isLoading ? (
             <span className="loading loading-spinner loading-xs"></span>
-          ) : localIsDuplicate ? (
+          ) : sticker.isDuplicate ? (
             "סמן כיחיד"
           ) : (
             "סמן ככפול"

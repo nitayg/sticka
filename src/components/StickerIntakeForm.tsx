@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Button } from "./ui/button";
@@ -16,7 +15,7 @@ import { useIntakeLogStore } from "@/store/useIntakeLogStore";
 interface StickerIntakeFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onIntake: (albumId: string, stickerNumbers: (number | string)[]) => void;
+  onIntake: (albumId: string, stickerNumbers: number[]) => void;
   defaultStickerNumbers?: string;
   defaultExchangePartner?: string;
 }
@@ -82,11 +81,8 @@ const StickerIntakeForm = ({
     const numbers = stickerNumbers
       .split(",")
       .map(num => num.trim())
-      .filter(num => num)
-      .map(num => {
-        const isAlphanumeric = /[^0-9]/.test(num);
-        return isAlphanumeric ? num : parseInt(num);
-      });
+      .filter(num => num && !isNaN(Number(num)))
+      .map(num => parseInt(num));
 
     if (numbers.length === 0) {
       setValidationError("אנא הכנס מספרי מדבקות תקינים, מופרדים בפסיקים");

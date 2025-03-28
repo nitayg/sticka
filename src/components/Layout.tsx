@@ -65,7 +65,7 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <div className={cn(
       "min-h-screen bg-background flex flex-col w-full", 
-      isAlbumView && "overflow-hidden", // שינוי מ-prevent-scroll ל-overflow-hidden
+      isAlbumView && "prevent-scroll", 
       "dir-rtl" // Ensure RTL direction
     )}>
       {/* Mobile Header */}
@@ -85,12 +85,9 @@ const Layout = ({ children }: LayoutProps) => {
         {/* Main Content */}
         <main className={cn(
           "flex-1 pt-14 pb-24 w-full", 
-          isAlbumView ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"
+          isAlbumView ? "main-content overflow-hidden" : "overflow-y-auto overflow-x-hidden"
         )}>
-          <div className={cn(
-            "max-w-4xl mx-auto px-1",
-            isAlbumView ? "h-[calc(100vh-9.5rem)] overflow-hidden" : ""
-          )}>
+          <div className="max-w-4xl mx-auto px-1 animate-fade-in">
             {children}
           </div>
         </main>

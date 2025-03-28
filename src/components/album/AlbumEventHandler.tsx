@@ -7,17 +7,15 @@ import { toast } from '@/components/ui/use-toast';
 import { StorageEvents } from '@/lib/sync';
 
 interface AlbumEventHandlerProps {
-  album?: Album;
-  onDataChange?: () => void;
+  album: Album;
 }
 
-const AlbumEventHandler: React.FC<AlbumEventHandlerProps> = ({ album, onDataChange }) => {
+const AlbumEventHandler: React.FC<AlbumEventHandlerProps> = ({ album }) => {
   const queryClient = useQueryClient();
 
   // Mutation for updating an album
   const updateAlbumMutation = useMutation({
     mutationFn: (data: Partial<Album>) => {
-      if (!album) return Promise.resolve(null);
       const updatedAlbum = updateAlbum(album.id, data);
       return Promise.resolve(updatedAlbum);
     },
@@ -39,7 +37,6 @@ const AlbumEventHandler: React.FC<AlbumEventHandlerProps> = ({ album, onDataChan
   // Mutation for deleting an album
   const deleteAlbumMutation = useMutation({
     mutationFn: () => {
-      if (!album) return Promise.resolve(false);
       return deleteAlbum(album.id);
     },
     onSuccess: (success) => {
@@ -58,16 +55,11 @@ const AlbumEventHandler: React.FC<AlbumEventHandlerProps> = ({ album, onDataChan
   });
 
   useEffect(() => {
-    // Skip adding event listeners if no album provided
-    if (!album) return;
-    
     const handleAlbumsUpdated = (event: any) => {
       // Check if the updated album is the current album
-      if (event.detail && Array.isArray(event.detail) && 
-          event.detail.find((updatedAlbum: Album) => updatedAlbum.id === album.id)) {
+      if (event.detail && event.detail.find((updatedAlbum: Album) => updatedAlbum.id === album.id)) {
         // Invalidate the query to refresh the data
         queryClient.invalidateQueries({ queryKey: ['albums'] });
-        if (onDataChange) onDataChange();
       }
     };
 
@@ -75,7 +67,6 @@ const AlbumEventHandler: React.FC<AlbumEventHandlerProps> = ({ album, onDataChan
       if (event.detail && event.detail.albumId === album.id) {
         queryClient.invalidateQueries({ queryKey: ['albums'] });
         queryClient.invalidateQueries({ queryKey: ['stickers'] });
-        if (onDataChange) onDataChange();
       }
     };
 
@@ -86,7 +77,7 @@ const AlbumEventHandler: React.FC<AlbumEventHandlerProps> = ({ album, onDataChan
       window.removeEventListener(StorageEvents.ALBUMS, handleAlbumsUpdated);
       window.removeEventListener('albumDeleted', handleAlbumDeleted);
     };
-  }, [album, queryClient, onDataChange]);
+  }, [album.id, queryClient]);
 
   return null; // This component doesn't render anything
 };

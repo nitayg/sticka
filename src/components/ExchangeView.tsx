@@ -1,338 +1,172 @@
 
-import React, { useState, useEffect, useCallback } from "react";
-import { useAlbumStore } from "@/store/useAlbumStore";
-import { getAllAlbums } from "@/lib/data";
-import { Album, ExchangeOffer } from "@/lib/types";
+import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import Header from "./Header";
 import AlbumCarousel from "./inventory/AlbumCarousel";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Plus, ArrowLeftRight, Search } from "lucide-react";
-import AddExchangeDialog from "./exchange/AddExchangeDialog";
-import { useToast } from "@/components/ui/use-toast";
-import { Card } from "@/components/ui/card";
-import ExchangeCard from "./exchange/card";
+import { getAllAlbums } from "@/lib/data";
+import { 
+  Plus, 
+  ArrowLeftRight
+} from "lucide-react";
+import { Button } from "./ui/button";
 import EmptyState from "./EmptyState";
-import { LoadingSpinner } from "./ui/loading";
-import UpdateExchangeDialog from "./exchange/UpdateExchangeDialog";
-import {
-  fetchExchangeOffers,
-  saveExchangeOffer,
-  deleteExchangeOfferFromSupabase,
-} from "@/lib/supabase";
+import { Dialog, DialogTrigger } from "./ui/dialog";
+import AddExchangeDialog from "./exchange/AddExchangeDialog";
+import ExchangeCard from "./exchange/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { useInventoryStore } from "@/store/useInventoryStore";
+import { fetchExchangeOffers } from "@/lib/supabase";
+import { ExchangeOffer } from "@/lib/types";
+import SyncIndicator from "./SyncIndicator";
 
 const ExchangeView = () => {
-  const [albums, setAlbums] = useState<Album[]>([]);
-  const { selectedAlbumId, setSelectedAlbumId } = useAlbumStore();
+  const [selectedAlbumId, setSelectedAlbumId] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
-  const [selectedExchange, setSelectedExchange] = useState<ExchangeOffer | null>(null);
-  const [myExchanges, setMyExchanges] = useState<ExchangeOffer[]>([]);
-  const [availableExchanges, setAvailableExchanges] = useState<ExchangeOffer[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<"active" | "completed">("active");
-  const { toast } = useToast();
-  const [refreshData, setRefreshData] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [exchanges, setExchanges] = useState<ExchangeOffer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Use useCallback to prevent infinite rendering
-  const handleRefreshData = useCallback(() => {
-    setRefreshData(prev => !prev);
-  }, []);
-
+  const albums = getAllAlbums();
+  
+  // Set initial album
   useEffect(() => {
-    const allAlbums = getAllAlbums();
-    setAlbums(allAlbums);
-    if (allAlbums.length > 0 && !selectedAlbumId) {
-      setSelectedAlbumId(allAlbums[0].id);
+    if (albums.length > 0 && !selectedAlbumId) {
+      setSelectedAlbumId(albums[0].id);
     }
-  }, [setSelectedAlbumId, selectedAlbumId]);
+  }, [albums]);
   
-  // Use useCallback for fetching data to prevent infinite loops
-  const fetchData = useCallback(async () => {
-    if (!selectedAlbumId) return;
-    
-    setLoading(true);
-    try {
-      const allExchanges = await fetchExchangeOffers() || [];
-      
-      // Filter exchanges based on the selected album
-      const albumExchanges = allExchanges.filter(exchange => exchange.albumId === selectedAlbumId);
-      
-      // Filter exchanges based on the current user (assuming you have a way to identify the current user)
-      const currentUserId = "user-001"; // Replace with the actual user ID
-      const myExchanges = albumExchanges.filter(exchange => exchange.userId === currentUserId);
-      const availableExchanges = albumExchanges.filter(exchange => exchange.userId !== currentUserId);
-      
-      // Further filter based on status
-      const filterByStatus = (exchanges: ExchangeOffer[]) => {
-        if (filterStatus === "active") {
-          return exchanges.filter(exchange => exchange.status === "active");
-        } else if (filterStatus === "completed") {
-          return exchanges.filter(exchange => exchange.status === "completed");
+  // Fetch exchanges from Supabase
+  useEffect(() => {
+    const loadExchanges = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchExchangeOffers();
+        if (data) {
+          console.log('Fetched exchange offers:', data);
+          setExchanges(data.filter(exchange => !exchange.isDeleted));
         }
-        return exchanges;
-      };
-      
-      setMyExchanges(filterByStatus(myExchanges));
-      setAvailableExchanges(filterByStatus(availableExchanges));
-    } catch (error) {
-      console.error("Failed to fetch exchanges:", error);
-      toast({
-        title: "Failed to fetch exchanges",
-        description: "There was an error fetching the exchange offers.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedAlbumId, filterStatus, toast]);
+      } catch (error) {
+        console.error('Error fetching exchanges:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadExchanges();
+    
+    // Set up listener for exchange data changes
+    const handleDataChanged = () => {
+      console.log('Exchange data changed, refreshing...');
+      loadExchanges();
+    };
+    
+    window.addEventListener('exchangeOffersDataChanged', handleDataChanged);
+    return () => window.removeEventListener('exchangeOffersDataChanged', handleDataChanged);
+  }, [refreshKey]);
   
-  // Separate effect for fetching data to avoid infinite loops
-  useEffect(() => {
-    fetchData();
-  }, [fetchData, refreshData]);
+  // Filter exchanges by selected album
+  const filteredExchanges = selectedAlbumId 
+    ? exchanges.filter(exchange => exchange.albumId === selectedAlbumId)
+    : [];
   
   const handleAlbumChange = (albumId: string) => {
     setSelectedAlbumId(albumId);
   };
   
-  const handleDeleteExchange = async (exchangeId: string) => {
-    try {
-      const success = await deleteExchangeOfferFromSupabase(exchangeId);
-      if (success) {
-        toast({
-          title: "Exchange offer deleted",
-          description: "The exchange offer has been successfully deleted.",
-        });
-        handleRefreshData();
-      } else {
-        toast({
-          title: "Failed to delete exchange offer",
-          description: "There was an error deleting the exchange offer.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Failed to delete exchange:", error);
-      toast({
-        title: "Failed to delete exchange",
-        description: "There was an error deleting the exchange offer.",
-        variant: "destructive",
-      });
-    }
+  const handleExchangeAdded = () => {
+    // Refresh the view when a new exchange is added
+    setRefreshKey(prev => prev + 1);
+    
+    // Force update album view and inventory view by dispatching custom events
+    window.dispatchEvent(new CustomEvent('albumDataChanged'));
+    window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
   };
-  
-  const handleCompleteExchange = async (exchangeId: string) => {
-    try {
-      // Find the exchange to get all its properties
-      const exchange = myExchanges.find(ex => ex.id === exchangeId);
-      if (!exchange) {
-        throw new Error("Exchange not found");
-      }
 
-      // Optimistically update the UI
-      setMyExchanges(prevExchanges =>
-        prevExchanges.map(ex =>
-          ex.id === exchangeId ? { ...ex, status: "completed" } : ex
-        )
-      );
-      
-      // Update the exchange offer in Supabase with all required fields
-      const updatedExchange: ExchangeOffer = {
-        ...exchange,
-        status: "completed",
-      };
-      
-      const success = await saveExchangeOffer(updatedExchange);
-      
-      if (success) {
-        toast({
-          title: "Exchange offer completed",
-          description: "The exchange offer has been marked as completed.",
-        });
-        handleRefreshData();
-      } else {
-        toast({
-          title: "Failed to complete exchange offer",
-          description: "There was an error completing the exchange offer.",
-          variant: "destructive",
-        });
-        // Revert the UI update if the Supabase update fails
-        setMyExchanges(prevExchanges =>
-          prevExchanges.map(ex =>
-            ex.id === exchangeId ? { ...ex, status: "active" } : ex
-          )
-        );
-      }
-    } catch (error) {
-      console.error("Failed to complete exchange:", error);
-      toast({
-        title: "Failed to complete exchange",
-        description: "There was an error completing the exchange offer.",
-        variant: "destructive",
-      });
-      // Revert the UI update if an error occurs
-      setMyExchanges(prevExchanges =>
-        prevExchanges.map(ex =>
-          ex.id === exchangeId ? { ...ex, status: "active" } : ex
-        )
-      );
-    }
-  };
-  
   return (
-    <div className="relative">
-      <div className="px-4 py-2 h-full">
-        <h1 className="text-2xl font-bold mb-4 text-center">החלפות</h1>
-        
-        <Tabs defaultValue="my-exchanges">
-          <div className="flex justify-between items-center mb-4">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="my-exchanges">
-                החלפות שלי
-              </TabsTrigger>
-              <TabsTrigger value="available-exchanges">
-                החלפות זמינות
-              </TabsTrigger>
-            </TabsList>
-            
-            {/* Add Exchange Button */}
-            {!isDialogOpen && (
-              <Button
-                variant="default"
-                size="sm"
-                className="ml-2"
-                onClick={() => setIsDialogOpen(true)}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                הוסף החלפה
-              </Button>
-            )}
+    <div className="space-y-4 animate-fade-in">
+      <Header 
+        title="מערכת החלפות" 
+        subtitle="החלף מדבקות עם אספנים אחרים"
+        action={
+          <div className="flex items-center gap-2">
+            <SyncIndicator headerPosition />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        עסקת החלפה חדשה
+                      </Button>
+                    </DialogTrigger>
+                    <AddExchangeDialog 
+                      onClose={() => setIsDialogOpen(false)}
+                      selectedAlbumId={selectedAlbumId}
+                      onExchangeAdded={handleExchangeAdded}
+                    />
+                  </Dialog>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>צור עסקת החלפה חדשה</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
-          
-          <TabsContent value="my-exchanges" className="space-y-4">
-            {/* Album Selection */}
-            <AlbumCarousel
-              albums={albums}
-              selectedAlbumId={selectedAlbumId}
-              onAlbumChange={handleAlbumChange}
-              onAlbumEdit={handleRefreshData}
-            />
-            
-            {/* Filter Controls */}
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              <Button
-                onClick={() => setFilterStatus("active")}
-                variant={filterStatus === "active" ? "default" : "outline"}
-                className="text-xs"
-                size="sm"
-              >
-                הצעות פעילות
-              </Button>
-              <Button
-                onClick={() => setFilterStatus("completed")}
-                variant={filterStatus === "completed" ? "default" : "outline"}
-                className="text-xs" 
-                size="sm"
-              >
-                הצעות שהושלמו
-              </Button>
+        }
+      />
+      
+      <AlbumCarousel 
+        albums={albums}
+        selectedAlbumId={selectedAlbumId}
+        onAlbumChange={handleAlbumChange}
+      />
+      
+      <div className="space-y-4">
+        {/* Active Exchanges */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">עסקאות החלפה פעילות</h2>
+          {isLoading ? (
+            <div className="py-8 flex justify-center">
+              <div className="animate-pulse flex space-x-4">
+                <div className="h-10 w-10 bg-gray-300 rounded-full"></div>
+                <div className="flex-1 space-y-4 py-1">
+                  <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-300 rounded"></div>
+                    <div className="h-4 bg-gray-300 rounded w-5/6"></div>
+                  </div>
+                </div>
+              </div>
             </div>
-            
-            {/* Exchange Cards for User's Exchanges */}
-            {loading ? (
-              <div className="flex justify-center my-8">
-                <LoadingSpinner />
-              </div>
-            ) : myExchanges.length > 0 ? (
-              <div className="space-y-4">
-                {myExchanges.map(exchange => (
-                  <Card key={exchange.id} className="transition-all hover:shadow-md">
-                    <ExchangeCard
-                      exchange={exchange}
-                      onUpdate={() => {
-                        setSelectedExchange(exchange);
-                        setIsUpdateDialogOpen(true);
-                      }}
-                      onDelete={() => handleDeleteExchange(exchange.id)}
-                      onComplete={() => handleCompleteExchange(exchange.id)}
-                      isOwner={true}
-                    />
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                title="אין לך הצעות החלפה"
-                description="הוסף הצעת החלפה חדשה כדי להתחיל"
-                icon={<ArrowLeftRight className="h-12 w-12 text-muted-foreground" />}
-              />
-            )}
-          </TabsContent>
-          
-          <TabsContent value="available-exchanges" className="space-y-4">
-            {/* Album Selection */}
-            <AlbumCarousel
-              albums={albums}
-              selectedAlbumId={selectedAlbumId}
-              onAlbumChange={handleAlbumChange}
-              onAlbumEdit={handleRefreshData}
+          ) : filteredExchanges.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-scale-in">
+              {filteredExchanges.map(exchange => (
+                <ExchangeCard 
+                  key={exchange.id}
+                  exchange={exchange}
+                  onRefresh={() => setRefreshKey(prev => prev + 1)}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon={<ArrowLeftRight className="h-12 w-12" />}
+              title="אין עסקאות פעילות"
+              description={`אין לך עסקאות החלפה פעילות לאלבום זה כרגע.`}
+              action={
+                <Button 
+                  onClick={() => setIsDialogOpen(true)}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  צור עסקת החלפה חדשה
+                </Button>
+              }
             />
-            
-            {/* Exchange Cards for Available Exchanges */}
-            {loading ? (
-              <div className="flex justify-center my-8">
-                <LoadingSpinner />
-              </div>
-            ) : availableExchanges.length > 0 ? (
-              <div className="space-y-4">
-                {availableExchanges.map(exchange => (
-                  <Card key={exchange.id} className="transition-all hover:shadow-md">
-                    <ExchangeCard
-                      exchange={exchange}
-                      onUpdate={undefined}
-                      onDelete={undefined}
-                      onComplete={undefined}
-                      isOwner={false}
-                    />
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                title="אין הצעות החלפה זמינות"
-                description="נסה לבחור אלבום אחר או הוסף הצעת החלפה חדשה"
-                icon={<Search className="h-12 w-12 text-muted-foreground" />}
-              />
-            )}
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
-      
-      {/* Add Exchange Dialog */}
-      {isDialogOpen && (
-        <AddExchangeDialog
-          isOpen={isDialogOpen}
-          onClose={() => setIsDialogOpen(false)}
-          onExchangeAdded={() => {
-            setIsDialogOpen(false);
-            handleRefreshData();
-          }}
-          selectedAlbumId={selectedAlbumId}
-        />
-      )}
-      
-      {/* Update Exchange Dialog */}
-      {isUpdateDialogOpen && selectedExchange && (
-        <UpdateExchangeDialog
-          isOpen={isUpdateDialogOpen}
-          onClose={() => setIsUpdateDialogOpen(false)}
-          onExchangeUpdated={() => {
-            setIsUpdateDialogOpen(false);
-            handleRefreshData();
-          }}
-          exchange={selectedExchange}
-        />
-      )}
     </div>
   );
 };

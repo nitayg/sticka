@@ -34,10 +34,6 @@ const InventoryView = () => {
   
   const { toast } = useToast();
   const [reportFormat, setReportFormat] = useState<'numbers' | 'names'>('numbers');
-  const [searchValue, setSearchValue] = useState("");
-  const [showCompleted, setShowCompleted] = useState(true);
-  const [showMissing, setShowMissing] = useState(true);
-  const [showDuplicated, setShowDuplicated] = useState(true);
   
   const { data: albums = [], isLoading: isAlbumsLoading } = useQuery({
     queryKey: ['albums'],
@@ -50,11 +46,8 @@ const InventoryView = () => {
     enabled: !!selectedAlbumId,
   });
   
-  // Use a ref to track if this is the first render to prevent unnecessary updates
-  const [isInitialized, setIsInitialized] = useState(false);
-  
   useEffect(() => {
-    if (!isInitialized && albums && albums.length > 0 && !selectedAlbumId) {
+    if (albums && albums.length > 0 && !selectedAlbumId) {
       // Try to get last selected album from localStorage
       const lastSelectedAlbum = localStorage.getItem('lastSelectedAlbumId');
       if (lastSelectedAlbum && albums.some(album => album.id === lastSelectedAlbum)) {
@@ -62,11 +55,10 @@ const InventoryView = () => {
       } else {
         handleAlbumChange(albums[0].id);
       }
-      setIsInitialized(true);
     }
-  }, [albums, selectedAlbumId, handleAlbumChange, isInitialized]);
+  }, [albums, selectedAlbumId, handleAlbumChange]);
   
-  // Store selected album ID when it changes - use a more controlled approach
+  // Store selected album ID when it changes
   useEffect(() => {
     if (selectedAlbumId) {
       localStorage.setItem('lastSelectedAlbumId', selectedAlbumId);
@@ -88,7 +80,7 @@ const InventoryView = () => {
     duplicates: albumStickers.filter(s => s.isDuplicate && s.isOwned).length
   };
   
-  const handleStickerIntakeSubmit = async (albumId: string, stickerNumbers: (number | string)[]) => {
+  const handleStickerIntakeSubmit = async (albumId: string, stickerNumbers: number[]) => {
     try {
       const results = await handleStickerIntake(albumId, stickerNumbers);
       
@@ -110,7 +102,7 @@ const InventoryView = () => {
         description: message,
       });
       
-      // Don't call handleRefresh here as it's already called in handleStickerIntake
+      handleRefresh();
     } catch (error) {
       console.error("Error adding stickers to inventory:", error);
       toast({
@@ -170,17 +162,8 @@ const InventoryView = () => {
       />
       
       <InventoryFilters
-        albums={albums}
         selectedAlbumId={selectedAlbumId}
         onAlbumChange={handleAlbumChange}
-        searchValue={searchValue}
-        setSearchValue={setSearchValue}
-        showCompleted={showCompleted}
-        setShowCompleted={setShowCompleted}
-        showMissing={showMissing}
-        setShowMissing={setShowMissing}
-        showDuplicated={showDuplicated}
-        setShowDuplicated={setShowDuplicated}
         viewMode={viewMode}
         setViewMode={setViewMode}
         showImages={showImages}

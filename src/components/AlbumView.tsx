@@ -1,138 +1,128 @@
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useEffect } from "react";
 import { useAlbumStore } from "@/store/useAlbumStore";
-import { getAllAlbums } from "@/lib/data";
-import { Album } from "@/lib/types";
 import AlbumHeader from "./album/AlbumHeader";
-import FilteredStickerContainer from "./album/FilteredStickerContainer";
-import AlbumCarouselGrid from "./album/AlbumCarouselGrid";
-import EditAlbumForm from "./add-album-form";
+import FilterControls from "./album/FilterControls";
 import AlbumEventHandler from "./album/AlbumEventHandler";
-import { useAlbumOrderStore } from "@/store/useAlbumOrderStore";
+import { useAlbumData } from "@/hooks/useAlbumData";
+import EmptyState from "./EmptyState";
+import { Album } from "lucide-react";
+import AddAlbumForm from "./add-album-form";
+import FilteredStickerContainer from "./album/FilteredStickerContainer";
 
 const AlbumView = () => {
-  const [albums, setAlbums] = useState<Album[]>([]);
-  const [showEditForm, setShowEditForm] = useState(false);
-  const [albumToEdit, setAlbumToEdit] = useState<string | null>(null);
-  const { selectedAlbumId, setSelectedAlbumId, viewMode, setViewMode, showImages, setShowImages } = useAlbumStore();
-  const [refreshKey, setRefreshKey] = useState(0);
-  const { orderedAlbumIds, initializeOrder } = useAlbumOrderStore();
+  const {
+    viewMode,
+    setViewMode,
+    showImages,
+    setShowImages,
+    selectedAlbumId,
+    refreshKey,
+    handleRefresh,
+    handleAlbumChange,
+  } = useAlbumStore();
   
-  const handleRefresh = useCallback(() => {
-    setRefreshKey(prev => prev + 1);
-  }, []);
-  
-  // Get all albums and update state
-  useEffect(() => {
-    let allAlbums = getAllAlbums();
-    
-    // Sort albums by the order in orderedAlbumIds
-    if (orderedAlbumIds.length > 0) {
-      allAlbums = [...allAlbums].sort((a, b) => {
-        const indexA = orderedAlbumIds.indexOf(a.id);
-        const indexB = orderedAlbumIds.indexOf(b.id);
-        
-        // If album is not in the orderedAlbumIds, put it at the end
-        if (indexA === -1) return 1;
-        if (indexB === -1) return -1;
-        
-        return indexA - indexB;
-      });
-    }
-    
-    setAlbums(allAlbums);
-    
-    // If no album is selected yet and we have albums, select the first one
-    if (allAlbums.length > 0 && !selectedAlbumId) {
-      setSelectedAlbumId(allAlbums[0].id);
-    }
-    
-    // Initialize order if needed
-    initializeOrder();
-  }, [selectedAlbumId, setSelectedAlbumId, refreshKey, orderedAlbumIds, initializeOrder]);
+  const { 
+    albums, 
+    stickers, 
+    transactionMap, 
+    isLoading
+  } = useAlbumData({ 
+    selectedAlbumId, 
+    refreshKey,
+    activeTab: "number", // Default to number tab
+    showAllAlbumStickers: false // Default not showing all album stickers
+  });
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   
   useEffect(() => {
-    const handleAlbumDataChanged = () => {
+    if (isIOS) {
+      setViewMode('compact');
+    }
+  }, [isIOS, setViewMode]);
+  
+  useEffect(() => {
+    if (albums.length > 0 && !selectedAlbumId) {
+      const lastSelectedAlbum = localStorage.getItem('lastSelectedAlbumId');
+      if (lastSelectedAlbum && albums.some(album => album.id === lastSelectedAlbum)) {
+        handleAlbumChange(lastSelectedAlbum);
+      } else {
+        handleAlbumChange(albums[0].id);
+      }
+    }
+  }, [albums, selectedAlbumId, handleAlbumChange]);
+  
+  useEffect(() => {
+    if (selectedAlbumId) {
+      localStorage.setItem('lastSelectedAlbumId', selectedAlbumId);
+    }
+  }, [selectedAlbumId]);
+  
+  // Listen for inventory changes to refresh stickers
+  useEffect(() => {
+    const handleInventoryChanged = () => {
+      console.log("Inventory data changed event received in AlbumView");
       handleRefresh();
     };
     
-    window.addEventListener('albumDataChanged', handleAlbumDataChanged);
+    window.addEventListener('inventoryDataChanged', handleInventoryChanged);
     return () => {
-      window.removeEventListener('albumDataChanged', handleAlbumDataChanged);
+      window.removeEventListener('inventoryDataChanged', handleInventoryChanged);
     };
   }, [handleRefresh]);
   
-  const handleAlbumChange = useCallback((albumId: string) => {
-    setSelectedAlbumId(albumId);
-  }, [setSelectedAlbumId]);
-  
-  const handleEditAlbum = useCallback((albumId: string) => {
-    setAlbumToEdit(albumId);
-    setShowEditForm(true);
-  }, []);
-  
-  const handleSaveAlbum = useCallback(() => {
-    setShowEditForm(false);
-    handleRefresh();
-    setAlbumToEdit(null);
-  }, [handleRefresh]);
-  
-  // If no albums, show empty state
-  if (albums.length === 0) {
+  if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-center">אין אלבומים</h1>
-        <p className="text-center mt-2">הוסף אלבום חדש כדי להתחיל</p>
-        <div className="flex justify-center mt-4">
-          <EditAlbumForm onAlbumAdded={handleSaveAlbum} />
+      <div className="space-y-4 animate-fade-in">
+        <div className="flex items-center justify-center p-12">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
         </div>
       </div>
     );
   }
   
-  // Find the selected album
-  const selectedAlbum = albums.find(album => album.id === selectedAlbumId) || albums[0];
+  if (albums.length === 0) {
+    return (
+      <div className="space-y-4 animate-fade-in p-4">
+        <EmptyState
+          icon={<Album className="h-12 w-12" />}
+          title="אין אלבומים פעילים"
+          description="הוסף אלבום חדש כדי להתחיל"
+          action={
+            <AddAlbumForm onAlbumAdded={handleRefresh} />
+          }
+        />
+      </div>
+    );
+  }
   
   return (
-    <>
-      {selectedAlbum && <AlbumEventHandler album={selectedAlbum} onDataChange={handleRefresh} />}
+    <div className="space-y-2 animate-fade-in">
+      {selectedAlbumId && <AlbumEventHandler album={albums.find(a => a.id === selectedAlbumId)} />}
       
-      <div className="flex flex-col h-full pt-14 pb-16">
-        <AlbumHeader 
-          albums={[selectedAlbum]} 
-          onRefresh={handleRefresh}
-        />
-        
-        <div className="px-2">
-          <AlbumCarouselGrid 
-            albums={albums}
-            selectedAlbumId={selectedAlbumId}
-            onAlbumChange={handleAlbumChange}
-            onEdit={handleEditAlbum}
-          />
-        </div>
-        
-        <FilteredStickerContainer 
-          stickers={[]} 
+      <FilterControls
+        albums={albums}
+        selectedAlbum={selectedAlbumId}
+        handleAlbumChange={handleAlbumChange}
+        onTeamsManage={() => {}} // Empty function since we're removing tabs
+      />
+      
+      <div className="pb-16"> {/* הוספת padding תחתון */}
+        <FilteredStickerContainer
+          stickers={stickers}
           selectedAlbumId={selectedAlbumId}
-          activeTab="number"
-          selectedRange={null}
-          selectedTeam={null}
-          showAllAlbumStickers={false}
           viewMode={viewMode}
           showImages={showImages}
           onRefresh={handleRefresh}
-          transactionMap={{}}
+          transactionMap={transactionMap}
+          activeTab="number" // Default to number tab
+          selectedRange={null}
+          selectedTeam={null}
+          showAllAlbumStickers={false}
         />
       </div>
-      
-      {showEditForm && albumToEdit && (
-        <EditAlbumForm 
-          onAlbumAdded={handleSaveAlbum}
-          albumId={albumToEdit}
-        />
-      )}
-    </>
+    </div>
   );
 };
 

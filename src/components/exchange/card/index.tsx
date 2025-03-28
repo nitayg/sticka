@@ -16,20 +16,9 @@ import ExchangeActions from "./ExchangeActions";
 interface ExchangeCardProps {
   exchange: ExchangeOffer;
   onRefresh?: () => void;
-  isOwner?: boolean;
-  onUpdate?: () => void;
-  onDelete?: () => void;
-  onComplete?: () => void;
 }
 
-const ExchangeCard = ({ 
-  exchange, 
-  onRefresh,
-  isOwner,
-  onUpdate,
-  onDelete,
-  onComplete
-}: ExchangeCardProps) => {
+const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedSticker, setSelectedSticker] = useState<any | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -158,10 +147,6 @@ const ExchangeCard = ({
       <ExchangeActions 
         exchange={exchange}
         onRefresh={onRefresh || (() => {})}
-        isOwner={isOwner}
-        onUpdate={onUpdate}
-        onDelete={onDelete}
-        onComplete={onComplete}
       />
     </div>
   );

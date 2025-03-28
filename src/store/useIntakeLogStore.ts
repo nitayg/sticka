@@ -8,9 +8,9 @@ interface IntakeLogEntry {
   albumName: string;
   source: string;
   sourceDetails?: string;
-  newStickers: (number | string)[];
-  newDuplicates: (number | string)[];
-  updatedDuplicates: (number | string)[];
+  newStickers: number[];
+  newDuplicates: number[];
+  updatedDuplicates: number[];
 }
 
 interface IntakeLogState {

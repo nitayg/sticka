@@ -17,11 +17,10 @@ interface UpdateExchangeDialogProps {
   isOpen: boolean;
   onClose: () => void;
   exchange: any;
-  onUpdate?: () => void;
-  onExchangeUpdated?: () => void;
+  onUpdate: () => void;
 }
 
-const UpdateExchangeDialog = ({ isOpen, onClose, exchange, onUpdate, onExchangeUpdated }: UpdateExchangeDialogProps) => {
+const UpdateExchangeDialog = ({ isOpen, onClose, exchange, onUpdate }: UpdateExchangeDialogProps) => {
   const [personName, setPersonName] = useState("");
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
@@ -53,7 +52,7 @@ const UpdateExchangeDialog = ({ isOpen, onClose, exchange, onUpdate, onExchangeU
     stickersToReceive,
     stickersToGive,
     onClose,
-    onUpdate: onExchangeUpdated || onUpdate || (() => {})
+    onUpdate
   });
   
   return (

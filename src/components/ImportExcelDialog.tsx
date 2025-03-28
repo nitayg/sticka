@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { FileSpreadsheet } from "lucide-react";
 import { Album } from "@/lib/types";
@@ -60,24 +61,12 @@ const ImportExcelDialog = ({
       let dataToImport: [number | string, string, string][] = [];
       
       if (parsedData.length > 0) {
-        dataToImport = parsedData.map(row => {
-          const isAlphanumeric = typeof row.number === 'string' && /[^0-9]/.test(row.number);
-          const number = isAlphanumeric ? row.number : 
-                        (typeof row.number === 'number' ? row.number : 
-                         parseInt(String(row.number), 10));
-          return [number, row.name, row.team];
-        });
+        dataToImport = parsedData.map(row => [row.number, row.name, row.team]);
       } 
       else if (file) {
         const fileContent = await file.text();
         const parsed = parseCSV(fileContent);
-        dataToImport = parsed.map(row => {
-          const isAlphanumeric = typeof row.number === 'string' && /[^0-9]/.test(row.number);
-          const number = isAlphanumeric ? row.number : 
-                        (typeof row.number === 'number' ? row.number : 
-                         parseInt(String(row.number), 10));
-          return [number, row.name, row.team];
-        });
+        dataToImport = parsed.map(row => [row.number, row.name, row.team]);
       }
       
       if (dataToImport.length === 0) {
@@ -85,6 +74,7 @@ const ImportExcelDialog = ({
       }
       
       console.log("Importing data:", dataToImport);
+      // Wait for the import function to complete using await
       const result = await importStickersFromCSV(selectedAlbum, dataToImport);
       console.log("Import result:", result);
       
@@ -101,6 +91,7 @@ const ImportExcelDialog = ({
         description: `יובאו ${result.length} מדבקות בהצלחה`,
       });
       
+      // Trigger refresh events
       window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
         detail: { albumId: selectedAlbum, action: 'import', count: result.length } 
       }));
