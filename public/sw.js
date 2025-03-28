@@ -1,9 +1,10 @@
 
-const CACHE_NAME = 'sticker-swapper-v1';
+const CACHE_NAME = 'sticker-swapper-v2';
 const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/lovable-uploads/b23851f0-cce1-44f8-a175-8ac64b6c3e4a.png',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png'
 ];
@@ -14,7 +15,11 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Opened cache');
-        return cache.addAll(urlsToCache);
+        return cache.addAll(urlsToCache).catch(error => {
+          console.error('Failed to cache resources:', error);
+          // Continue with installation even if some resources fail to cache
+          return Promise.resolve();
+        });
       })
   );
 });
@@ -39,6 +44,7 @@ self.addEventListener('activate', event => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
             return caches.delete(cacheName);
           }
+          return Promise.resolve();
         })
       );
     })
