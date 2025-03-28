@@ -9,19 +9,19 @@ let activeChannel: any = null;
 let syncDebounceTimeout: any = null;
 let eventsReceived = 0;
 
-// Debounced sync function
+// Debounced sync function with increased timeout
 const debouncedSync = () => {
   // Clear any existing timeout
   if (syncDebounceTimeout) {
     clearTimeout(syncDebounceTimeout);
   }
   
-  // Set a new timeout
+  // Set a new timeout with a longer delay to prevent rapid consecutive syncs
   syncDebounceTimeout = setTimeout(() => {
     console.log(`Triggering sync after receiving ${eventsReceived} events`);
     syncWithSupabase();
     eventsReceived = 0;
-  }, 2000); // 2 second debounce
+  }, 3000); // 3 second debounce to collect more changes before syncing
 };
 
 // Set up real-time subscriptions to Supabase with improved error handling
@@ -38,7 +38,7 @@ export const setupRealtimeSubscriptions = () => {
   // Create a channel for all tables with improved configuration
   const channel = supabase.channel('public:all-changes', {
     config: {
-      broadcast: { self: false }, // Don't receive your own changes
+      broadcast: { self: false }, // Critical: Don't receive your own changes to prevent loops
       presence: { key: 'client-' + Math.floor(Math.random() * 1000000) },
     }
   })
@@ -87,7 +87,10 @@ export const setupRealtimeSubscriptions = () => {
   channel.on('system', { event: 'reconnect' }, () => {
     console.log('Reconnected to Supabase realtime server');
     // Trigger a sync to ensure data is up-to-date after reconnection
-    syncWithSupabase();
+    // Use debounce to prevent immediate sync which might cause conflicts
+    setTimeout(() => {
+      syncWithSupabase();
+    }, 1000);
   });
   
   // Enhanced subscription with online/offline detection

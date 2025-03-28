@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'sticker-swapper-v1';
+const CACHE_NAME = 'sticker-swapper-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -14,7 +14,15 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Opened cache');
-        return cache.addAll(urlsToCache);
+        // Try to cache items individually to prevent failing if one resource is unavailable
+        const cachePromises = urlsToCache.map(url => 
+          cache.add(url).catch(error => {
+            console.error(`Failed to cache: ${url}`, error);
+            // Continue caching other resources even if one fails
+            return Promise.resolve();
+          })
+        );
+        return Promise.all(cachePromises);
       })
   );
 });
@@ -39,8 +47,14 @@ self.addEventListener('activate', event => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
             return caches.delete(cacheName);
           }
+          return Promise.resolve();
         })
       );
     })
   );
+});
+
+// Handle errors gracefully
+self.addEventListener('error', (event) => {
+  console.error('Service Worker error:', event.message);
 });
