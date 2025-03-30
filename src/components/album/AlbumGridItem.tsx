@@ -6,6 +6,7 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/comp
 import { useToast } from "@/components/ui/use-toast";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { deleteAlbum } from "@/lib/album-operations";
+import { getStickersByAlbumId } from "@/lib/sticker-operations";
 
 interface AlbumGridItemProps {
   id: string;
@@ -20,6 +21,24 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
   const [hovered, setHovered] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { toast } = useToast();
+
+  // Get completion percentage for the album
+  const albumStickers = getStickersByAlbumId(id);
+  const totalStickers = albumStickers.length;
+  const ownedStickers = albumStickers.filter(s => s.isOwned).length;
+  const completionPercentage = totalStickers > 0 
+    ? Math.round((ownedStickers / totalStickers) * 100) 
+    : 0;
+
+  // Generate gradient colors based on completion percentage
+  let progressColor = "bg-red-500";
+  if (completionPercentage > 75) {
+    progressColor = "bg-green-500";
+  } else if (completionPercentage > 50) {
+    progressColor = "bg-blue-500";
+  } else if (completionPercentage > 25) {
+    progressColor = "bg-yellow-500";
+  }
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -79,6 +98,7 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
               src={coverImage} 
               alt={name} 
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy" // Add lazy loading to improve performance
             />
           ) : (
             <div className="h-full w-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
@@ -121,10 +141,19 @@ const AlbumGridItem = ({ id, name, coverImage, isSelected, onSelect, onEdit }: A
             </div>
           </TooltipProvider>
 
-          <div className="absolute bottom-0 left-0 right-0 p-3 text-sm font-medium text-white transition-all duration-300 group-hover:pb-4">
-            <div className="smooth-fade-in">{name}</div>
+          {/* Completion progress bar */}
+          <div className="absolute left-0 right-0 bottom-0 h-6 bg-black/50 flex flex-col justify-center px-2">
+            <div className="h-2 w-full bg-gray-700 rounded-full overflow-hidden">
+              <div 
+                className={`h-full ${progressColor} transition-all duration-500`} 
+                style={{ width: `${completionPercentage}%` }}
+              />
+            </div>
+            {/* Display percentage on hover */}
             {hovered && (
-              <div className="text-xs text-gray-300 mt-1 smooth-fade-in">לחץ לבחירה</div>
+              <div className="absolute inset-x-0 bottom-1 text-[10px] text-center text-white font-medium">
+                {completionPercentage}% הושלם ({ownedStickers}/{totalStickers})
+              </div>
             )}
           </div>
         </div>

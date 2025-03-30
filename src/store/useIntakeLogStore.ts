@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface IntakeLogEntry {
+export interface IntakeLogEntry {
   timestamp: number;
   albumId: string;
   albumName: string;
@@ -17,11 +17,12 @@ interface IntakeLogState {
   intakeLog: IntakeLogEntry[];
   addLogEntry: (entry: Omit<IntakeLogEntry, 'timestamp'>) => void;
   clearLog: () => void;
+  getRecentEntries: (limit: number) => IntakeLogEntry[];
 }
 
 export const useIntakeLogStore = create<IntakeLogState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       intakeLog: [],
       
       addLogEntry: (entry) => set((state) => ({
@@ -35,6 +36,13 @@ export const useIntakeLogStore = create<IntakeLogState>()(
       })),
       
       clearLog: () => set({ intakeLog: [] }),
+      
+      // Added helper method to get only the most recent entries
+      // This helps minimize memory usage when displaying logs
+      getRecentEntries: (limit) => {
+        const { intakeLog } = get();
+        return intakeLog.slice(0, limit);
+      }
     }),
     {
       name: 'sticker-intake-log',
