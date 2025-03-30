@@ -1,4 +1,3 @@
-
 import { getStickersByAlbumId } from "@/lib/sticker-operations";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -9,8 +8,8 @@ interface ExchangeStickerGridProps {
   title: string;
   exchangeColor?: string;
   exchangeUserName?: string;
-  onStickerClick: (number: number) => void;
-  onStickerDetails: (number: number) => void;
+  onStickerClick: (number: number | string) => void;
+  onStickerDetails: (number: number | string) => void;
   selectedStickerId: string | null;
   isDialogOpen: boolean;
   handleCloseDialog: () => void;
@@ -25,10 +24,16 @@ const ExchangeStickerGrid = ({
   onStickerClick,
   onStickerDetails
 }: ExchangeStickerGridProps) => {
-  // Convert sticker IDs to numbers and ensure they're valid
+  // Convert sticker IDs to numbers or keep as strings for alphanumeric
   const stickerNumbers = stickerIds
-    .map(id => parseInt(id))
-    .filter(number => !isNaN(number));
+    .map(id => {
+      // Check if the ID is purely numeric
+      if (/^\d+$/.test(id)) {
+        return parseInt(id);
+      }
+      // Otherwise keep as string for alphanumeric
+      return id;
+    });
   
   // Get stickers from the album
   const albumStickers = getStickersByAlbumId(albumId);
@@ -56,7 +61,7 @@ const ExchangeStickerGrid = ({
       <div className="flex flex-wrap gap-1">
         {matchedStickers.map(({ number, isOwned, isDuplicate }) => (
           <div 
-            key={number}
+            key={number.toString()}
             className={cn(
               "w-8 h-8 flex items-center justify-center text-sm font-medium rounded-md cursor-pointer border",
               isOwned 

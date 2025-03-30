@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "./Header";
@@ -80,7 +79,7 @@ const InventoryView = () => {
     duplicates: albumStickers.filter(s => s.isDuplicate && s.isOwned).length
   };
   
-  const handleStickerIntakeSubmit = async (albumId: string, stickerNumbers: number[]) => {
+  const handleStickerIntakeSubmit = async (albumId: string, stickerNumbers: (number | string)[]) => {
     try {
       const results = await handleStickerIntake(albumId, stickerNumbers);
       

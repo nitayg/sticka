@@ -17,13 +17,13 @@ const StickerNumbersInput = ({ stickerNumbers, setStickerNumbers }: StickerNumbe
       <div className="col-span-3">
         <Input
           id="stickerNumbers"
-          placeholder="1, 2, 3, 4"
+          placeholder="1, 2, 3, A1, B2..."
           value={stickerNumbers}
           onChange={(e) => setStickerNumbers(e.target.value)}
           className="text-right"
         />
         <p className="text-xs text-muted-foreground mt-1 text-right">
-          יש להפריד מספרים עם פסיק (,)
+          יש להפריד מספרים עם פסיק (,) - ניתן להזין גם מספרי מדבקות אלפאנומריים
         </p>
       </div>
     </div>
