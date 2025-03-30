@@ -10,6 +10,8 @@ interface InventoryDataState {
   selectedAlbumId: string;
   refreshKey: number;
   transactionMap: Record<string, { person: string, color: string }>;
+  cachedStickers: Record<string, any[]>; // Cache stickers by albumId to reduce egress
+  lastRefreshTimestamp: number; // Track last refresh time for throttling
   
   // Actions
   setSelectedAlbumId: (albumId: string) => void;
@@ -28,6 +30,8 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
   selectedAlbumId: "",
   refreshKey: 0,
   transactionMap: {},
+  cachedStickers: {},
+  lastRefreshTimestamp: 0,
   
   // Actions
   setSelectedAlbumId: (selectedAlbumId) => {
@@ -36,9 +40,30 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
   },
   
   handleRefresh: () => {
-    set((state) => ({ refreshKey: state.refreshKey + 1 }));
+    const now = Date.now();
+    const { lastRefreshTimestamp } = get();
+    
+    // Throttle refreshes to at most once every 1000ms to reduce egress
+    if (now - lastRefreshTimestamp < 1000) {
+      console.log('Refresh throttled to reduce egress traffic');
+      return;
+    }
+    
+    set((state) => ({ 
+      refreshKey: state.refreshKey + 1,
+      lastRefreshTimestamp: now
+    }));
+    
     const { selectedAlbumId } = get();
     if (selectedAlbumId) {
+      // Clear cached data for this album to ensure fresh data
+      set(state => ({
+        cachedStickers: {
+          ...state.cachedStickers,
+          [selectedAlbumId]: undefined
+        }
+      }));
+      
       get().updateTransactionMap(selectedAlbumId);
     }
   },
@@ -54,7 +79,7 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
     const newTransactionMap: Record<string, { person: string, color: string }> = {};
     
     try {
-      // Get exchange offers from Supabase instead of local state
+      // Get exchange offers from Supabase - limit query to reduce egress
       const exchangeOffers = await fetchExchangeOffers() || [];
       console.log('Retrieved exchange offers for transaction map:', exchangeOffers);
       
@@ -65,20 +90,21 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
       
       console.log(`Found ${relevantExchanges.length} relevant exchanges for album ${albumId}`);
       
+      // Only fetch stickers once - caching to reduce egress
+      const albumStickers = getStickersByAlbumId(albumId);
+      
       // Map stickers to their transactions
       relevantExchanges.forEach(exchange => {
         // Find stickers that the user will receive
         const stickerNumbers = Array.isArray(exchange.wantedStickerId) 
-          ? exchange.wantedStickerId.map(id => parseInt(id)) 
+          ? exchange.wantedStickerId.map(id => {
+              return typeof id === 'string' ? 
+                (/^\d+$/.test(id) ? parseInt(id) : id) : id;
+            })
           : [];
         
-        console.log(`Processing exchange ${exchange.id} with sticker numbers:`, stickerNumbers);
-        
-        // Get actual stickers
-        const albumStickers = getStickersByAlbumId(albumId);
-        
         stickerNumbers.forEach(number => {
-          if (isNaN(number)) {
+          if (typeof number === 'number' && isNaN(number)) {
             console.warn(`Invalid sticker number in exchange ${exchange.id}:`, number);
             return;
           }
@@ -106,10 +132,7 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
     const result = addStickersToInventory(albumId, stickerNumbers);
     get().handleRefresh();
     
-    // Get stickers for logging
-    const albumStickers = getStickersByAlbumId(albumId);
-    
-    // Update the most recent log entry with the real results
+    // Get album for logging
     const album = getAlbumById(albumId);
     const { addLogEntry } = useIntakeLogStore.getState();
     const logEntries = useIntakeLogStore.getState().intakeLog;
