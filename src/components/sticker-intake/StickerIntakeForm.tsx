@@ -1,14 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { useToast } from "../ui/use-toast";
-import AlbumSelector from "../sticker-form/AlbumSelector";
-import StickerNumbersInput from "./StickerNumbersInput";
-import SourceSelector from "./SourceSelector";
-import ExchangePartnerSelector from "./ExchangePartnerSelector";
-import OtherDetailsInput from "./OtherDetailsInput";
-import ValidationError from "./ValidationError";
 import { getStickersByAlbumId, addStickersToInventory } from "@/lib/sticker-operations";
 import { getAllAlbums, getAlbumById } from "@/lib/data";
 import { useFormState } from "./useFormState";
@@ -18,7 +11,7 @@ import { useIntakeLogStore } from "@/store/useIntakeLogStore";
 interface StickerIntakeFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onIntake: (albumId: string, stickerNumbers: number[]) => void;
+  onIntake: (albumId: string, stickerNumbers: (number | string)[]) => void;
   defaultStickerNumbers?: string;
   defaultExchangePartner?: string;
 }
@@ -85,11 +78,14 @@ const StickerIntakeForm = ({
       return;
     }
 
-    const numbers = stickerNumbers
+    const numbers: (number | string)[] = stickerNumbers
       .split(",")
       .map(num => num.trim())
-      .filter(num => num && !isNaN(Number(num)))
-      .map(num => parseInt(num));
+      .filter(num => num)
+      .map(num => {
+        const isAlphanumeric = /[^0-9]/.test(num);
+        return isAlphanumeric ? num : parseInt(num, 10);
+      });
 
     if (numbers.length === 0) {
       setValidationError("אנא הכנס מספרי מדבקות תקינים, מופרדים בפסיקים");

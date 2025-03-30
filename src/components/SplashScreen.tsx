@@ -50,7 +50,7 @@ const SplashScreen = ({ onComplete, minDisplayTime = 2500 }: SplashScreenProps) 
           <div className="relative">
             <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping opacity-75 scale-110"></div>
             <img
-              src="/lovable-uploads/b23851f0-cce1-44f8-a175-8ac64b6c3e4a.png"
+              src="/lovable-uploads/46e6bbf0-717d-461d-95e4-1584072c6ff0.png"
               alt="Logo"
               className="w-32 h-32 logo-animation relative z-10"
             />

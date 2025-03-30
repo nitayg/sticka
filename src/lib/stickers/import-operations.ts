@@ -20,9 +20,7 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
   // Create sets for both numeric and alphanumeric sticker numbers
   const existingNumbers = new Set();
   existingStickers.forEach(s => {
-    if (typeof s.number === 'number') {
-      existingNumbers.add(s.number);
-    } else if (typeof s.number === 'string') {
+    if (typeof s.number === 'number' || typeof s.number === 'string') {
       existingNumbers.add(s.number);
     }
   });
@@ -33,19 +31,16 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
   const newStickers: Sticker[] = [];
   
   data.forEach(([stickerNumber, name, team]) => {
-    // Ensure stickerNumber is treated correctly whether it's numeric or alphanumeric
-    const number = stickerNumber;
-    
     // Skip if the sticker already exists with this number in this album
-    if (existingNumbers.has(number)) {
-      console.log(`Skipping sticker #${number} - already exists in album`);
+    if (existingNumbers.has(stickerNumber)) {
+      console.log(`Skipping sticker #${stickerNumber} - already exists in album`);
       return;
     }
     
     const newSticker: Sticker = {
       id: generateId(),
-      number,
-      name: name || `Sticker ${number}`,
+      number: stickerNumber,
+      name: name || `Sticker ${stickerNumber}`,
       team: team || 'Unknown',
       teamLogo: '',
       category: team || 'Default',
