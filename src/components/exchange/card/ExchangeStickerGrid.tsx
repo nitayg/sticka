@@ -25,16 +25,17 @@ const ExchangeStickerGrid = ({
   onStickerDetails
 }: ExchangeStickerGridProps) => {
   // Convert sticker IDs to numbers or keep as strings for alphanumeric
-  const stickerNumbers = stickerIds.map(id => {
-    // Check if the ID is purely numeric
-    if (/^\d+$/.test(id)) {
-      return parseInt(id);
-    }
-    // Otherwise keep as string for alphanumeric
-    return id;
-  });
+  const stickerNumbers = stickerIds
+    .map(id => {
+      // Check if the ID is purely numeric
+      if (/^\d+$/.test(id)) {
+        return parseInt(id);
+      }
+      // Otherwise keep as string for alphanumeric
+      return id;
+    });
   
-  // Get stickers from the album - only fetch once to minimize egress traffic
+  // Get stickers from the album
   const albumStickers = getStickersByAlbumId(albumId);
   
   // Find stickers that match the given numbers
@@ -52,7 +53,7 @@ const ExchangeStickerGrid = ({
   }
   
   return (
-    <div className="space-y-1" dir="rtl">
+    <div className="space-y-1" dir="rtl"> {/* Added RTL direction */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">{title}</h3>
         <Badge variant="outline" className="text-xs h-5 px-1.5">{stickerNumbers.length}</Badge>

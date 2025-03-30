@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Plus, Minus } from "lucide-react";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
@@ -25,30 +25,6 @@ const InventoryTableRow = ({
 }: InventoryTableRowProps) => {
   const inventoryCount = sticker.isOwned ? (sticker.duplicateCount || 0) + 1 : 0;
   const isEven = index % 2 === 0;
-  // Add optimistic UI update
-  const [optimisticCount, setOptimisticCount] = useState<number | null>(null);
-  
-  // Display either the optimistic count (if we have one) or the actual count
-  const displayCount = optimisticCount !== null ? optimisticCount : inventoryCount;
-
-  // Handle inventory update with optimistic UI
-  const handleInventoryUpdate = (increment: boolean) => {
-    // Calculate new count optimistically
-    const newCount = increment 
-      ? displayCount + 1 
-      : Math.max(0, displayCount - 1);
-    
-    // Update UI immediately
-    setOptimisticCount(newCount);
-    
-    // Call the actual update
-    onUpdateInventory(sticker, increment);
-    
-    // Reset optimistic state after a short delay (in case the actual update fails)
-    setTimeout(() => {
-      setOptimisticCount(null);
-    }, 2000);
-  };
 
   return (
     <tr 
@@ -80,7 +56,7 @@ const InventoryTableRow = ({
             className="h-7 w-7 rounded-full"
             onClick={(e) => {
               e.stopPropagation();
-              handleInventoryUpdate(false);
+              onUpdateInventory(sticker, false);
             }}
             disabled={!sticker.isOwned}
           >
@@ -88,11 +64,10 @@ const InventoryTableRow = ({
           </Button>
           
           <span className={cn(
-            "font-medium w-5 text-center transition-all duration-300",
-            displayCount === 0 ? "text-red-500" : "text-green-500",
-            optimisticCount !== null && "animate-pulse"
+            "font-medium w-5 text-center",
+            inventoryCount === 0 ? "text-red-500" : "text-green-500"
           )}>
-            {displayCount}
+            {inventoryCount}
           </span>
           
           <Button
@@ -101,7 +76,7 @@ const InventoryTableRow = ({
             className="h-7 w-7 rounded-full"
             onClick={(e) => {
               e.stopPropagation();
-              handleInventoryUpdate(true);
+              onUpdateInventory(sticker, true);
             }}
           >
             <Plus className="h-3.5 w-3.5" />
