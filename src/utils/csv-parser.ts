@@ -59,7 +59,6 @@ export const parseCSV = (csvContent: string): ParsedCsvRow[] => {
       team: team || 'Unknown',
     };
     
-    // Include raw data for debugging
     console.log(`Parsed line ${index + 1}:`, result);
     
     return result;
@@ -97,12 +96,18 @@ function isHeaderLine(line: string): boolean {
 }
 
 // Helper to parse number fields safely
-function parseNumberField(value: string): number {
+function parseNumberField(value: string): number | string {
   if (!value) return 0;
   
-  // Clean the string value first
+  // Don't strip letters - this was causing the issue
+  // Clean the string value first - keep it as-is if it contains letters
+  if (/[a-zA-Z]/.test(value)) {
+    return value;
+  }
+  
+  // Otherwise, parse as number
   const cleanValue = value.replace(/[^\d.-]/g, '');
   const parsed = parseInt(cleanValue, 10);
   
-  return isNaN(parsed) ? 0 : parsed;
+  return isNaN(parsed) ? value : parsed;
 }

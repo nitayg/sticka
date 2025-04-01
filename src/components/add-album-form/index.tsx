@@ -1,4 +1,3 @@
-
 import { useState, ReactNode, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { 
@@ -66,57 +65,37 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
         coverImage: imageUrl,
       };
       
-      // Add album to storage and Supabase
       await addAlbum(newAlbum);
       console.log("Album created successfully:", newAlbum);
       
-      // Keep track if we imported any stickers
       let stickersImported = false;
       let importedCount = 0;
       
-      // Process CSV data if provided
       if (csvContent) {
         try {
           console.log("Processing CSV content, length:", csvContent.length);
           
-          // Parse CSV data
           const parsedData = parseCSV(csvContent);
           console.log("Parsed CSV data:", parsedData);
           
           if (parsedData && parsedData.length > 0) {
-            // Format data as [number, name, team] triplets
-            const importData: [number, string, string][] = [];
+            const importData: [number | string, string, string][] = [];
             
-            // Process data from parser - handle parsed data in the expected format
             parsedData.forEach(row => {
-              if (Array.isArray(row) && row.length >= 1) {
-                // For array format, values are already in the right order
-                const numStr = row[0]?.toString() || "0";
-                const number = parseInt(numStr) || 0;
-                const name = row[1]?.toString() || "";
-                const team = row[2]?.toString() || "";
+              if (row && 'number' in row) {
+                const number = row.number;
+                const name = row.name || "";
+                const team = row.team || "";
                 
-                if (number > 0) {
-                  importData.push([number, name, team]);
-                }
-              } else if (typeof row === 'object' && row !== null) {
-                // For object format with parsed fields
-                const rowObj = row as { number: number; name: string; team: string };
-                const number = rowObj.number || 0;
-                const name = rowObj.name || "";
-                const team = rowObj.team || "";
-                
-                if (number > 0) {
-                  importData.push([number, name, team]);
-                }
+                importData.push([number, name, team]);
               }
             });
             
             console.log("Formatted import data:", importData);
+            console.log(`Prepared ${importData.length} stickers for import`);
             
-            // Only import if we have valid data
             if (importData.length > 0) {
-              console.log("Importing stickers:", importData);
+              console.log("Importing stickers:", importData.length);
               const importedStickers = await importStickersFromCSV(newAlbumId, importData);
               importedCount = importedStickers.length;
               
@@ -149,16 +128,14 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
           console.error("Error parsing CSV:", error);
           toast({
             title: "שגיאה בייבוא מדבקות",
-            description: "אירעה שגיאה בעת ייבוא המדבקות מהקובץ",
+            description: error instanceof Error ? error.message : "אירעה שגיאה בעת ייבוא המדבקות מהקובץ",
             variant: "destructive",
           });
         }
       }
       
-      // Select the new album automatically
       handleAlbumChange(newAlbumId);
       
-      // Close dialog and reset form
       setOpen(false);
       resetForm();
       
@@ -167,20 +144,16 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
         description: `האלבום "${name}" נוסף בהצלחה${stickersImported ? ` ו-${importedCount} מדבקות יובאו` : ''}`,
       });
       
-      // Run the callback if provided
       if (onAlbumAdded) {
         onAlbumAdded();
       }
       
-      // Force refresh to ensure components get updated - use multiple events
       window.dispatchEvent(new CustomEvent('albumDataChanged'));
       
-      // Trigger sticker data changed event specifically for this album
       window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
         detail: { albumId: newAlbumId, count: importedCount } 
       }));
       
-      // Add a small delay and refresh again to ensure stickers are loaded
       setTimeout(() => {
         console.log("Triggering delayed refresh events");
         window.dispatchEvent(new CustomEvent('forceRefresh'));
@@ -189,7 +162,6 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
         }));
       }, 500);
       
-      // Add another longer delay for final refresh
       setTimeout(() => {
         console.log("Triggering final refresh events");
         window.dispatchEvent(new CustomEvent('forceRefresh'));
@@ -201,7 +173,6 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false, children }: AddAlbumForm
           }));
         }
       }, 1500);
-      
     } catch (error) {
       console.error("Error adding album:", error);
       toast({

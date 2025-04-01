@@ -26,16 +26,27 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
   });
   
   console.log(`Found ${existingStickers.length} existing stickers for album ${albumId}`);
+  console.log(`Existing numbers sample:`, Array.from(existingNumbers).slice(0, 10));
   
   // Create new stickers
   const newStickers: Sticker[] = [];
+  const processedNumbers = new Set(); // Keep track of processed numbers to avoid duplicates
   
-  data.forEach(([stickerNumber, name, team]) => {
+  data.forEach(([stickerNumber, name, team], index) => {
+    // Skip if already processed (avoid duplicates in input data)
+    if (processedNumbers.has(stickerNumber)) {
+      console.log(`Skipping duplicate sticker #${stickerNumber} at line ${index + 1}`);
+      return;
+    }
+    
     // Skip if the sticker already exists with this number in this album
     if (existingNumbers.has(stickerNumber)) {
       console.log(`Skipping sticker #${stickerNumber} - already exists in album`);
       return;
     }
+    
+    // Mark as processed
+    processedNumbers.add(stickerNumber);
     
     const newSticker: Sticker = {
       id: generateId(),
@@ -61,8 +72,10 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
   }
   
   try {
-    // Save to server first - this is important to ensure data is persisted to Supabase
     console.log(`Adding ${newStickers.length} new stickers to server for album ${albumId}`);
+    console.log(`New stickers sample:`, newStickers.slice(0, 5).map(s => ({ number: s.number, name: s.name })));
+    
+    // Save to server first - this is important to ensure data is persisted to Supabase
     const saveResult = await saveStickerBatch(newStickers);
     
     if (!saveResult) {
