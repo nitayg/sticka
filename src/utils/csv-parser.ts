@@ -1,4 +1,3 @@
-
 export interface ParsedCsvRow {
   number: number | string;
   name: string;

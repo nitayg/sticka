@@ -73,93 +73,96 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
   
   try {
     console.log(`Adding ${newStickers.length} new stickers to server for album ${albumId}`);
-    console.log(`New stickers sample:`, newStickers.slice(0, 5).map(s => ({ number: s.number, name: s.name })));
+    console.log(`New stickers sample:`, newStickers.slice(0, 3).map(s => ({ number: s.number, name: s.name })));
     
-    // To fix the "Failed to save stickers to Supabase" error, let's:
-    // 1. Process in smaller batches to avoid timeouts/limits
-    // 2. Add error handling and retries
-    const BATCH_SIZE = 100;
+    // Process in even smaller batches to avoid egress limits
+    const BATCH_SIZE = 50;
     let saveSuccess = true;
+    const savedStickers: Sticker[] = [];
     
     for (let i = 0; i < newStickers.length; i += BATCH_SIZE) {
       const batch = newStickers.slice(i, i + BATCH_SIZE);
-      console.log(`Saving batch ${i/BATCH_SIZE + 1}/${Math.ceil(newStickers.length/BATCH_SIZE)}, size: ${batch.length}`);
+      console.log(`Saving batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(newStickers.length/BATCH_SIZE)}, size: ${batch.length}`);
       
       // Try to save with retries
-      const MAX_RETRIES = 3;
+      const MAX_RETRIES = 5;
       let retries = 0;
       let batchSaved = false;
       
       while (retries < MAX_RETRIES && !batchSaved) {
         try {
+          // If this is a retry, add progressively longer delay
+          if (retries > 0) {
+            const backoffDelay = Math.min(1000 * Math.pow(2, retries - 1), 10000); // Exponential backoff up to 10s
+            console.log(`Retry ${retries}/${MAX_RETRIES}: Waiting ${backoffDelay}ms before retrying batch ${Math.floor(i/BATCH_SIZE) + 1}`);
+            await new Promise(resolve => setTimeout(resolve, backoffDelay));
+          }
+          
           const result = await saveStickerBatch(batch);
           if (!result) {
-            console.error(`Failed to save batch ${i/BATCH_SIZE + 1}, retry ${retries + 1}/${MAX_RETRIES}`);
+            console.error(`Failed to save batch ${Math.floor(i/BATCH_SIZE) + 1}, retry ${retries + 1}/${MAX_RETRIES}`);
             retries++;
-            if (retries < MAX_RETRIES) {
-              await new Promise(resolve => setTimeout(resolve, 1000 * retries)); // Exponential backoff
-            }
           } else {
             batchSaved = true;
-            console.log(`Successfully saved batch ${i/BATCH_SIZE + 1}/${Math.ceil(newStickers.length/BATCH_SIZE)}`);
+            savedStickers.push(...batch);
+            console.log(`Successfully saved batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(newStickers.length/BATCH_SIZE)}`);
           }
         } catch (error) {
-          console.error(`Error saving batch ${i/BATCH_SIZE + 1}, retry ${retries + 1}/${MAX_RETRIES}:`, error);
+          console.error(`Error saving batch ${Math.floor(i/BATCH_SIZE) + 1}, retry ${retries + 1}/${MAX_RETRIES}:`, error);
           retries++;
-          if (retries < MAX_RETRIES) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * retries)); // Exponential backoff
-          }
         }
       }
       
       if (!batchSaved) {
         saveSuccess = false;
-        console.error(`Failed to save batch ${i/BATCH_SIZE + 1} after ${MAX_RETRIES} retries`);
+        console.error(`Failed to save batch ${Math.floor(i/BATCH_SIZE) + 1} after ${MAX_RETRIES} retries`);
       }
       
-      // Add a small delay between batches to avoid rate limits
+      // Add a longer delay between batches
       if (i + BATCH_SIZE < newStickers.length) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        const betweenBatchDelay = 800; // 800ms between batches
+        console.log(`Waiting ${betweenBatchDelay}ms between batches to avoid rate limits`);
+        await new Promise(resolve => setTimeout(resolve, betweenBatchDelay));
       }
     }
     
-    if (!saveSuccess) {
-      throw new Error("Failed to save some stickers to Supabase");
-    }
-    
-    // Update local state after successful server save
-    const allStickers = getStickerData();
-    const updatedStickers = [...allStickers, ...newStickers];
-    setStickerData(updatedStickers);
-    
-    // Trigger events with a slight delay to ensure data is saved
-    setTimeout(() => {
-      if (typeof window !== 'undefined') {
-        console.log(`Dispatching sticker data changed events for ${newStickers.length} new stickers`);
-        
-        // Dispatch the specific event
-        window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-          detail: { 
-            albumId, 
-            action: 'import',
-            count: newStickers.length 
-          } 
-        }));
-        
-        // Dispatch a general refresh event
-        window.dispatchEvent(new CustomEvent('forceRefresh'));
-        
-        // Additional event at a longer delay to catch components that might initialize later
-        setTimeout(() => {
+    // If we saved at least some stickers, update the local state with what was saved
+    if (savedStickers.length > 0) {
+      console.log(`Saved ${savedStickers.length}/${newStickers.length} stickers to Supabase`);
+      
+      // Update local state with successfully saved stickers
+      const allStickers = getStickerData();
+      const updatedStickers = [...allStickers, ...savedStickers];
+      setStickerData(updatedStickers);
+      
+      // Trigger events with a slight delay to ensure data is saved
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          console.log(`Dispatching sticker data changed events for ${savedStickers.length} new stickers`);
+          
+          // Dispatch the specific event
           window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-            detail: { albumId, count: newStickers.length } 
+            detail: { 
+              albumId, 
+              action: 'import',
+              count: savedStickers.length 
+            } 
           }));
+          
+          // Dispatch a general refresh event
           window.dispatchEvent(new CustomEvent('forceRefresh'));
-        }, 500);
-      }
-    }, 100);
+        }
+      }, 100);
+      
+      return savedStickers;
+    }
     
-    return newStickers;
+    // If we didn't save any stickers, throw an error
+    if (saveSuccess === false || savedStickers.length === 0) {
+      throw new Error("Failed to save stickers to Supabase. This might be due to exceeding egress limits.");
+    }
+    
+    return savedStickers;
   } catch (error) {
     console.error(`Error importing stickers:`, error);
     throw error;
