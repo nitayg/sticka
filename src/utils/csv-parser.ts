@@ -1,3 +1,4 @@
+
 export interface ParsedCsvRow {
   number: number | string;
   name: string;
@@ -6,6 +7,9 @@ export interface ParsedCsvRow {
 
 export const parseCSV = (csvContent: string): ParsedCsvRow[] => {
   if (!csvContent) return [];
+  
+  console.log("Starting CSV parsing...");
+  console.time("CSV parsing time");
   
   // Clean up the input - handle different line breaks
   const cleanContent = csvContent
@@ -21,7 +25,7 @@ export const parseCSV = (csvContent: string): ParsedCsvRow[] => {
   console.log(`First few lines:`, lines.slice(0, 3));
   
   // Detect delimiter - try tabs, commas, and semicolons
-  let delimiter = detectDelimiter(lines[0]);
+  const delimiter = detectDelimiter(lines[0]);
   console.log(`Detected delimiter: "${delimiter}"`);
   
   // Check if first line is a header
@@ -30,15 +34,26 @@ export const parseCSV = (csvContent: string): ParsedCsvRow[] => {
   
   // Skip header line if detected
   const dataLines = isFirstLineHeader ? lines.slice(1) : lines;
+  console.log(`Processing ${dataLines.length} data lines`);
   
-  // Parse each data line
-  return dataLines.map((line, index) => {
+  // Parse each data line (with progress logging for large files)
+  const result: ParsedCsvRow[] = [];
+  const totalLines = dataLines.length;
+  
+  for (let i = 0; i < dataLines.length; i++) {
+    const line = dataLines[i];
+    
+    // Log progress for large files
+    if (totalLines > 200 && i % 100 === 0) {
+      console.log(`Parsing progress: ${i}/${totalLines} lines (${Math.round(i/totalLines*100)}%)`);
+    }
+    
     // Split the line by the delimiter
     const fields = line.split(delimiter).map(field => field.trim());
     
     if (fields.length < 1) {
-      console.log(`Skipping line ${index + 1} - not enough fields`);
-      return null;
+      console.log(`Skipping line ${i + 1} - not enough fields`);
+      continue;
     }
     
     // Extract fields - allow flexible field order
@@ -53,16 +68,20 @@ export const parseCSV = (csvContent: string): ParsedCsvRow[] => {
       : parseNumberField(numberStr);
     
     // If we're returning an object format
-    const result: ParsedCsvRow = {
+    const parsedRow: ParsedCsvRow = {
       number: parsedNumber,
       name: name || `Sticker ${numberStr}`,
       team: team || 'Unknown',
     };
     
-    console.log(`Parsed line ${index + 1}:`, result);
-    
-    return result;
-  }).filter(Boolean) as ParsedCsvRow[]; // Filter out null entries
+    result.push(parsedRow);
+  }
+  
+  console.log(`Successfully parsed ${result.length} rows`);
+  console.log(`Sample of parsed data:`, result.slice(0, 5));
+  console.timeEnd("CSV parsing time");
+  
+  return result;
 };
 
 // Helper to detect the most likely delimiter in a CSV line

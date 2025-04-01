@@ -7,40 +7,56 @@ export async function saveBatch<T extends { id: string }>(
 ) {
   if (!items.length) return true;
 
-  console.log(`Received items for ${tableName}:`, JSON.stringify(items, null, 2));
-  console.log(`Saving ${items.length} items to ${tableName}`);
-
-  console.log('JSON שנשלח:', JSON.stringify(items, null, 2));
+  console.log(`Received ${items.length} items for ${tableName}`);
+  
+  // Don't log the full JSON to avoid console overload
+  console.log(`First item sample:`, JSON.stringify(items[0], null, 2));
 
   try {
-    const chunkSize = 100;
+    // Reduced chunk size to avoid request size limits
+    const chunkSize = 50; 
+    let allSuccess = true;
+
     for (let i = 0; i < items.length; i += chunkSize) {
       const chunk = items.slice(i, i + chunkSize);
+      console.log(`Processing chunk ${i/chunkSize + 1}/${Math.ceil(items.length/chunkSize)}, size: ${chunk.length}`);
 
-      const { error } = await supabase
-        .from(tableName)
-        .upsert(chunk, {
-          onConflict: 'id',
-          ignoreDuplicates: false,
-        })
-        .select('*');
+      try {
+        const { error, data } = await supabase
+          .from(tableName)
+          .upsert(chunk, {
+            onConflict: 'id',
+            ignoreDuplicates: false,
+          });
 
-      if (error) {
-        console.error(
-          `Error saving batch to ${tableName} (chunk ${i}-${i + chunk.length}):`,
-          error
-        );
-        console.error('Error details:', JSON.stringify(error));
-        return false;
+        if (error) {
+          console.error(
+            `Error saving batch to ${tableName} (chunk ${i/chunkSize + 1}/${Math.ceil(items.length/chunkSize)}):`,
+            error
+          );
+          console.error('Error details:', JSON.stringify(error, null, 2));
+          allSuccess = false;
+        } else {
+          console.log(`Successfully saved chunk ${i/chunkSize + 1}/${Math.ceil(items.length/chunkSize)} to ${tableName}`);
+        }
+      } catch (chunkError) {
+        console.error(`Exception in chunk ${i/chunkSize + 1}/${Math.ceil(items.length/chunkSize)}:`, chunkError);
+        allSuccess = false;
       }
 
-      if (items.length > chunkSize && i + chunkSize < items.length) {
+      // Add a delay between chunks to avoid rate limiting
+      if (i + chunkSize < items.length) {
         await new Promise((resolve) => setTimeout(resolve, 300));
       }
     }
 
-    console.log(`Successfully saved ${items.length} items to ${tableName}`);
-    return true;
+    if (allSuccess) {
+      console.log(`Successfully saved all ${items.length} items to ${tableName}`);
+      return true;
+    } else {
+      console.error(`Failed to save some chunks to ${tableName}`);
+      return false;
+    }
   } catch (error) {
     console.error(`Error in saveBatch for ${tableName}:`, error);
     return false;

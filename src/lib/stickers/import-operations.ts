@@ -75,12 +75,56 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
     console.log(`Adding ${newStickers.length} new stickers to server for album ${albumId}`);
     console.log(`New stickers sample:`, newStickers.slice(0, 5).map(s => ({ number: s.number, name: s.name })));
     
-    // Save to server first - this is important to ensure data is persisted to Supabase
-    const saveResult = await saveStickerBatch(newStickers);
+    // To fix the "Failed to save stickers to Supabase" error, let's:
+    // 1. Process in smaller batches to avoid timeouts/limits
+    // 2. Add error handling and retries
+    const BATCH_SIZE = 100;
+    let saveSuccess = true;
     
-    if (!saveResult) {
-      console.error("Failed to save stickers to Supabase");
-      throw new Error("Failed to save stickers to Supabase");
+    for (let i = 0; i < newStickers.length; i += BATCH_SIZE) {
+      const batch = newStickers.slice(i, i + BATCH_SIZE);
+      console.log(`Saving batch ${i/BATCH_SIZE + 1}/${Math.ceil(newStickers.length/BATCH_SIZE)}, size: ${batch.length}`);
+      
+      // Try to save with retries
+      const MAX_RETRIES = 3;
+      let retries = 0;
+      let batchSaved = false;
+      
+      while (retries < MAX_RETRIES && !batchSaved) {
+        try {
+          const result = await saveStickerBatch(batch);
+          if (!result) {
+            console.error(`Failed to save batch ${i/BATCH_SIZE + 1}, retry ${retries + 1}/${MAX_RETRIES}`);
+            retries++;
+            if (retries < MAX_RETRIES) {
+              await new Promise(resolve => setTimeout(resolve, 1000 * retries)); // Exponential backoff
+            }
+          } else {
+            batchSaved = true;
+            console.log(`Successfully saved batch ${i/BATCH_SIZE + 1}/${Math.ceil(newStickers.length/BATCH_SIZE)}`);
+          }
+        } catch (error) {
+          console.error(`Error saving batch ${i/BATCH_SIZE + 1}, retry ${retries + 1}/${MAX_RETRIES}:`, error);
+          retries++;
+          if (retries < MAX_RETRIES) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * retries)); // Exponential backoff
+          }
+        }
+      }
+      
+      if (!batchSaved) {
+        saveSuccess = false;
+        console.error(`Failed to save batch ${i/BATCH_SIZE + 1} after ${MAX_RETRIES} retries`);
+      }
+      
+      // Add a small delay between batches to avoid rate limits
+      if (i + BATCH_SIZE < newStickers.length) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+    
+    if (!saveSuccess) {
+      throw new Error("Failed to save some stickers to Supabase");
     }
     
     // Update local state after successful server save
