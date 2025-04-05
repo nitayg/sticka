@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { importStickersFromCSV } from "@/lib/data";
@@ -34,7 +33,7 @@ export const useCSVImport = ({
   const [parsedData, setParsedData] = useState<ParsedCsvRow[] | null>(initialParsedData);
   const { toast } = useToast();
 
-  const parseFile = async (selectedFile: File) => {
+  const parseFile = async (selectedFile: File): Promise<void> => {
     try {
       const text = await selectedFile.text();
       const parsed = parseCSV(text);
@@ -52,8 +51,6 @@ export const useCSVImport = ({
           description: `${parsed.length} רשומות נמצאו בקובץ`,
         });
       }
-      
-      return parsed;
     } catch (error) {
       console.error("Error parsing file:", error);
       toast({
@@ -61,7 +58,6 @@ export const useCSVImport = ({
         description: "שגיאה בניתוח הקובץ. ודא שהקובץ בפורמט CSV תקין",
         variant: "destructive"
       });
-      return null;
     }
   };
 
@@ -106,7 +102,6 @@ export const useCSVImport = ({
         throw new Error("לא נמצאו רשומות בקובץ");
       }
       
-      // If too many records, ask for confirmation
       if (data.length > 200) {
         const shouldProceed = window.confirm(
           `אזהרה: אתה מנסה לייבא ${data.length} רשומות. ייבוא גדול עלול לגרום לשגיאות בשל מגבלות השרת. מומלץ לייבא בקבוצות של עד 200 רשומות. להמשיך בכל זאת?`
@@ -150,7 +145,6 @@ export const useCSVImport = ({
         
         let errorMessage = "אירעה שגיאה בייבוא המדבקות";
         
-        // Check for specific error types
         if (importError?.message?.includes("egress") || 
             importError?.message?.includes("exceeded") || 
             importError?.message?.includes("limit")) {
