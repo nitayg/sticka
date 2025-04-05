@@ -48,7 +48,7 @@ const ImportStickers = ({ albumId, onImportComplete }: ImportStickersProps) => {
           toast({
             title: "שים לב - קובץ גדול",
             description: `קובץ מכיל ${parsed.length} רשומות. ייתכן שיש צורך לייבא בקבוצות קטנות יותר כדי להימנע ממגבלות של השרת.`,
-            variant: "warning"
+            variant: "destructive"
           });
         } else {
           toast({
@@ -193,7 +193,7 @@ const ImportStickers = ({ albumId, onImportComplete }: ImportStickersProps) => {
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <Alert variant="warning" className="mb-2">
+          <Alert className="mb-2">
             <InfoIcon className="h-4 w-4" />
             <AlertDescription>
               כדי להימנע משגיאות שרת, מומלץ לייבא קבצים המכילים עד 200 רשומות בלבד בכל פעם.
