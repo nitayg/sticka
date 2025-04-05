@@ -14,7 +14,7 @@ export async function saveBatch<T extends { id: string }>(
 
   try {
     // Further reduced chunk size to avoid request size limits
-    const chunkSize = 25; // Smaller chunks to avoid Supabase limits
+    const chunkSize = 20; // Reduced from 25 to 20 for smaller batch size
     let allSuccess = true;
 
     for (let i = 0; i < items.length; i += chunkSize) {
@@ -24,7 +24,7 @@ export async function saveBatch<T extends { id: string }>(
       try {
         // Add more delay between requests to avoid rate limiting
         if (i > 0) {
-          const delayMs = 500; // 500ms delay between chunks
+          const delayMs = 800; // Increased from 500ms to 800ms
           console.log(`Adding delay of ${delayMs}ms before processing next chunk`);
           await new Promise(resolve => setTimeout(resolve, delayMs));
         }
@@ -46,7 +46,7 @@ export async function saveBatch<T extends { id: string }>(
           // If we hit an egress limit or rate limit error, add a longer delay
           if (error.message?.includes('exceeded') || error.code === '429') {
             console.log('Detected rate limit or egress limit error, adding longer delay');
-            await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+            await new Promise(resolve => setTimeout(resolve, 3000)); // Increased from 2000ms to 3000ms
           }
           
           allSuccess = false;
@@ -60,7 +60,7 @@ export async function saveBatch<T extends { id: string }>(
 
       // Add a delay between chunks based on the current chunk index
       // The deeper we go, the longer we wait to avoid overloading the service
-      const progressiveDelay = Math.min(300 + (i / items.length) * 700, 1000);
+      const progressiveDelay = Math.min(500 + (i / items.length) * 1000, 1500); // Increased max delay
       if (i + chunkSize < items.length) {
         await new Promise((resolve) => setTimeout(resolve, progressiveDelay));
       }

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { 
   Dialog,
@@ -12,10 +13,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { importStickersFromCSV } from "@/lib/data";
-import { UploadIcon, AlertCircle, Loader2 } from "lucide-react";
+import { UploadIcon, AlertCircle, Loader2, InfoIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { parseCSV } from "@/utils/csv-parser";
 import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ImportStickersProps {
   albumId: string;
@@ -35,18 +37,28 @@ const ImportStickers = ({ albumId, onImportComplete }: ImportStickersProps) => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFile = e.target.files[0];
       setFile(selectedFile);
+      setErrorDetails(null);
       
       try {
         const text = await selectedFile.text();
         const parsed = parseCSV(text);
         setParsedData(parsed);
         
-        toast({
-          title: "קובץ נטען",
-          description: `${parsed.length} רשומות נמצאו בקובץ`,
-        });
+        if (parsed.length > 200) {
+          toast({
+            title: "שים לב - קובץ גדול",
+            description: `קובץ מכיל ${parsed.length} רשומות. ייתכן שיש צורך לייבא בקבוצות קטנות יותר כדי להימנע ממגבלות של השרת.`,
+            variant: "warning"
+          });
+        } else {
+          toast({
+            title: "קובץ נטען",
+            description: `${parsed.length} רשומות נמצאו בקובץ`,
+          });
+        }
       } catch (error) {
         console.error("Error parsing file:", error);
+        setErrorDetails("שגיאה בניתוח הקובץ. ודא שהקובץ בפורמט CSV תקין");
       }
     }
   };
@@ -90,9 +102,22 @@ const ImportStickers = ({ albumId, onImportComplete }: ImportStickersProps) => {
         throw new Error("לא נמצאו רשומות בקובץ");
       }
       
+      // If too many records, ask for confirmation
+      if (data.length > 200) {
+        const shouldProceed = window.confirm(
+          `אזהרה: אתה מנסה לייבא ${data.length} רשומות. ייבוא גדול עלול לגרום לשגיאות בשל מגבלות השרת. מומלץ לייבא בקבוצות של עד 200 רשומות. להמשיך בכל זאת?`
+        );
+        
+        if (!shouldProceed) {
+          setIsLoading(false);
+          setImportProgress(0);
+          return;
+        }
+      }
+      
       const importProgressInterval = setInterval(() => {
         setImportProgress(prev => {
-          const newProgress = Math.min(prev + 5, 95);
+          const newProgress = Math.min(prev + 3, 95);
           return newProgress;
         });
       }, 1000);
@@ -102,7 +127,7 @@ const ImportStickers = ({ albumId, onImportComplete }: ImportStickersProps) => {
         clearInterval(importProgressInterval);
         
         if (!newStickers || newStickers.length === 0) {
-          throw new Error("לא הצלחנו לייבא את המדבקות. ייתכן שהן כבר קיימות באלבום.");
+          throw new Error("לא הצלחנו לייבא את המדבקות. ייתכן שהן כבר קיימות באלבום או שיש מגבלת שימוש בשרת.");
         }
         
         setImportProgress(100);
@@ -121,8 +146,12 @@ const ImportStickers = ({ albumId, onImportComplete }: ImportStickersProps) => {
         console.error("שגיאה בייבוא:", importError);
         
         let errorMessage = "אירעה שגיאה בייבוא המדבקות";
-        if (importError?.message?.includes("egress") || importError?.message?.includes("limit")) {
-          errorMessage = "שגיאה בייבוא: חריגה ממגבלות השימוש בשרת. נסה לייבא פחות מדבקות בכל פעם.";
+        
+        // Check for specific error types
+        if (importError?.message?.includes("egress") || 
+            importError?.message?.includes("exceeded") || 
+            importError?.message?.includes("limit")) {
+          errorMessage = "שגיאה בייבוא: חריגה ממגבלות השימוש בשרת. נסה לייבא פחות מדבקות בכל פעם (עד 100-200) או לבצע ייבוא בהפרשי זמן של כמה דקות.";
         }
         
         setErrorDetails(errorMessage);
@@ -164,6 +193,13 @@ const ImportStickers = ({ albumId, onImportComplete }: ImportStickersProps) => {
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          <Alert variant="warning" className="mb-2">
+            <InfoIcon className="h-4 w-4" />
+            <AlertDescription>
+              כדי להימנע משגיאות שרת, מומלץ לייבא קבצים המכילים עד 200 רשומות בלבד בכל פעם.
+            </AlertDescription>
+          </Alert>
+          
           <div className="grid w-full items-center gap-1.5">
             <Label htmlFor="stickers-file">קובץ מדבקות</Label>
             <Input 
@@ -182,6 +218,11 @@ const ImportStickers = ({ albumId, onImportComplete }: ImportStickersProps) => {
                 {parsedData && (
                   <div className="mt-1 text-sm text-muted-foreground">
                     {parsedData.length} רשומות זוהו בקובץ
+                    {parsedData.length > 200 && (
+                      <div className="text-orange-500 mt-1">
+                        אזהרה: קובץ גדול. ייתכן שתצטרך לחלק לקבצים קטנים יותר.
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

@@ -76,7 +76,7 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
     console.log(`New stickers sample:`, newStickers.slice(0, 3).map(s => ({ number: s.number, name: s.name })));
     
     // Process in even smaller batches to avoid egress limits
-    const BATCH_SIZE = 50;
+    const BATCH_SIZE = 25; // Reduced from 50 to 25 to help with egress limits
     let saveSuccess = true;
     const savedStickers: Sticker[] = [];
     
@@ -120,7 +120,7 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
       
       // Add a longer delay between batches
       if (i + BATCH_SIZE < newStickers.length) {
-        const betweenBatchDelay = 800; // 800ms between batches
+        const betweenBatchDelay = 1200; // Increased from 800ms to 1200ms
         console.log(`Waiting ${betweenBatchDelay}ms between batches to avoid rate limits`);
         await new Promise(resolve => setTimeout(resolve, betweenBatchDelay));
       }
@@ -165,6 +165,6 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
     return savedStickers;
   } catch (error) {
     console.error(`Error importing stickers:`, error);
-    throw error;
+    throw error; 
   }
 };

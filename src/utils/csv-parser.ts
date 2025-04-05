@@ -56,17 +56,21 @@ export const parseCSV = (csvContent: string): ParsedCsvRow[] => {
     }
     
     // Extract fields - allow flexible field order
-    const [numberStr, name, team] = fields;
+    const [numberStr, name = "", team = ""] = fields;
+    if (!numberStr) {
+      console.log(`Skipping line ${i + 1} - missing number`);
+      continue;
+    }
     
     // Check if the number contains any non-numeric characters
-    const isAlphanumeric = numberStr ? /[^0-9]/.test(numberStr) : false;
+    const isAlphanumeric = /[^0-9]/.test(numberStr);
     
     // If the number contains letters, keep it as a string, otherwise parse as number
     const parsedNumber = isAlphanumeric 
       ? numberStr // Keep alphanumeric as string
       : parseNumberField(numberStr);
     
-    // If we're returning an object format
+    // Create parsed row object
     const parsedRow: ParsedCsvRow = {
       number: parsedNumber,
       name: name || `Sticker ${numberStr}`,
@@ -117,9 +121,8 @@ function isHeaderLine(line: string): boolean {
 function parseNumberField(value: string): number | string {
   if (!value) return 0;
   
-  // Don't strip letters - this was causing the issue
-  // Clean the string value first - keep it as-is if it contains letters
-  if (/[a-zA-Z]/.test(value)) {
+  // If it contains any non-numeric characters, return as-is
+  if (/[^0-9.-]/.test(value)) {
     return value;
   }
   

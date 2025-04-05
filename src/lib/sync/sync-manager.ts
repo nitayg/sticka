@@ -20,6 +20,7 @@ let lastSyncTime: Date | null = null;
 let syncInProgress = false;
 let pendingSync = false;
 let realtimeChannel: ReturnType<typeof setupRealtimeSubscriptions> | null = null;
+let lastEgressError: Date | null = null;
 
 // Initialize data directly from Supabase
 export const initializeFromStorage = async () => {
@@ -67,6 +68,15 @@ export const initializeFromStorage = async () => {
 
 // Sync data directly with Supabase - only get data from cloud, not from local storage
 export const syncWithSupabase = async (isInitialSync = false) => {
+  // If we had an egress error recently, wait before trying again
+  if (lastEgressError) {
+    const timeSinceError = new Date().getTime() - lastEgressError.getTime();
+    if (timeSinceError < 60000) { // 1 minute cooldown
+      console.log(`Skipping sync due to recent egress error (${Math.round(timeSinceError/1000)}s ago)`);
+      return;
+    }
+  }
+  
   if (syncInProgress) {
     pendingSync = true;
     console.log('Sync already in progress, scheduling follow-up sync');
@@ -117,6 +127,7 @@ export const syncWithSupabase = async (isInitialSync = false) => {
 
     // Update sync tracking
     lastSyncTime = new Date();
+    lastEgressError = null; // Reset error state on successful sync
     
     // Dispatch sync complete event (without toast notification)
     window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_COMPLETE, {
@@ -124,8 +135,17 @@ export const syncWithSupabase = async (isInitialSync = false) => {
     }));
     
     console.log('Sync complete at', lastSyncTime);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error syncing with Supabase:', error);
+    
+    // Check if this is an egress limit error
+    if (error?.message?.includes('egress') || 
+        error?.message?.includes('exceeded') || 
+        error?.message?.includes('limit') ||
+        error?.code === '429') {
+      lastEgressError = new Date();
+      console.warn('Egress limit detected, will throttle future sync requests');
+    }
   } finally {
     syncInProgress = false;
     
@@ -145,6 +165,13 @@ export const getLastSyncTime = () => {
 // Check if sync is in progress
 export const isSyncInProgress = () => {
   return syncInProgress;
+};
+
+// Check if we're in egress limit cooldown
+export const isEgressLimitCooldown = () => {
+  if (!lastEgressError) return false;
+  const timeSinceError = new Date().getTime() - lastEgressError.getTime();
+  return timeSinceError < 60000; // 1 minute cooldown
 };
 
 // Force a manual sync
