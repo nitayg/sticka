@@ -31,8 +31,18 @@ export const parseCSV = (csvContent: string): ParsedCsvRow[] => {
     return !isNaN(num) && num >= 426 && num <= 440;
   });
   
+  // Check for alphanumeric sticker numbers (like L1-L20)
+  const alphanumericLines = lines.filter(line => {
+    const firstField = line.split(/[,;\t]/)[0].trim();
+    return /^[A-Za-z][0-9]+$/.test(firstField);
+  });
+  
   if (criticalRangeLines.length > 0) {
     console.log(`Found ${criticalRangeLines.length} lines with numbers in range 426-440:`, criticalRangeLines);
+  }
+  
+  if (alphanumericLines.length > 0) {
+    console.log(`Found ${alphanumericLines.length} lines with alphanumeric numbers:`, alphanumericLines);
   }
   
   // Detect delimiter - try tabs, commas, and semicolons
@@ -82,9 +92,13 @@ export const parseCSV = (csvContent: string): ParsedCsvRow[] => {
       ? numberStr.trim() // Keep alphanumeric as string and ensure it's trimmed
       : parseNumberField(numberStr);
     
-    // Check if this is a record in our critical range
+    // Extra logging for critical ranges
     if (typeof parsedNumber === 'number' && parsedNumber >= 426 && parsedNumber <= 440) {
       console.log(`Parsed critical range sticker: #${parsedNumber} - ${name} (${team})`);
+    }
+    
+    if (typeof parsedNumber === 'string' && /^[A-Za-z]/.test(parsedNumber)) {
+      console.log(`Parsed alphanumeric sticker: #${parsedNumber} - ${name} (${team})`);
     }
     
     // Create parsed row object
@@ -105,10 +119,18 @@ export const parseCSV = (csvContent: string): ParsedCsvRow[] => {
     return false;
   });
   
+  const alphanumericStickers = result.filter(row => 
+    typeof row.number === 'string' && /^[A-Za-z]/.test(row.number)
+  );
+  
   if (criticalRangeStickers.length > 0) {
     console.log(`Final result contains ${criticalRangeStickers.length} stickers in range 426-440:`, criticalRangeStickers);
   } else {
     console.log(`Warning: No stickers in range 426-440 were found in the final result!`);
+  }
+  
+  if (alphanumericStickers.length > 0) {
+    console.log(`Final result contains ${alphanumericStickers.length} alphanumeric stickers:`, alphanumericStickers);
   }
   
   console.log(`Successfully parsed ${result.length} rows`);

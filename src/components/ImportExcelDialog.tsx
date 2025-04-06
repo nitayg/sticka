@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { FileSpreadsheet } from "lucide-react";
 import { Album } from "@/lib/types";
@@ -9,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { importStickersFromCSV } from "@/lib/sticker-operations";
 import { parseCSV, ParsedCsvRow } from "@/utils/csv-parser";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
 
 interface ImportExcelDialogProps {
   albums: Album[];
@@ -28,6 +30,7 @@ const ImportExcelDialog = ({
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
   const [parsedData, setParsedData] = useState<ParsedCsvRow[]>([]);
   const { toast } = useToast();
   
@@ -41,9 +44,43 @@ const ImportExcelDialog = ({
       return false;
     });
     
+    const alphanumericStickers = data.filter(row => 
+      typeof row.number === 'string' && /^[A-Za-z]/.test(row.number.toString())
+    );
+    
+    // Log detailed information about parsed stickers
+    console.log(`File upload contains ${data.length} total stickers`);
+    
     if (criticalRangeStickers.length > 0) {
       console.log(`File upload contains ${criticalRangeStickers.length} stickers in range 426-440:`, criticalRangeStickers);
+    } else {
+      console.log(`File upload contains NO stickers in range 426-440`);
     }
+    
+    if (alphanumericStickers.length > 0) {
+      console.log(`File upload contains ${alphanumericStickers.length} alphanumeric stickers:`, alphanumericStickers);
+    }
+    
+    toast({
+      title: "קובץ נטען בהצלחה",
+      description: `נמצאו ${data.length} מדבקות בקובץ`,
+    });
+  };
+  
+  const startProgressUpdate = () => {
+    // Start at 10%
+    setImportProgress(10);
+    
+    // Set up progress animation
+    const interval = setInterval(() => {
+      setImportProgress(prev => {
+        // Don't go beyond 90% until we're done
+        if (prev >= 90) return 90;
+        return prev + 5;
+      });
+    }, 2000);
+    
+    return interval;
   };
   
   const handleImport = async () => {
@@ -67,27 +104,24 @@ const ImportExcelDialog = ({
     
     setIsImporting(true);
     
+    // Start progress animation
+    const progressInterval = startProgressUpdate();
+    
     try {
       let dataToImport: [number | string, string, string][] = [];
       
       if (parsedData.length > 0) {
+        console.log(`Using ${parsedData.length} already parsed rows for import`);
         dataToImport = parsedData.map(row => {
-          const isAlphanumeric = typeof row.number === 'string' && /[^0-9]/.test(row.number);
-          const number = isAlphanumeric ? row.number : 
-                        (typeof row.number === 'number' ? row.number : 
-                         parseInt(String(row.number), 10));
-          return [number, row.name, row.team];
+          return [row.number, row.name, row.team];
         });
       } 
       else if (file) {
+        console.log(`Parsing file (${file.name}) for import`);
         const fileContent = await file.text();
         const parsed = parseCSV(fileContent);
         dataToImport = parsed.map(row => {
-          const isAlphanumeric = typeof row.number === 'string' && /[^0-9]/.test(row.number);
-          const number = isAlphanumeric ? row.number : 
-                        (typeof row.number === 'number' ? row.number : 
-                         parseInt(String(row.number), 10));
-          return [number, row.name, row.team];
+          return [row.number, row.name, row.team];
         });
       }
       
@@ -95,6 +129,7 @@ const ImportExcelDialog = ({
         throw new Error("לא נמצאו מדבקות בקובץ");
       }
       
+      // Check for special stickers
       const criticalRangeItems = dataToImport.filter(([num]) => {
         if (typeof num === 'number') {
           return num >= 426 && num <= 440;
@@ -102,50 +137,129 @@ const ImportExcelDialog = ({
         return false;
       });
       
+      const alphanumericItems = dataToImport.filter(([num]) => {
+        return typeof num === 'string' && /^[A-Za-z]/.test(num.toString());
+      });
+      
+      // Log data to be imported
+      console.log(`Importing ${dataToImport.length} stickers to album ${selectedAlbum}`);
+      
       if (criticalRangeItems.length > 0) {
         console.log(`Import data contains ${criticalRangeItems.length} stickers in range 426-440:`, criticalRangeItems);
       }
       
-      console.log("Importing data:", dataToImport);
-      const result = await importStickersFromCSV(selectedAlbum, dataToImport);
-      console.log("Import result:", result);
+      if (alphanumericItems.length > 0) {
+        console.log(`Import data contains ${alphanumericItems.length} alphanumeric stickers:`, alphanumericItems);
+      }
       
-      if (!result || result.length === 0) {
+      // Perform the import in smaller batches for better reliability
+      const BATCH_SIZE = 100;
+      const allImportedStickers = [];
+      
+      for (let i = 0; i < dataToImport.length; i += BATCH_SIZE) {
+        const batch = dataToImport.slice(i, i + BATCH_SIZE);
+        console.log(`Importing batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(dataToImport.length/BATCH_SIZE)}, size: ${batch.length}`);
+        
+        // Check if this batch has any special stickers
+        const hasCriticalRange = batch.some(([num]) => typeof num === 'number' && num >= 426 && num <= 440);
+        const hasAlphanumeric = batch.some(([num]) => typeof num === 'string' && /^[A-Za-z]/.test(num.toString()));
+        
+        if (hasCriticalRange) {
+          console.log(`Batch ${i/BATCH_SIZE + 1} contains critical range stickers`);
+        }
+        
+        if (hasAlphanumeric) {
+          console.log(`Batch ${i/BATCH_SIZE + 1} contains alphanumeric stickers`);
+        }
+        
+        // Import this batch
+        try {
+          const result = await importStickersFromCSV(selectedAlbum, batch);
+          
+          if (result && result.length > 0) {
+            console.log(`Successfully imported ${result.length} stickers from batch ${i/BATCH_SIZE + 1}`);
+            allImportedStickers.push(...result);
+            
+            // Update progress
+            setImportProgress(Math.min(90, 10 + (i + batch.length) / dataToImport.length * 80));
+            
+            // Add delay between batches to avoid rate limits
+            if (i + BATCH_SIZE < dataToImport.length) {
+              await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+          } else {
+            console.warn(`No stickers imported from batch ${i/BATCH_SIZE + 1}`);
+          }
+        } catch (error) {
+          console.error(`Error importing batch ${i/BATCH_SIZE + 1}:`, error);
+          // Continue with next batch even if this one failed
+        }
+      }
+      
+      // Check if we imported everything successfully
+      if (!allImportedStickers.length) {
         throw new Error("שגיאה בייבוא המדבקות לשרת");
       }
       
-      const importedCriticalRange = result.filter(s => {
+      // Final checks for special ranges
+      const importedCriticalRange = allImportedStickers.filter(s => {
         if (typeof s.number === 'number') {
           return s.number >= 426 && s.number <= 440;
         }
         return false;
       });
       
-      if (criticalRangeItems.length > 0 && importedCriticalRange.length === 0) {
-        console.warn("Warning: Critical range stickers (426-440) were not imported successfully.");
+      const importedAlphanumeric = allImportedStickers.filter(s => 
+        typeof s.number === 'string' && /^[A-Za-z]/.test(s.number.toString())
+      );
+      
+      console.log(`Successfully imported ${allImportedStickers.length} stickers in total`);
+      console.log(`Imported ${importedCriticalRange.length} critical range stickers`);
+      console.log(`Imported ${importedAlphanumeric.length} alphanumeric stickers`);
+      
+      // Check if we're missing any critical range stickers
+      if (criticalRangeItems.length > 0 && importedCriticalRange.length < criticalRangeItems.length) {
+        console.warn(`Warning: Only imported ${importedCriticalRange.length}/${criticalRangeItems.length} critical range stickers (426-440)`);
         toast({
           title: "חלק מהמדבקות לא יובאו",
-          description: "מדבקות בטווח 426-440 לא יובאו בהצלחה. אנא נסה שוב.",
+          description: `יובאו רק ${importedCriticalRange.length} מתוך ${criticalRangeItems.length} מדבקות בטווח 426-440. אנא נסה שוב.`,
           variant: "destructive",
         });
       }
       
-      setOpen(false);
-      setFile(null);
-      setParsedData([]);
+      // Check if we're missing any alphanumeric stickers
+      if (alphanumericItems.length > 0 && importedAlphanumeric.length < alphanumericItems.length) {
+        console.warn(`Warning: Only imported ${importedAlphanumeric.length}/${alphanumericItems.length} alphanumeric stickers`);
+        toast({
+          title: "חלק מהמדבקות לא יובאו",
+          description: `יובאו רק ${importedAlphanumeric.length} מתוך ${alphanumericItems.length} מדבקות אלפאנומריות (L1-L20). אנא נסה שוב.`,
+          variant: "destructive",
+        });
+      }
       
-      toast({
-        title: "ייבוא הושלם בהצלחה",
-        description: `יובאו ${result.length} מדבקות בהצלחה`,
-      });
+      // Set final progress and close dialog
+      setImportProgress(100);
       
-      window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-        detail: { albumId: selectedAlbum, action: 'import', count: result.length } 
-      }));
-      window.dispatchEvent(new CustomEvent('forceRefresh'));
-      window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
-      
-      onImportComplete();
+      // Reset state after successful import
+      setTimeout(() => {
+        setOpen(false);
+        setFile(null);
+        setParsedData([]);
+        
+        toast({
+          title: "ייבוא הושלם בהצלחה",
+          description: `יובאו ${allImportedStickers.length} מדבקות בהצלחה`,
+        });
+        
+        // Trigger refresh events
+        window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+          detail: { albumId: selectedAlbum, action: 'import', count: allImportedStickers.length } 
+        }));
+        window.dispatchEvent(new CustomEvent('forceRefresh'));
+        window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
+        
+        onImportComplete();
+      }, 1000);
     } catch (error) {
       console.error("Error importing Excel:", error);
       toast({
@@ -154,6 +268,7 @@ const ImportExcelDialog = ({
         variant: "destructive",
       });
     } finally {
+      clearInterval(progressInterval);
       setIsImporting(false);
     }
   };
@@ -205,6 +320,16 @@ const ImportExcelDialog = ({
             setFile={setFile}
             onParse={handleFileUpload}
           />
+          
+          {isImporting && (
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span>מייבא מדבקות...</span>
+                <span>{Math.round(importProgress)}%</span>
+              </div>
+              <Progress value={importProgress} className="h-2" />
+            </div>
+          )}
           
           <Button 
             onClick={handleImport} 

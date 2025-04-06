@@ -26,16 +26,20 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
   // Create sets for both numeric and alphanumeric sticker numbers
   const existingNumbers = new Set();
   existingStickers.forEach(s => {
-    if (typeof s.number === 'number' || typeof s.number === 'string') {
+    if (s.number !== undefined) {
       existingNumbers.add(s.number);
     }
   });
   
   console.log(`Found ${existingStickers.length} existing stickers for album ${albumId}`);
   console.log(`Existing numbers sample:`, Array.from(existingNumbers).slice(0, 10));
-  console.log(`Existing numbers contains 'L1': ${existingNumbers.has('L1')}`);
-  console.log(`Existing numbers contains '426': ${existingNumbers.has(426)}`);
-  console.log(`Existing numbers contains '440': ${existingNumbers.has(440)}`);
+  
+  // Debug special ranges
+  if (existingNumbers.size > 0) {
+    console.log(`Existing numbers contains 'L1': ${existingNumbers.has('L1')}`);
+    console.log(`Existing numbers contains '426': ${existingNumbers.has(426)}`);
+    console.log(`Existing numbers contains '440': ${existingNumbers.has(440)}`);
+  }
   
   // Create new stickers
   const newStickers: Sticker[] = [];
@@ -76,6 +80,13 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
     };
     
     newStickers.push(newSticker);
+    
+    // Log confirmation for special ranges
+    if (typeof stickerNumber === 'number' && stickerNumber >= 426 && stickerNumber <= 440) {
+      console.log(`Added critical range sticker to newStickers: #${stickerNumber} - ${name}`);
+    } else if (typeof stickerNumber === 'string' && stickerNumber.startsWith('L')) {
+      console.log(`Added alphanumeric sticker to newStickers: #${stickerNumber} - ${name}`);
+    }
   });
   
   if (newStickers.length === 0) {
@@ -94,11 +105,18 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
       }
       return false;
     });
+    
+    const alphanumericStickers = newStickers.filter(s => typeof s.number === 'string');
+    
     console.log(`Found ${criticalRangeStickers.length} stickers in range 426-440 to be imported`, 
       criticalRangeStickers.map(s => ({ number: s.number, name: s.name })));
     
-    // Process in even smaller batches to avoid egress limits
-    const BATCH_SIZE = 25; // Reduced from 50 to 25 to help with egress limits
+    console.log(`Found ${alphanumericStickers.length} alphanumeric stickers to be imported`, 
+      alphanumericStickers.map(s => ({ number: s.number, name: s.name })));
+    
+    // Process in smaller batches to avoid egress limits
+    // CRITICAL CHANGE: Reduce batch size to ensure all imports work
+    const BATCH_SIZE = 10; // Reduced from 25 to 10 for more reliable importing
     let saveSuccess = true;
     const savedStickers: Sticker[] = [];
     
@@ -114,6 +132,8 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
         return false;
       });
       
+      const hasAlphanumeric = batch.some(s => typeof s.number === 'string');
+      
       if (hasCriticalRange) {
         console.log(`Batch ${Math.floor(i/BATCH_SIZE) + 1} contains critical range stickers:`, 
           batch.filter(s => {
@@ -122,6 +142,12 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
             }
             return false;
           }).map(s => ({ number: s.number, name: s.name })));
+      }
+      
+      if (hasAlphanumeric) {
+        console.log(`Batch ${Math.floor(i/BATCH_SIZE) + 1} contains alphanumeric stickers:`, 
+          batch.filter(s => typeof s.number === 'string')
+            .map(s => ({ number: s.number, name: s.name })));
       }
       
       // Try to save with retries
@@ -150,6 +176,10 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
             if (hasCriticalRange) {
               console.log(`Successfully saved critical range stickers in batch ${Math.floor(i/BATCH_SIZE) + 1}`);
             }
+            
+            if (hasAlphanumeric) {
+              console.log(`Successfully saved alphanumeric stickers in batch ${Math.floor(i/BATCH_SIZE) + 1}`);
+            }
           }
         } catch (error) {
           console.error(`Error saving batch ${Math.floor(i/BATCH_SIZE) + 1}, retry ${retries + 1}/${MAX_RETRIES}:`, error);
@@ -162,9 +192,9 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
         console.error(`Failed to save batch ${Math.floor(i/BATCH_SIZE) + 1} after ${MAX_RETRIES} retries`);
       }
       
-      // Add a longer delay between batches
+      // Add a longer delay between batches - CRITICAL for Supabase throttling
       if (i + BATCH_SIZE < newStickers.length) {
-        const betweenBatchDelay = 1200; // Increased from 800ms to 1200ms
+        const betweenBatchDelay = 2000; // Increased from 1200ms to 2000ms
         console.log(`Waiting ${betweenBatchDelay}ms between batches to avoid rate limits`);
         await new Promise(resolve => setTimeout(resolve, betweenBatchDelay));
       }
@@ -173,6 +203,19 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
     // If we saved at least some stickers, update the local state with what was saved
     if (savedStickers.length > 0) {
       console.log(`Saved ${savedStickers.length}/${newStickers.length} stickers to Supabase`);
+      
+      // Check critical ranges after save
+      const savedCriticalRange = savedStickers.filter(s => {
+        if (typeof s.number === 'number') {
+          return s.number >= 426 && s.number <= 440;
+        }
+        return false;
+      });
+      
+      const savedAlphanumeric = savedStickers.filter(s => typeof s.number === 'string');
+      
+      console.log(`Saved ${savedCriticalRange.length} stickers in range 426-440`);
+      console.log(`Saved ${savedAlphanumeric.length} alphanumeric stickers`);
       
       // Update local state with successfully saved stickers
       const allStickers = getStickerData();
@@ -212,4 +255,3 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
     throw error; 
   }
 };
-

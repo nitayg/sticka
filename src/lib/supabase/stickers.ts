@@ -11,9 +11,8 @@ export async function fetchStickers() {
     return null;
   }
   console.log(`Fetched ${data?.length || 0} stickers from Supabase`);
-  console.log('Fetched data:', JSON.stringify(data, null, 2));
-
-  // התאמת שמות השדות לממשק Sticker
+  
+  // Adjust data to the Sticker interface
   const adjustedData = data.map((sticker) => ({
     id: sticker.id,
     name: sticker.name,
@@ -21,19 +20,18 @@ export async function fetchStickers() {
     teamLogo: sticker.teamlogo,
     category: sticker.category,
     imageUrl: sticker.imageurl,
-    number: sticker.number,
+    number: sticker.number, // This handles both numeric and string values
     isOwned: sticker.isowned,
     isDuplicate: sticker.isduplicate,
     duplicateCount: sticker.duplicatecount,
     albumId: sticker.albumid,
   }));
 
-  console.log('Adjusted data:', JSON.stringify(adjustedData, null, 2));
   return adjustedData as Sticker[];
 }
 
 export async function saveSticker(sticker: Sticker) {
-  console.log('Saving sticker to Supabase:', sticker.id);
+  console.log('Saving sticker to Supabase:', sticker.id, 'with number:', sticker.number, 'type:', typeof sticker.number);
   const supabaseSticker = {
     id: sticker.id,
     name: sticker.name,
@@ -41,13 +39,13 @@ export async function saveSticker(sticker: Sticker) {
     teamlogo: sticker.teamLogo,
     category: sticker.category,
     imageurl: sticker.imageUrl,
-    number: sticker.number, // Will now handle both numeric and string values
+    number: sticker.number, // Handles both numeric and string values
     isowned: sticker.isOwned,
     isduplicate: sticker.isDuplicate,
     duplicatecount: sticker.duplicateCount,
     albumid: sticker.albumId,
   };
-  console.log('JSON שנשלח:', JSON.stringify(supabaseSticker, null, 2));
+  
   const { data, error } = await supabase
     .from('stickers')
     .upsert(supabaseSticker, { onConflict: 'id' })
@@ -77,19 +75,46 @@ export async function saveStickerBatch(stickers: Sticker[]) {
   
   console.log(`Saving ${stickers.length} stickers to Supabase`);
   
-  const adjustedItems = stickers.map((sticker) => ({
-    id: sticker.id,
-    name: sticker.name,
-    team: sticker.team,
-    teamlogo: sticker.teamLogo,
-    category: sticker.category,
-    imageurl: sticker.imageUrl,
-    number: sticker.number, // This will now properly handle both numeric and string values
-    isowned: sticker.isOwned,
-    isduplicate: sticker.isDuplicate,
-    duplicatecount: sticker.duplicateCount,
-    albumid: sticker.albumId,
-  }));
+  // Log critical range and alphanumeric stickers
+  const criticalRangeStickers = stickers.filter(s => 
+    typeof s.number === 'number' && s.number >= 426 && s.number <= 440
+  );
+  
+  const alphanumericStickers = stickers.filter(s => 
+    typeof s.number === 'string' && /^[A-Za-z]/.test(s.number.toString())
+  );
+  
+  if (criticalRangeStickers.length > 0) {
+    console.log(`Batch contains ${criticalRangeStickers.length} critical range stickers:`, 
+      criticalRangeStickers.map(s => ({id: s.id, number: s.number, name: s.name})));
+  }
+  
+  if (alphanumericStickers.length > 0) {
+    console.log(`Batch contains ${alphanumericStickers.length} alphanumeric stickers:`, 
+      alphanumericStickers.map(s => ({id: s.id, number: s.number, name: s.name})));
+  }
+  
+  const adjustedItems = stickers.map((sticker) => {
+    // Debug each sticker before saving
+    if ((typeof sticker.number === 'number' && sticker.number >= 426 && sticker.number <= 440) ||
+        (typeof sticker.number === 'string' && /^[A-Za-z]/.test(sticker.number))) {
+      console.log(`Preparing special sticker for save: #${sticker.number} (${typeof sticker.number}) - ${sticker.name}`);
+    }
+    
+    return {
+      id: sticker.id,
+      name: sticker.name,
+      team: sticker.team,
+      teamlogo: sticker.teamLogo,
+      category: sticker.category,
+      imageurl: sticker.imageUrl,
+      number: sticker.number, // This properly handles both numeric and string values
+      isowned: sticker.isOwned,
+      isduplicate: sticker.isDuplicate,
+      duplicatecount: sticker.duplicateCount,
+      albumid: sticker.albumId,
+    };
+  });
   
   return await saveBatch('stickers', adjustedItems);
 }
