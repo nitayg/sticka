@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus, Minus } from "lucide-react";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
@@ -25,13 +25,19 @@ const InventoryTableRow = ({
 }: InventoryTableRowProps) => {
   const inventoryCount = sticker.isOwned ? (sticker.duplicateCount || 0) + 1 : 0;
   const isEven = index % 2 === 0;
-  // Add optimistic UI update
+  
+  // Add optimistic UI update with proper persistence
   const [optimisticCount, setOptimisticCount] = useState<number | null>(null);
   
-  // Display either the optimistic count (if we have one) or the actual count
+  // Reset optimistic count when sticker data changes from parent
+  useEffect(() => {
+    setOptimisticCount(null);
+  }, [sticker.isOwned, sticker.duplicateCount]);
+  
+  // Display either the optimistic count or the actual count
   const displayCount = optimisticCount !== null ? optimisticCount : inventoryCount;
 
-  // Handle inventory update with optimistic UI
+  // Handle inventory update with optimistic UI that persists
   const handleInventoryUpdate = (increment: boolean) => {
     // Calculate new count optimistically
     const newCount = increment 
@@ -43,11 +49,6 @@ const InventoryTableRow = ({
     
     // Call the actual update
     onUpdateInventory(sticker, increment);
-    
-    // Reset optimistic state after a short delay (in case the actual update fails)
-    setTimeout(() => {
-      setOptimisticCount(null);
-    }, 2000);
   };
 
   return (

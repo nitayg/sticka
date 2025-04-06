@@ -7,6 +7,7 @@ import { useToast } from "../ui/use-toast";
 export const useInventoryActions = (onRefresh: () => void) => {
   const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
   const [isSelectMode, setIsSelectMode] = useState(false);
+  const [updatingStickers, setUpdatingStickers] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
 
   // Reset selected stickers when select mode is disabled
@@ -38,29 +39,40 @@ export const useInventoryActions = (onRefresh: () => void) => {
   // Handle inventory update for a single sticker
   const handleInventoryUpdate = async (sticker: Sticker, increment: boolean) => {
     try {
-      if (!sticker.isOwned && increment) {
+      // Mark this sticker as currently updating to prevent duplicate operations
+      if (updatingStickers[sticker.id]) {
+        console.log(`Skipping update for ${sticker.id} - already in progress`);
+        return;
+      }
+      
+      setUpdatingStickers(prev => ({ ...prev, [sticker.id]: true }));
+      
+      // Clone sticker to avoid mutating the original
+      const stickerCopy = { ...sticker };
+      
+      if (!stickerCopy.isOwned && increment) {
         // If not owned and incrementing, toggle to owned
-        await toggleStickerOwned(sticker.id);
-      } else if (sticker.isOwned) {
+        await toggleStickerOwned(stickerCopy.id);
+      } else if (stickerCopy.isOwned) {
         if (increment) {
           // If owned and incrementing, increase duplicate count
-          const newCount = (sticker.duplicateCount || 0) + 1;
-          await updateSticker(sticker.id, { 
+          const newCount = (stickerCopy.duplicateCount || 0) + 1;
+          await updateSticker(stickerCopy.id, { 
             isDuplicate: true, 
             duplicateCount: newCount 
           });
         } else {
           // If owned and decrementing
-          const currentCount = sticker.duplicateCount || 0;
+          const currentCount = stickerCopy.duplicateCount || 0;
           if (currentCount > 0) {
             // If has duplicates, decrease duplicate count
-            await updateSticker(sticker.id, { 
+            await updateSticker(stickerCopy.id, { 
               isDuplicate: currentCount - 1 > 0, 
               duplicateCount: currentCount - 1 
             });
           } else {
             // If no duplicates, toggle to not owned
-            await toggleStickerOwned(sticker.id);
+            await toggleStickerOwned(stickerCopy.id);
           }
         }
       }
@@ -70,14 +82,15 @@ export const useInventoryActions = (onRefresh: () => void) => {
 
       // Trigger events for syncing
       window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-        detail: { action: 'update' } 
+        detail: { action: 'update', stickerId: stickerCopy.id } 
       }));
       window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
+      window.dispatchEvent(new CustomEvent('forceRefresh'));
       
       // Show toast notification
       toast({
         title: increment ? "מדבקה נוספה למלאי" : "מדבקה הוסרה מהמלאי",
-        description: `מדבקה מספר ${sticker.number} ${increment ? "נוספה" : "הוסרה"} ${sticker.name ? `(${sticker.name})` : ""}`,
+        description: `מדבקה מספר ${stickerCopy.number} ${increment ? "נוספה" : "הוסרה"} ${stickerCopy.name ? `(${stickerCopy.name})` : ""}`,
       });
     } catch (error) {
       console.error("Error updating inventory:", error);
@@ -85,6 +98,13 @@ export const useInventoryActions = (onRefresh: () => void) => {
         title: "שגיאה בעדכון המלאי",
         description: "אירעה שגיאה בעת עדכון המלאי",
         variant: "destructive"
+      });
+    } finally {
+      // Clear updating flag for this sticker
+      setUpdatingStickers(prev => {
+        const updated = { ...prev };
+        delete updated[sticker.id];
+        return updated;
       });
     }
   };
@@ -127,11 +147,12 @@ export const useInventoryActions = (onRefresh: () => void) => {
       // Refresh inventory and show toast
       onRefresh();
       
-      // Trigger sync events
+      // Trigger sync events with stronger force refresh
       window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
         detail: { action: 'bulkUpdate' } 
       }));
       window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
+      window.dispatchEvent(new CustomEvent('forceRefresh'));
       
       toast({
         title: increment ? "מדבקות נוספו למלאי" : "מדבקות הוסרו מהמלאי",

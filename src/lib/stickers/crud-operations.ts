@@ -16,18 +16,20 @@ export const addSticker = async (sticker: Omit<Sticker, 'id'>): Promise<Sticker>
   };
   
   try {
-    // שמירה לשרת תחילה
-    console.log(`Saving new sticker #${newSticker.number} to server for album ${newSticker.albumId}`);
-    const success = await saveSticker(newSticker);
-    
-    if (!success) {
-      throw new Error(`שגיאה בשמירת מדבקה חדשה לשרת: ${newSticker.number}`);
-    }
-    
-    // אם השמירה לשרת הצליחה, נעדכן גם את המצב המקומי
+    // Optimistic update to local state first
     const stickers = getStickerData();
     const updatedStickers = [...stickers, newSticker];
     setStickerData(updatedStickers);
+    
+    // Force UI refresh
+    window.dispatchEvent(new CustomEvent('forceRefresh'));
+    
+    // Then update the server in background
+    console.log(`Saving new sticker #${newSticker.number} to server for album ${newSticker.albumId}`);
+    saveSticker(newSticker).catch(error => {
+      console.error(`Error saving sticker to server: ${error}`);
+      // Could add rollback logic here if needed
+    });
     
     // Trigger stickerDataChanged event
     if (typeof window !== 'undefined') {
@@ -43,7 +45,7 @@ export const addSticker = async (sticker: Omit<Sticker, 'id'>): Promise<Sticker>
   }
 };
 
-// Update a sticker
+// Update a sticker with optimistic updates
 export const updateSticker = async (id: string, updates: Partial<Sticker>): Promise<Sticker | null> => {
   const stickers = getStickerData();
   const stickerIndex = stickers.findIndex(sticker => sticker.id === id);
@@ -53,18 +55,11 @@ export const updateSticker = async (id: string, updates: Partial<Sticker>): Prom
     return null;
   }
   
-  const updatedSticker = { ...stickers[stickerIndex], ...updates };
+  const originalSticker = stickers[stickerIndex];
+  const updatedSticker = { ...originalSticker, ...updates };
   
   try {
-    // שמירה לשרת תחילה
-    console.log(`Updating sticker ${id} on server`);
-    const success = await saveSticker(updatedSticker);
-    
-    if (!success) {
-      throw new Error(`שגיאה בעדכון מדבקה בשרת: ${id}`);
-    }
-    
-    // אם העדכון בשרת הצליח, נעדכן גם את המצב המקומי
+    // Update local state immediately for optimistic UI
     const updatedStickers = [
       ...stickers.slice(0, stickerIndex),
       updatedSticker,
@@ -72,6 +67,30 @@ export const updateSticker = async (id: string, updates: Partial<Sticker>): Prom
     ];
     
     setStickerData(updatedStickers);
+    
+    // Force UI refresh
+    window.dispatchEvent(new CustomEvent('forceRefresh'));
+    
+    // Update server in background - non-blocking
+    console.log(`Updating sticker ${id} on server`);
+    saveSticker(updatedSticker).catch(error => {
+      console.error(`Error updating sticker on server: ${error}`);
+      
+      // Rollback on server error
+      const currentStickers = getStickerData();
+      const currentIndex = currentStickers.findIndex(s => s.id === id);
+      
+      if (currentIndex !== -1) {
+        const rolledBackStickers = [
+          ...currentStickers.slice(0, currentIndex),
+          originalSticker,
+          ...currentStickers.slice(currentIndex + 1)
+        ];
+        
+        setStickerData(rolledBackStickers);
+        window.dispatchEvent(new CustomEvent('forceRefresh'));
+      }
+    });
     
     // Trigger stickerDataChanged event
     if (typeof window !== 'undefined') {

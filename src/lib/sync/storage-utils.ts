@@ -10,29 +10,36 @@ export const filterDeleted = <T>(items: T[]): T[] => {
 };
 
 // Save data directly to Supabase without using localStorage
-export const saveToStorage = <T>(key: string, data: T, syncToCloud = true): void => {
+export const saveToStorage = <T>(key: string, data: T): void => {
   try {
-    console.log(`Saving ${Array.isArray(data) ? data.length : 1} item(s) to ${key} in cloud`);
+    // Save to localStorage
+    localStorage.setItem(key, JSON.stringify(data));
     
-    // Store data in memory storage first
+    // Update in-memory state
     setMemoryStorage(key, data);
     
-    // Sync to Supabase always
-    if (syncToCloud && isConnected) {
-      console.log(`Syncing ${key} to Supabase`);
-      sendToSupabase(key, data);
-      
-      // Trigger a sync-start event to show indicator
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_START));
+    // Dispatch event for cross-tab synchronization with proper typing
+    const event = new StorageEvent('storage', {
+      key: key,
+      newValue: JSON.stringify(data),
+      storageArea: localStorage
+    });
+    window.dispatchEvent(event);
+    
+    // Additional custom event for better reactivity
+    window.dispatchEvent(new CustomEvent(`${key}Updated`, { 
+      detail: {
+        data,
+        timestamp: Date.now()
       }
+    }));
+    
+    // Force refresh for all components that need it
+    if (key === 'stickers') {
+      window.dispatchEvent(new CustomEvent('forceRefresh'));
     }
-    
-    // Dispatch data change events
-    dispatchDataChangeEvents(key, data);
-    
   } catch (error) {
-    console.error(`Error saving ${key} to storage:`, error);
+    console.error(`Error saving to storage: ${error}`);
   }
 };
 

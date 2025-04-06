@@ -1,3 +1,4 @@
+
 import { Sticker } from '../types';
 import { getStickerData, setStickerData, getStickersByAlbumId } from './basic-operations';
 import { updateSticker } from './crud-operations';
@@ -14,8 +15,30 @@ export const toggleStickerOwned = async (id: string): Promise<Sticker | null> =>
       return null;
     }
     
-    // שימוש בפונקציית העדכון המעודכנת שתעדכן גם בשרת
-    return await updateSticker(id, { isOwned: !sticker.isOwned });
+    // Optimistically update local state before waiting for server response
+    const updatedSticker = { ...sticker, isOwned: !sticker.isOwned };
+    
+    // Update local state first
+    const updatedStickers = stickers.map(s => 
+      s.id === id ? updatedSticker : s
+    );
+    setStickerData(updatedStickers);
+    
+    // Dispatch event for immediate UI update
+    window.dispatchEvent(new CustomEvent('forceRefresh'));
+    
+    // Then update the server (without waiting for response)
+    updateSticker(id, { isOwned: !sticker.isOwned }).catch(error => {
+      console.error(`Server update failed for toggling sticker owned status: ${error}`);
+      // If server update fails, revert local state
+      const revertedStickers = getStickerData().map(s => 
+        s.id === id ? sticker : s
+      );
+      setStickerData(revertedStickers);
+      window.dispatchEvent(new CustomEvent('forceRefresh'));
+    });
+    
+    return updatedSticker;
   } catch (error) {
     console.error(`Error toggling sticker owned status: ${error}`);
     throw error;
@@ -44,11 +67,37 @@ export const toggleStickerDuplicate = async (id: string): Promise<Sticker | null
     
     const isDuplicate = duplicateCount > 0;
     
-    // שימוש בפונקציית העדכון המעודכנת שתעדכן גם בשרת
-    return await updateSticker(id, { 
+    // Optimistically update local state
+    const updatedSticker = { 
+      ...sticker, 
+      isDuplicate, 
+      duplicateCount: isDuplicate ? duplicateCount : 0
+    };
+    
+    // Update local state first for immediate visual feedback
+    const updatedStickers = stickers.map(s => 
+      s.id === id ? updatedSticker : s
+    );
+    setStickerData(updatedStickers);
+    
+    // Dispatch event for immediate UI update
+    window.dispatchEvent(new CustomEvent('forceRefresh'));
+    
+    // Then update the server (without waiting for response)
+    updateSticker(id, { 
       isDuplicate, 
       duplicateCount: isDuplicate ? duplicateCount : 0 
+    }).catch(error => {
+      console.error(`Server update failed for toggling sticker duplicate status: ${error}`);
+      // If server update fails, revert local state
+      const revertedStickers = getStickerData().map(s => 
+        s.id === id ? sticker : s
+      );
+      setStickerData(revertedStickers);
+      window.dispatchEvent(new CustomEvent('forceRefresh'));
     });
+    
+    return updatedSticker;
   } catch (error) {
     console.error(`Error toggling sticker duplicate status: ${error}`);
     throw error;
@@ -95,13 +144,7 @@ export const addStickersToInventory = (albumId: string, stickerNumbers: (number 
   }
   
   try {
-    // שמירה בשרת - כעת נעשה בצורה שאינה חוסמת
-    console.log(`Updating ${stickersToUpdate.length} stickers in inventory on server`);
-    saveStickerBatch(stickersToUpdate).catch(error => {
-      console.error(`Error updating stickers inventory on server: ${error}`);
-    });
-    
-    // עדכון מקומי בלי להמתין לתשובה מהשרת
+    // Update local state immediately before server update
     const updatedStickers = stickers.map(sticker => {
       const updatedSticker = stickersToUpdate.find(s => s.id === sticker.id);
       return updatedSticker || sticker;
@@ -109,11 +152,16 @@ export const addStickersToInventory = (albumId: string, stickerNumbers: (number 
     
     setStickerData(updatedStickers);
     
-    // Trigger events
+    // Trigger immediate UI refresh
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent('forceRefresh'));
       window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
-    }, 100);
+    }, 10);
+    
+    // Server update in background - non-blocking
+    saveStickerBatch(stickersToUpdate).catch(error => {
+      console.error(`Error updating stickers inventory on server: ${error}`);
+    });
     
     return { newlyOwned, duplicatesUpdated, notFound };
   } catch (error) {
