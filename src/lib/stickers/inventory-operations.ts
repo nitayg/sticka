@@ -18,11 +18,14 @@ export const toggleStickerOwned = async (id: string): Promise<Sticker | null> =>
     // Optimistically update local state before waiting for server response
     const updatedSticker = { ...sticker, isOwned: !sticker.isOwned };
     
+    // Get sticker album for more targeted refresh
+    const albumId = sticker.albumId;
+    
     // Update local state first
     const updatedStickers = stickers.map(s => 
       s.id === id ? updatedSticker : s
     );
-    setStickerData(updatedStickers);
+    setStickerData(updatedStickers, { albumId, action: 'toggleOwned' });
     
     // Dispatch event for immediate UI update
     window.dispatchEvent(new CustomEvent('forceRefresh'));
@@ -34,7 +37,7 @@ export const toggleStickerOwned = async (id: string): Promise<Sticker | null> =>
       const revertedStickers = getStickerData().map(s => 
         s.id === id ? sticker : s
       );
-      setStickerData(revertedStickers);
+      setStickerData(revertedStickers, { albumId, action: 'revert' });
       window.dispatchEvent(new CustomEvent('forceRefresh'));
     });
     
@@ -67,6 +70,9 @@ export const toggleStickerDuplicate = async (id: string): Promise<Sticker | null
     
     const isDuplicate = duplicateCount > 0;
     
+    // Get sticker album for more targeted refresh
+    const albumId = sticker.albumId;
+    
     // Optimistically update local state
     const updatedSticker = { 
       ...sticker, 
@@ -78,7 +84,7 @@ export const toggleStickerDuplicate = async (id: string): Promise<Sticker | null
     const updatedStickers = stickers.map(s => 
       s.id === id ? updatedSticker : s
     );
-    setStickerData(updatedStickers);
+    setStickerData(updatedStickers, { albumId, action: 'toggleDuplicate' });
     
     // Dispatch event for immediate UI update
     window.dispatchEvent(new CustomEvent('forceRefresh'));
@@ -93,7 +99,7 @@ export const toggleStickerDuplicate = async (id: string): Promise<Sticker | null
       const revertedStickers = getStickerData().map(s => 
         s.id === id ? sticker : s
       );
-      setStickerData(revertedStickers);
+      setStickerData(revertedStickers, { albumId, action: 'revert' });
       window.dispatchEvent(new CustomEvent('forceRefresh'));
     });
     
@@ -150,12 +156,13 @@ export const addStickersToInventory = (albumId: string, stickerNumbers: (number 
       return updatedSticker || sticker;
     });
     
-    setStickerData(updatedStickers);
+    setStickerData(updatedStickers, { albumId, action: 'bulkUpdate' });
     
-    // Trigger immediate UI refresh
+    // Trigger immediate UI refresh with multiple events for different components
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent('forceRefresh'));
       window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
+      window.dispatchEvent(new CustomEvent('albumDataChanged'));
     }, 10);
     
     // Server update in background - non-blocking
