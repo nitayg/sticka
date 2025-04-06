@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -55,9 +54,9 @@ const ExchangeActions = ({ exchange, onRefresh }: ExchangeActionsProps) => {
     }
   };
 
-  const handleStickerIntakeSubmit = (albumId: string, stickerNumbers: number[]) => {
+  const handleStickerIntakeSubmit = async (albumId: string, stickerNumbers: number[]) => {
     try {
-      const result = handleStickerIntake(albumId, stickerNumbers);
+      const result = await handleStickerIntake(albumId, stickerNumbers);
       
       toast({
         title: "מדבקות נקלטו בהצלחה",
