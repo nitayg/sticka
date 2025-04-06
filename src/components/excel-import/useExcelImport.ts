@@ -1,6 +1,7 @@
-import { useState } from "react";
+
+import { useState, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { importStickersFromCSV } from "@/lib/sticker-operations";
+import { importStickersFromCSV } from "@/lib/stickers";
 import { parseCSV, ParsedCsvRow } from "@/utils/csv-parser";
 
 interface UseExcelImportProps {
@@ -8,15 +9,33 @@ interface UseExcelImportProps {
   onImportComplete: () => void;
 }
 
+interface ImportResult {
+  success: boolean;
+  importedCount: number;
+  totalCount: number;
+}
+
 export const useExcelImport = ({ selectedAlbum, onImportComplete }: UseExcelImportProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [parsedData, setParsedData] = useState<ParsedCsvRow[]>([]);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { toast } = useToast();
   
-  const handleFileUpload = (data: ParsedCsvRow[]) => {
+  // Reset all import state
+  const resetImportState = useCallback(() => {
+    setFile(null);
+    setParsedData([]);
+    setImportProgress(0);
+    setImportResult(null);
+    setErrorMessage(null);
+  }, []);
+  
+  const handleFileUpload = useCallback((data: ParsedCsvRow[]) => {
     setParsedData(data);
+    setErrorMessage(null);
     
     const criticalRangeStickers = data.filter(row => {
       if (typeof row.number === 'number') {
@@ -33,8 +52,6 @@ export const useExcelImport = ({ selectedAlbum, onImportComplete }: UseExcelImpo
     
     if (criticalRangeStickers.length > 0) {
       console.log(`File upload contains ${criticalRangeStickers.length} stickers in range 426-440:`, criticalRangeStickers);
-    } else {
-      console.log(`File upload contains NO stickers in range 426-440`);
     }
     
     if (alphanumericStickers.length > 0) {
@@ -45,22 +62,40 @@ export const useExcelImport = ({ selectedAlbum, onImportComplete }: UseExcelImpo
       title: "קובץ נטען בהצלחה",
       description: `נמצאו ${data.length} מדבקות בקובץ`,
     });
-  };
+  }, [toast]);
   
-  const startProgressUpdate = () => {
-    setImportProgress(10);
+  // More reliable progress tracking
+  const updateImportProgress = useCallback((current: number, total: number) => {
+    // Calculate percentage with a max of 95% until complete
+    const calculatedPercentage = Math.min(Math.floor((current / total) * 95), 95);
+    setImportProgress(calculatedPercentage);
+  }, []);
+  
+  const completeImport = useCallback((success: boolean, importedCount: number, totalCount: number) => {
+    // Set progress to 100% on completion
+    setImportProgress(100);
+    setImportResult({ success, importedCount, totalCount });
+    setIsImporting(false);
     
-    const interval = setInterval(() => {
-      setImportProgress(prev => {
-        if (prev >= 90) return 90;
-        return prev + 5;
+    // Notify completion
+    if (success) {
+      toast({
+        title: "ייבוא הושלם בהצלחה",
+        description: `יובאו ${importedCount} מדבקות בהצלחה`,
       });
-    }, 2000);
-    
-    return interval;
-  };
+      
+      // Trigger global data refresh
+      window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+        detail: { albumId: selectedAlbum, action: 'import', count: importedCount } 
+      }));
+      window.dispatchEvent(new CustomEvent('forceRefresh'));
+      
+      // Notify parent component
+      onImportComplete();
+    }
+  }, [selectedAlbum, toast, onImportComplete]);
   
-  const handleImport = async () => {
+  const handleImport = useCallback(async () => {
     if (!selectedAlbum) {
       toast({
         title: "לא נבחר אלבום",
@@ -80,158 +115,93 @@ export const useExcelImport = ({ selectedAlbum, onImportComplete }: UseExcelImpo
     }
     
     setIsImporting(true);
-    
-    const progressInterval = startProgressUpdate();
+    setImportProgress(5);  // Start at 5%
+    setErrorMessage(null);
     
     try {
       let dataToImport: [number | string, string, string][] = [];
       
       if (parsedData.length > 0) {
         console.log(`Using ${parsedData.length} already parsed rows for import`);
-        dataToImport = parsedData.map(row => {
-          return [row.number, row.name, row.team];
-        });
+        dataToImport = parsedData.map(row => [row.number, row.name, row.team]);
+        setImportProgress(10);  // Advance to 10% after preparing data
       } 
       else if (file) {
         console.log(`Parsing file (${file.name}) for import`);
         const fileContent = await file.text();
+        setImportProgress(10);
+        
         const parsed = parseCSV(fileContent);
-        dataToImport = parsed.map(row => {
-          return [row.number, row.name, row.team];
-        });
+        dataToImport = parsed.map(row => [row.number, row.name, row.team]);
+        setImportProgress(20);  // Advance to 20% after parsing file
       }
       
       if (dataToImport.length === 0) {
         throw new Error("לא נמצאו מדבקות בקובץ");
       }
       
-      const criticalRangeItems = dataToImport.filter(([num]) => {
-        if (typeof num === 'number') {
-          return num >= 426 && num <= 440;
-        }
-        return false;
-      });
-      
-      const alphanumericItems = dataToImport.filter(([num]) => {
-        return typeof num === 'string' && /^[A-Za-z]/.test(num.toString());
-      });
-      
       console.log(`Importing ${dataToImport.length} stickers to album ${selectedAlbum}`);
       
-      if (criticalRangeItems.length > 0) {
-        console.log(`Import data contains ${criticalRangeItems.length} stickers in range 426-440:`, criticalRangeItems);
-      }
-      
-      if (alphanumericItems.length > 0) {
-        console.log(`Import data contains ${alphanumericItems.length} alphanumeric stickers:`, alphanumericItems);
-      }
-      
-      const BATCH_SIZE = 100;
+      // Calculate smaller batch size for more reliability
+      const BATCH_SIZE = 50;
+      const batches = Math.ceil(dataToImport.length / BATCH_SIZE);
       const allImportedStickers = [];
       
+      // Split import into smaller batches for better reliability
       for (let i = 0; i < dataToImport.length; i += BATCH_SIZE) {
+        const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
         const batch = dataToImport.slice(i, i + BATCH_SIZE);
-        console.log(`Importing batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(dataToImport.length/BATCH_SIZE)}, size: ${batch.length}`);
-        
-        const hasCriticalRange = batch.some(([num]) => typeof num === 'number' && num >= 426 && num <= 440);
-        const hasAlphanumeric = batch.some(([num]) => typeof num === 'string' && /^[A-Za-z]/.test(num.toString()));
-        
-        if (hasCriticalRange) {
-          console.log(`Batch ${i/BATCH_SIZE + 1} contains critical range stickers`);
-        }
-        
-        if (hasAlphanumeric) {
-          console.log(`Batch ${i/BATCH_SIZE + 1} contains alphanumeric stickers`);
-        }
+        console.log(`Importing batch ${batchNumber}/${batches}, size: ${batch.length}`);
         
         try {
+          // Update progress - each batch contributes proportionally to overall progress
+          updateImportProgress(i, dataToImport.length);
+          
           const result = await importStickersFromCSV(selectedAlbum, batch);
           
           if (result && result.length > 0) {
-            console.log(`Successfully imported ${result.length} stickers from batch ${i/BATCH_SIZE + 1}`);
+            console.log(`Successfully imported ${result.length} stickers from batch ${batchNumber}`);
             allImportedStickers.push(...result);
             
-            setImportProgress(Math.min(90, 10 + (i + batch.length) / dataToImport.length * 80));
+            // Update progress after each successful batch
+            updateImportProgress(i + batch.length, dataToImport.length);
             
+            // Add a pause between batches to reduce server load
             if (i + BATCH_SIZE < dataToImport.length) {
-              await new Promise(resolve => setTimeout(resolve, 2000));
+              await new Promise(resolve => setTimeout(resolve, 1000));
             }
           } else {
-            console.warn(`No stickers imported from batch ${i/BATCH_SIZE + 1}`);
+            console.warn(`No stickers imported from batch ${batchNumber}`);
           }
         } catch (error) {
-          console.error(`Error importing batch ${i/BATCH_SIZE + 1}:`, error);
+          console.error(`Error importing batch ${batchNumber}:`, error);
+          // Continue with next batch even if this one fails
         }
       }
       
-      if (!allImportedStickers.length) {
-        throw new Error("שגיאה בייבוא המדבקות לשרת");
+      if (allImportedStickers.length === 0) {
+        throw new Error("שגיאה בייבוא המדבקות לשרת. ייתכן שחלק מהמדבקות כבר קיימות או שיש בעיה בקובץ.");
       }
       
-      const importedCriticalRange = allImportedStickers.filter(s => {
-        if (typeof s.number === 'number') {
-          return s.number >= 426 && s.number <= 440;
-        }
-        return false;
-      });
+      console.log(`Successfully imported ${allImportedStickers.length}/${dataToImport.length} stickers in total`);
       
-      const importedAlphanumeric = allImportedStickers.filter(s => 
-        typeof s.number === 'string' && /^[A-Za-z]/.test(s.number.toString())
-      );
+      // Complete the import successfully
+      completeImport(true, allImportedStickers.length, dataToImport.length);
       
-      console.log(`Successfully imported ${allImportedStickers.length} stickers in total`);
-      console.log(`Imported ${importedCriticalRange.length} critical range stickers`);
-      console.log(`Imported ${importedAlphanumeric.length} alphanumeric stickers`);
-      
-      if (criticalRangeItems.length > 0 && importedCriticalRange.length < criticalRangeItems.length) {
-        console.warn(`Warning: Only imported ${importedCriticalRange.length}/${criticalRangeItems.length} critical range stickers (426-440)`);
-        toast({
-          title: "חלק מהמדבקות לא יובאו",
-          description: `יובאו רק ${importedCriticalRange.length} מתוך ${criticalRangeItems.length} מדבקות בטווח 426-440. אנא נסה שוב.`,
-          variant: "destructive",
-        });
-      }
-      
-      if (alphanumericItems.length > 0 && importedAlphanumeric.length < alphanumericItems.length) {
-        console.warn(`Warning: Only imported ${importedAlphanumeric.length}/${alphanumericItems.length} alphanumeric stickers`);
-        toast({
-          title: "חלק מהמדבקות לא יובאו",
-          description: `יובאו רק ${importedAlphanumeric.length} מתוך ${alphanumericItems.length} מדבקות אלפאנומריות (L1-L20). אנא נסה שוב.`,
-          variant: "destructive",
-        });
-      }
-      
-      setImportProgress(100);
-      
-      setFile(null);
-      setParsedData([]);
-      
-      toast({
-        title: "ייבוא הושלם בהצלחה",
-        description: `יובאו ${allImportedStickers.length} מדבקות בהצלחה`,
-      });
-      
-      window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-        detail: { albumId: selectedAlbum, action: 'import', count: allImportedStickers.length } 
-      }));
-      window.dispatchEvent(new CustomEvent('forceRefresh'));
-      window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
-      
-      onImportComplete();
     } catch (error) {
       console.error("Error importing Excel:", error);
+      setErrorMessage(error instanceof Error ? error.message : "אירעה שגיאה בעת ייבוא המדבקות");
+      
       toast({
         title: "שגיאה בייבוא",
         description: error instanceof Error ? error.message : "אירעה שגיאה בעת ייבוא המדבקות",
         variant: "destructive",
       });
       
-      onImportComplete();
-    } finally {
-      clearInterval(progressInterval);
-      setIsImporting(false);
+      // Complete the import with failure
+      completeImport(false, 0, 0);
     }
-  };
+  }, [selectedAlbum, file, parsedData, toast, updateImportProgress, completeImport]);
 
   return {
     file,
@@ -239,7 +209,10 @@ export const useExcelImport = ({ selectedAlbum, onImportComplete }: UseExcelImpo
     parsedData,
     isImporting,
     importProgress,
+    importResult,
+    errorMessage,
     handleFileUpload,
-    handleImport
+    handleImport,
+    resetImportState
   };
 };

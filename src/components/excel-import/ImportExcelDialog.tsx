@@ -34,14 +34,34 @@ const ImportExcelDialog = ({
     handleFileUpload,
     isImporting,
     importProgress,
-    handleImport
+    importResult,
+    errorMessage,
+    handleImport,
+    resetImportState
   } = useExcelImport({
     selectedAlbum,
     onImportComplete: () => {
-      setOpen(false); // Close the dialog when import completes
-      onImportComplete(); // Call the parent's callback function
+      // Only close the dialog if import was successful
+      if (importResult && importResult.success) {
+        setTimeout(() => {
+          setOpen(false);
+          onImportComplete();
+          // Reset the state after dialog is closed
+          setTimeout(() => resetImportState(), 300);
+        }, 1500); // Delay to show 100% completion
+      }
     }
   });
+  
+  // Handle dialog close - reset import state
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    
+    // Reset import state when dialog is closed
+    if (!newOpen && !isImporting) {
+      resetImportState();
+    }
+  };
   
   const trigger = iconOnly ? (
     <TooltipProvider>
@@ -70,7 +90,7 @@ const ImportExcelDialog = ({
   );
   
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
@@ -89,10 +109,26 @@ const ImportExcelDialog = ({
             file={file}
             setFile={setFile}
             onParse={handleFileUpload}
+            disabled={isImporting}
           />
           
           {isImporting && (
-            <ImportProgressIndicator value={importProgress} />
+            <ImportProgressIndicator 
+              value={importProgress} 
+              status={importProgress >= 100 ? "complete" : "importing"} 
+            />
+          )}
+          
+          {errorMessage && !isImporting && (
+            <div className="bg-destructive/10 p-3 rounded-md text-destructive text-sm">
+              {errorMessage}
+            </div>
+          )}
+          
+          {importResult && importResult.success && !isImporting && (
+            <div className="bg-green-100 p-3 rounded-md text-green-800 text-sm">
+              יובאו {importResult.importedCount} מדבקות בהצלחה
+            </div>
           )}
           
           <Button 
