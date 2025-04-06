@@ -17,11 +17,11 @@ interface InventoryDataState {
   setSelectedAlbumId: (albumId: string) => void;
   handleRefresh: () => void;
   handleAlbumChange: (albumId: string) => void;
-  handleStickerIntake: (albumId: string, stickerNumbers: (number | string)[]) => {
+  handleStickerIntake: (albumId: string, stickerNumbers: (number | string)[]) => Promise<{
     newlyOwned: (number | string)[];
     duplicatesUpdated: (number | string)[];
     notFound: (number | string)[];
-  };
+  }>;
   updateTransactionMap: (albumId: string) => void;
 }
 
@@ -128,7 +128,7 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
     }
   },
   
-  handleStickerIntake: (albumId, stickerNumbers) => {
+  handleStickerIntake: async (albumId, stickerNumbers) => {
     const result = addStickersToInventory(albumId, stickerNumbers);
     get().handleRefresh();
     

@@ -2,8 +2,14 @@
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
+interface StickersIntakeResult {
+  newlyOwned: (number | string)[];
+  duplicatesUpdated: (number | string)[];
+  notFound: (number | string)[];
+}
+
 interface UseStickersIntakeProps {
-  handleStickerIntake: (albumId: string, stickerNumbers: (number | string)[]) => void;
+  handleStickerIntake: (albumId: string, stickerNumbers: (number | string)[]) => Promise<StickersIntakeResult>;
   handleRefresh: () => void;
 }
 

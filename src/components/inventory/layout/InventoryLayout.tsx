@@ -1,10 +1,8 @@
 
-import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import Header from "../../Header";
 import StickerIntakeForm from "../../StickerIntakeForm";
 import { useInventoryStore } from "@/store/useInventoryStore";
-import { getAllAlbums } from "@/lib/album-operations";
 import InventoryLoading from "./InventoryLoading";
 import InventoryEmpty from "./InventoryEmpty";
 import InventoryFilters from "../InventoryFilters";
@@ -116,8 +114,5 @@ const InventoryLayout = () => {
     </div>
   );
 };
-
-// Fix missing import
-import { useState } from "react";
 
 export default InventoryLayout;
