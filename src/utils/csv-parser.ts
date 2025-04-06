@@ -24,6 +24,17 @@ export const parseCSV = (csvContent: string): ParsedCsvRow[] => {
   console.log(`Parsing CSV with ${lines.length} lines`);
   console.log(`First few lines:`, lines.slice(0, 3));
   
+  // Check for any lines with numbers in the range 426-440
+  const criticalRangeLines = lines.filter(line => {
+    const firstField = line.split(/[,;\t]/)[0].trim();
+    const num = parseInt(firstField, 10);
+    return !isNaN(num) && num >= 426 && num <= 440;
+  });
+  
+  if (criticalRangeLines.length > 0) {
+    console.log(`Found ${criticalRangeLines.length} lines with numbers in range 426-440:`, criticalRangeLines);
+  }
+  
   // Detect delimiter - try tabs, commas, and semicolons
   const delimiter = detectDelimiter(lines[0]);
   console.log(`Detected delimiter: "${delimiter}"`);
@@ -71,6 +82,11 @@ export const parseCSV = (csvContent: string): ParsedCsvRow[] => {
       ? numberStr.trim() // Keep alphanumeric as string and ensure it's trimmed
       : parseNumberField(numberStr);
     
+    // Check if this is a record in our critical range
+    if (typeof parsedNumber === 'number' && parsedNumber >= 426 && parsedNumber <= 440) {
+      console.log(`Parsed critical range sticker: #${parsedNumber} - ${name} (${team})`);
+    }
+    
     // Create parsed row object
     const parsedRow: ParsedCsvRow = {
       number: parsedNumber,
@@ -79,6 +95,20 @@ export const parseCSV = (csvContent: string): ParsedCsvRow[] => {
     };
     
     result.push(parsedRow);
+  }
+  
+  // Additional check for critical range stickers in the final result
+  const criticalRangeStickers = result.filter(row => {
+    if (typeof row.number === 'number') {
+      return row.number >= 426 && row.number <= 440;
+    }
+    return false;
+  });
+  
+  if (criticalRangeStickers.length > 0) {
+    console.log(`Final result contains ${criticalRangeStickers.length} stickers in range 426-440:`, criticalRangeStickers);
+  } else {
+    console.log(`Warning: No stickers in range 426-440 were found in the final result!`);
   }
   
   console.log(`Successfully parsed ${result.length} rows`);

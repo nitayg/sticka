@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { FileSpreadsheet } from "lucide-react";
 import { Album } from "@/lib/types";
@@ -33,6 +34,18 @@ const ImportExcelDialog = ({
   
   const handleFileUpload = (data: ParsedCsvRow[]) => {
     setParsedData(data);
+    
+    // Check if we have critical range stickers (426-440)
+    const criticalRangeStickers = data.filter(row => {
+      if (typeof row.number === 'number') {
+        return row.number >= 426 && row.number <= 440;
+      }
+      return false;
+    });
+    
+    if (criticalRangeStickers.length > 0) {
+      console.log(`File upload contains ${criticalRangeStickers.length} stickers in range 426-440:`, criticalRangeStickers);
+    }
   };
   
   const handleImport = async () => {
@@ -84,12 +97,41 @@ const ImportExcelDialog = ({
         throw new Error("לא נמצאו מדבקות בקובץ");
       }
       
+      // Check if we have any stickers in the critical range
+      const criticalRangeItems = dataToImport.filter(([num]) => {
+        if (typeof num === 'number') {
+          return num >= 426 && num <= 440;
+        }
+        return false;
+      });
+      
+      if (criticalRangeItems.length > 0) {
+        console.log(`Import data contains ${criticalRangeItems.length} stickers in range 426-440:`, criticalRangeItems);
+      }
+      
       console.log("Importing data:", dataToImport);
       const result = await importStickersFromCSV(selectedAlbum, dataToImport);
       console.log("Import result:", result);
       
       if (!result || result.length === 0) {
         throw new Error("שגיאה בייבוא המדבקות לשרת");
+      }
+      
+      // Check if the critical range stickers were successfully imported
+      const importedCriticalRange = result.filter(s => {
+        if (typeof s.number === 'number') {
+          return s.number >= 426 && s.number <= 440;
+        }
+        return false;
+      });
+      
+      if (criticalRangeItems.length > 0 && importedCriticalRange.length === 0) {
+        console.warn("Warning: Critical range stickers (426-440) were not imported successfully.");
+        toast({
+          title: "חלק מהמדבקות לא יובאו",
+          description: "מדבקות בטווח 426-440 לא יובאו בהצלחה. אנא נסה שוב.",
+          variant: "warning",
+        });
       }
       
       setOpen(false);

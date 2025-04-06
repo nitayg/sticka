@@ -13,6 +13,12 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
 
   console.log(`Importing ${data.length} stickers from CSV for album ${albumId}`);
   console.log(`First few entries:`, data.slice(0, 3));
+  console.log(`Sample entries in range 425-445:`, data.filter(([num]) => {
+    if (typeof num === 'number') {
+      return num >= 425 && num <= 445;
+    }
+    return false;
+  }));
   
   // Get existing stickers for this album
   const existingStickers = getStickerData().filter(sticker => sticker.albumId === albumId);
@@ -28,7 +34,8 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
   console.log(`Found ${existingStickers.length} existing stickers for album ${albumId}`);
   console.log(`Existing numbers sample:`, Array.from(existingNumbers).slice(0, 10));
   console.log(`Existing numbers contains 'L1': ${existingNumbers.has('L1')}`);
-  console.log(`Existing numbers contains 'L20': ${existingNumbers.has('L20')}`);
+  console.log(`Existing numbers contains '426': ${existingNumbers.has(426)}`);
+  console.log(`Existing numbers contains '440': ${existingNumbers.has(440)}`);
   
   // Create new stickers
   const newStickers: Sticker[] = [];
@@ -80,6 +87,16 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
     console.log(`Adding ${newStickers.length} new stickers to server for album ${albumId}`);
     console.log(`New stickers sample:`, newStickers.slice(0, 3).map(s => ({ number: s.number, name: s.name })));
     
+    // Check if we have any stickers in the 426-440 range
+    const criticalRangeStickers = newStickers.filter(s => {
+      if (typeof s.number === 'number') {
+        return s.number >= 426 && s.number <= 440;
+      }
+      return false;
+    });
+    console.log(`Found ${criticalRangeStickers.length} stickers in range 426-440 to be imported`, 
+      criticalRangeStickers.map(s => ({ number: s.number, name: s.name })));
+    
     // Process in even smaller batches to avoid egress limits
     const BATCH_SIZE = 25; // Reduced from 50 to 25 to help with egress limits
     let saveSuccess = true;
@@ -88,6 +105,24 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
     for (let i = 0; i < newStickers.length; i += BATCH_SIZE) {
       const batch = newStickers.slice(i, i + BATCH_SIZE);
       console.log(`Saving batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(newStickers.length/BATCH_SIZE)}, size: ${batch.length}`);
+      
+      // Check if this batch contains any of our target range
+      const hasCriticalRange = batch.some(s => {
+        if (typeof s.number === 'number') {
+          return s.number >= 426 && s.number <= 440;
+        }
+        return false;
+      });
+      
+      if (hasCriticalRange) {
+        console.log(`Batch ${Math.floor(i/BATCH_SIZE) + 1} contains critical range stickers:`, 
+          batch.filter(s => {
+            if (typeof s.number === 'number') {
+              return s.number >= 426 && s.number <= 440;
+            }
+            return false;
+          }).map(s => ({ number: s.number, name: s.name })));
+      }
       
       // Try to save with retries
       const MAX_RETRIES = 5;
@@ -111,6 +146,10 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
             batchSaved = true;
             savedStickers.push(...batch);
             console.log(`Successfully saved batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(newStickers.length/BATCH_SIZE)}`);
+            
+            if (hasCriticalRange) {
+              console.log(`Successfully saved critical range stickers in batch ${Math.floor(i/BATCH_SIZE) + 1}`);
+            }
           }
         } catch (error) {
           console.error(`Error saving batch ${Math.floor(i/BATCH_SIZE) + 1}, retry ${retries + 1}/${MAX_RETRIES}:`, error);
@@ -173,3 +212,4 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
     throw error; 
   }
 };
+
