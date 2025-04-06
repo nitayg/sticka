@@ -1,4 +1,3 @@
-
 import { Sticker } from '../types';
 import { getStickerData, setStickerData, getStickersByAlbumId } from './basic-operations';
 import { updateSticker } from './crud-operations';
