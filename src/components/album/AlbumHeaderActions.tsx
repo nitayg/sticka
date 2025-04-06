@@ -4,7 +4,7 @@ import { Download, Upload, Trash2, Recycle, RefreshCw, Plus, FileSpreadsheet } f
 import { Button } from "../ui/button";
 import ViewModeToggle from "../ViewModeToggle";
 import AddAlbumForm from "../add-album-form";
-import ImportExcelDialog from "../ImportExcelDialog";
+import ImportExcelDialog from "../excel-import";
 import { Album } from "@/lib/types";
 import { moveAlbumToRecycleBin } from "@/lib/recycle-bin";
 import { useToast } from "../ui/use-toast";
