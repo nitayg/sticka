@@ -1,5 +1,5 @@
 
-import { ImportProgressIndicator } from "../excel-import/ImportProgressIndicator";
+import ImportProgressIndicator from "../excel-import/ImportProgressIndicator";
 
 interface ImportProgressProps {
   value: number;
