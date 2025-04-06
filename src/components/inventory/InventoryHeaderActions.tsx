@@ -1,6 +1,6 @@
 
 import React from "react";
-import { History, FileMinus, Copy, ClipboardCopy, Plus, FileSpreadsheet } from "lucide-react";
+import { History, FileMinus, Copy, ClipboardCopy, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "../ui/button";
 import { useToast } from "../ui/use-toast";
@@ -16,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import ImportExcelDialog from "../ImportExcelDialog";
+import ImportExcelDialog from "../excel-import";
 import { getAllAlbums } from "@/lib/data";
 
 interface InventoryHeaderActionsProps {
