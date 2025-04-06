@@ -38,8 +38,8 @@ const ImportExcelDialog = ({
   } = useExcelImport({
     selectedAlbum,
     onImportComplete: () => {
-      setOpen(false);
-      onImportComplete();
+      setOpen(false); // Close the dialog when import completes
+      onImportComplete(); // Call the parent's callback function
     }
   });
   
