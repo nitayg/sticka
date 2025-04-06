@@ -15,6 +15,17 @@ export async function processStickerBatches(
   }
 
   console.log(`Adding ${newStickers.length} new stickers to server`);
+  
+  // Log special stickers
+  const alphanumericStickers = newStickers.filter(s => 
+    typeof s.number === 'string' && /^[A-Za-z]/.test(s.number.toString())
+  );
+  
+  if (alphanumericStickers.length > 0) {
+    console.log(`About to import ${alphanumericStickers.length} alphanumeric stickers:`);
+    console.log(alphanumericStickers.map(s => ({ number: s.number, name: s.name })));
+  }
+  
   console.log(`New stickers sample:`, newStickers.slice(0, 3).map(s => ({ number: s.number, name: s.name })));
   
   // Process in smaller batches to avoid egress limits
@@ -24,6 +35,16 @@ export async function processStickerBatches(
   for (let i = 0; i < newStickers.length; i += BATCH_SIZE) {
     const batch = newStickers.slice(i, i + BATCH_SIZE);
     console.log(`Saving batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(newStickers.length/BATCH_SIZE)}, size: ${batch.length}`);
+    
+    // Check for alphanumeric stickers in this batch
+    const batchAlphanumeric = batch.filter(s => 
+      typeof s.number === 'string' && /^[A-Za-z]/.test(s.number.toString())
+    );
+    
+    if (batchAlphanumeric.length > 0) {
+      console.log(`Batch ${Math.floor(i/BATCH_SIZE) + 1} contains ${batchAlphanumeric.length} alphanumeric stickers:`, 
+        batchAlphanumeric.map(s => ({ number: s.number, name: s.name })));
+    }
     
     // Try to save with retries
     const MAX_RETRIES = 3;
@@ -47,6 +68,11 @@ export async function processStickerBatches(
           batchSaved = true;
           savedStickers.push(...batch);
           console.log(`Successfully saved batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(newStickers.length/BATCH_SIZE)}`);
+          
+          // Log successful alphanumeric saves
+          if (batchAlphanumeric.length > 0) {
+            console.log(`Successfully saved ${batchAlphanumeric.length} alphanumeric stickers in batch ${Math.floor(i/BATCH_SIZE) + 1}`);
+          }
         }
       } catch (error) {
         console.error(`Error saving batch ${Math.floor(i/BATCH_SIZE) + 1}, retry ${retries + 1}/${MAX_RETRIES}:`, error);
@@ -65,6 +91,17 @@ export async function processStickerBatches(
       console.log(`Waiting ${betweenBatchDelay}ms between batches to avoid rate limits`);
       await new Promise(resolve => setTimeout(resolve, betweenBatchDelay));
     }
+  }
+  
+  // Log about alphanumeric stickers in final result
+  const savedAlphanumeric = savedStickers.filter(s => 
+    typeof s.number === 'string' && /^[A-Za-z]/.test(s.number.toString())
+  );
+  
+  if (alphanumericStickers.length > 0 && savedAlphanumeric.length > 0) {
+    console.log(`Successfully saved ${savedAlphanumeric.length}/${alphanumericStickers.length} alphanumeric stickers`);
+  } else if (alphanumericStickers.length > 0) {
+    console.error(`Failed to save any of the ${alphanumericStickers.length} alphanumeric stickers!`);
   }
   
   console.log(`Successfully saved ${savedStickers.length}/${newStickers.length} stickers to Supabase`);

@@ -132,7 +132,7 @@ export type Database = {
           isowned: boolean
           lastmodified: number | null
           name: string
-          number: number
+          number: string
           team: string
           teamlogo: string | null
           updatedat: string | null
@@ -149,7 +149,7 @@ export type Database = {
           isowned?: boolean
           lastmodified?: number | null
           name: string
-          number: number
+          number: string
           team: string
           teamlogo?: string | null
           updatedat?: string | null
@@ -166,7 +166,7 @@ export type Database = {
           isowned?: boolean
           lastmodified?: number | null
           name?: string
-          number?: number
+          number?: string
           team?: string
           teamlogo?: string | null
           updatedat?: string | null

@@ -22,6 +22,17 @@ const FileUploadField = ({ file, setFile, onParse, disabled = false }: FileUploa
     try {
       const text = await selectedFile.text();
       const parsedData = parseCSV(text);
+      
+      // Log alphanumeric sticker data for debugging
+      const alphanumericStickers = parsedData.filter(row => 
+        typeof row.number === 'string' && /^[A-Za-z]/.test(row.number)
+      );
+      
+      if (alphanumericStickers.length > 0) {
+        console.log(`Found ${alphanumericStickers.length} alphanumeric stickers:`, 
+          alphanumericStickers.map(s => ({ number: s.number, name: s.name })));
+      }
+      
       onParse(parsedData);
     } catch (error) {
       console.error("Error parsing file:", error);

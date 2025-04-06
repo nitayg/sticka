@@ -20,7 +20,7 @@ export async function fetchStickers() {
     teamLogo: sticker.teamlogo,
     category: sticker.category,
     imageUrl: sticker.imageurl,
-    number: sticker.number, // This handles both numeric and string values
+    number: sticker.number, // Now this properly handles both numeric and string values
     isOwned: sticker.isowned,
     isDuplicate: sticker.isduplicate,
     duplicateCount: sticker.duplicatecount,
@@ -39,7 +39,7 @@ export async function saveSticker(sticker: Sticker) {
     teamlogo: sticker.teamLogo,
     category: sticker.category,
     imageurl: sticker.imageUrl,
-    number: sticker.number, // Handles both numeric and string values
+    number: sticker.number, // Now this properly handles both numeric and string values
     isowned: sticker.isOwned,
     isduplicate: sticker.isDuplicate,
     duplicatecount: sticker.duplicateCount,
@@ -97,7 +97,7 @@ export async function saveStickerBatch(stickers: Sticker[]) {
   const adjustedItems = stickers.map((sticker) => {
     // Debug each sticker before saving
     if ((typeof sticker.number === 'number' && sticker.number >= 426 && sticker.number <= 440) ||
-        (typeof sticker.number === 'string' && /^[A-Za-z]/.test(sticker.number))) {
+        (typeof sticker.number === 'string' && /^[A-Za-z]/.test(sticker.number.toString()))) {
       console.log(`Preparing special sticker for save: #${sticker.number} (${typeof sticker.number}) - ${sticker.name}`);
     }
     
@@ -108,7 +108,7 @@ export async function saveStickerBatch(stickers: Sticker[]) {
       teamlogo: sticker.teamLogo,
       category: sticker.category,
       imageurl: sticker.imageUrl,
-      number: sticker.number, // This properly handles both numeric and string values
+      number: sticker.number, // Now this properly handles both numeric and string values
       isowned: sticker.isOwned,
       isduplicate: sticker.isDuplicate,
       duplicatecount: sticker.duplicateCount,

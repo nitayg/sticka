@@ -1,4 +1,3 @@
-
 export interface ParsedCsvRow {
   number: number | string;
   name: string;
@@ -34,7 +33,7 @@ export const parseCSV = (csvContent: string): ParsedCsvRow[] => {
   // Check for alphanumeric sticker numbers (like L1-L20)
   const alphanumericLines = lines.filter(line => {
     const firstField = line.split(/[,;\t]/)[0].trim();
-    return /^[A-Za-z][0-9]+$/.test(firstField);
+    return /^[A-Za-z]/.test(firstField);
   });
   
   if (criticalRangeLines.length > 0) {
@@ -120,13 +119,11 @@ export const parseCSV = (csvContent: string): ParsedCsvRow[] => {
   });
   
   const alphanumericStickers = result.filter(row => 
-    typeof row.number === 'string' && /^[A-Za-z]/.test(row.number)
+    typeof row.number === 'string' && /^[A-Za-z]/.test(row.number.toString())
   );
   
   if (criticalRangeStickers.length > 0) {
     console.log(`Final result contains ${criticalRangeStickers.length} stickers in range 426-440:`, criticalRangeStickers);
-  } else {
-    console.log(`Warning: No stickers in range 426-440 were found in the final result!`);
   }
   
   if (alphanumericStickers.length > 0) {

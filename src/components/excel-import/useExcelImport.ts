@@ -60,7 +60,7 @@ export const useExcelImport = ({ selectedAlbum, onImportComplete }: UseExcelImpo
     
     toast({
       title: "קובץ נטען בהצלחה",
-      description: `נמצאו ${data.length} מדבקות בקובץ`,
+      description: `נמצאו ${data.length} מדבקות בקובץ${alphanumericStickers.length > 0 ? ` (כולל ${alphanumericStickers.length} מדבקות אלפאנומריות)` : ''}`,
     });
   }, [toast]);
   
@@ -81,7 +81,7 @@ export const useExcelImport = ({ selectedAlbum, onImportComplete }: UseExcelImpo
     if (success) {
       toast({
         title: "ייבוא הושלם בהצלחה",
-        description: `יובאו ${importedCount} מדבקות בהצלחה`,
+        description: `יובאו ${importedCount} מדבקות בהצלחה${importedCount < totalCount ? ` (${totalCount - importedCount} לא יובאו)` : ''}`,
       });
       
       // Trigger global data refresh
@@ -143,7 +143,7 @@ export const useExcelImport = ({ selectedAlbum, onImportComplete }: UseExcelImpo
       console.log(`Importing ${dataToImport.length} stickers to album ${selectedAlbum}`);
       
       // Calculate smaller batch size for more reliability
-      const BATCH_SIZE = 50;
+      const BATCH_SIZE = 25;
       const batches = Math.ceil(dataToImport.length / BATCH_SIZE);
       const allImportedStickers = [];
       
@@ -152,6 +152,15 @@ export const useExcelImport = ({ selectedAlbum, onImportComplete }: UseExcelImpo
         const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
         const batch = dataToImport.slice(i, i + BATCH_SIZE);
         console.log(`Importing batch ${batchNumber}/${batches}, size: ${batch.length}`);
+        
+        // Find any alphanumeric stickers in this batch for special handling
+        const specialStickers = batch.filter(([number]) => 
+          typeof number === 'string' && /^[A-Za-z]/.test(number.toString())
+        );
+        
+        if (specialStickers.length > 0) {
+          console.log(`Batch ${batchNumber} contains ${specialStickers.length} alphanumeric stickers:`, specialStickers);
+        }
         
         try {
           // Update progress - each batch contributes proportionally to overall progress
@@ -168,7 +177,7 @@ export const useExcelImport = ({ selectedAlbum, onImportComplete }: UseExcelImpo
             
             // Add a pause between batches to reduce server load
             if (i + BATCH_SIZE < dataToImport.length) {
-              await new Promise(resolve => setTimeout(resolve, 1000));
+              await new Promise(resolve => setTimeout(resolve, 1500));
             }
           } else {
             console.warn(`No stickers imported from batch ${batchNumber}`);

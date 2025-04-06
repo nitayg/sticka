@@ -1,19 +1,15 @@
 
-import { Loader2 } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { ImportProgressIndicator } from "../excel-import/ImportProgressIndicator";
 
 interface ImportProgressProps {
   value: number;
+  status?: "importing" | "complete" | "error";
 }
 
-export const ImportProgress = ({ value }: ImportProgressProps) => {
+export const ImportProgress = ({ value, status = "importing" }: ImportProgressProps) => {
   return (
-    <div className="space-y-2">
-      <Progress value={value} className="h-2" />
-      <div className="flex items-center justify-center text-sm text-muted-foreground">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        מייבא מדבקות... {value}%
-      </div>
+    <div className="my-4">
+      <ImportProgressIndicator value={value} status={status} />
     </div>
   );
 };
