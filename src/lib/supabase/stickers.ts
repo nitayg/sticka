@@ -41,7 +41,7 @@ export async function saveSticker(sticker: Sticker) {
     teamlogo: sticker.teamLogo,
     category: sticker.category,
     imageurl: sticker.imageUrl,
-    number: sticker.number,
+    number: sticker.number, // Will now handle both numeric and string values
     isowned: sticker.isOwned,
     isduplicate: sticker.isDuplicate,
     duplicatecount: sticker.duplicateCount,
@@ -84,7 +84,7 @@ export async function saveStickerBatch(stickers: Sticker[]) {
     teamlogo: sticker.teamLogo,
     category: sticker.category,
     imageurl: sticker.imageUrl,
-    number: sticker.number,
+    number: sticker.number, // This will now properly handle both numeric and string values
     isowned: sticker.isOwned,
     isduplicate: sticker.isDuplicate,
     duplicatecount: sticker.duplicateCount,

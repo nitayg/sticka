@@ -1,3 +1,4 @@
+
 export interface ParsedCsvRow {
   number: number | string;
   name: string;
@@ -67,7 +68,7 @@ export const parseCSV = (csvContent: string): ParsedCsvRow[] => {
     
     // If the number contains letters, keep it as a string, otherwise parse as number
     const parsedNumber = isAlphanumeric 
-      ? numberStr // Keep alphanumeric as string
+      ? numberStr.trim() // Keep alphanumeric as string and ensure it's trimmed
       : parseNumberField(numberStr);
     
     // Create parsed row object

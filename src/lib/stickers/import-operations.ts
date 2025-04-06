@@ -27,12 +27,17 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
   
   console.log(`Found ${existingStickers.length} existing stickers for album ${albumId}`);
   console.log(`Existing numbers sample:`, Array.from(existingNumbers).slice(0, 10));
+  console.log(`Existing numbers contains 'L1': ${existingNumbers.has('L1')}`);
+  console.log(`Existing numbers contains 'L20': ${existingNumbers.has('L20')}`);
   
   // Create new stickers
   const newStickers: Sticker[] = [];
   const processedNumbers = new Set(); // Keep track of processed numbers to avoid duplicates
   
   data.forEach(([stickerNumber, name, team], index) => {
+    // Debug the incoming sticker number
+    console.log(`Processing sticker #${stickerNumber} (${typeof stickerNumber}) at line ${index + 1}`);
+    
     // Skip if already processed (avoid duplicates in input data)
     if (processedNumbers.has(stickerNumber)) {
       console.log(`Skipping duplicate sticker #${stickerNumber} at line ${index + 1}`);
