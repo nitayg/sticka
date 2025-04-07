@@ -9,6 +9,7 @@ import EmptyState from "./EmptyState";
 import { Album } from "lucide-react";
 import AddAlbumForm from "./add-album-form";
 import FilteredStickerContainer from "./album/FilteredStickerContainer";
+import { toast } from "./ui/use-toast";
 
 const AlbumView = () => {
   const {
@@ -42,16 +43,41 @@ const AlbumView = () => {
     }
   }, [isIOS, setViewMode]);
   
+  // Improved logging to help troubleshoot
+  useEffect(() => {
+    console.log("[AlbumView] Albums:", albums);
+    console.log("[AlbumView] Selected album:", selectedAlbumId);
+    console.log("[AlbumView] isLoading:", isLoading);
+  }, [albums, selectedAlbumId, isLoading]);
+  
+  // Enhanced error handling when selecting album
   useEffect(() => {
     if (albums.length > 0 && !selectedAlbumId) {
       const lastSelectedAlbum = localStorage.getItem('lastSelectedAlbumId');
+      console.log("[AlbumView] Last selected album:", lastSelectedAlbum);
+      
       if (lastSelectedAlbum && albums.some(album => album.id === lastSelectedAlbum)) {
+        console.log("[AlbumView] Restoring previous album selection:", lastSelectedAlbum);
         handleAlbumChange(lastSelectedAlbum);
       } else {
+        console.log("[AlbumView] Selecting first album:", albums[0].id);
         handleAlbumChange(albums[0].id);
       }
     }
   }, [albums, selectedAlbumId, handleAlbumChange]);
+  
+  // Force a refresh if we have no albums but should have
+  useEffect(() => {
+    if (albums.length === 0 && !isLoading) {
+      // Try to force a refresh after a brief delay
+      const timer = setTimeout(() => {
+        console.log("[AlbumView] No albums found, forcing refresh");
+        handleRefresh();
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [albums, isLoading, handleRefresh]);
   
   useEffect(() => {
     if (selectedAlbumId) {

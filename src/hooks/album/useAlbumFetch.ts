@@ -10,7 +10,11 @@ export const useAlbumFetch = (refreshKey: number) => {
   // Fetch albums
   const { data: albums = [], isLoading: isAlbumsLoading } = useQuery({
     queryKey: ['albums', refreshKey],
-    queryFn: fetchAllAlbums
+    queryFn: fetchAllAlbums,
+    // Add retry options to improve reliability
+    retry: 3,
+    retryDelay: 1000,
+    staleTime: 60000, // 1 minute
   });
   
   // Fetch exchange offers
@@ -21,6 +25,8 @@ export const useAlbumFetch = (refreshKey: number) => {
       return offers.filter(offer => !offer.isDeleted);
     }
   });
+
+  console.log("[useAlbumFetch] Albums loaded:", albums.length);
 
   return {
     albums,

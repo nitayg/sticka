@@ -4,6 +4,7 @@ import { useStickerFetch } from "./album/useStickerFetch";
 import { useTransactionMap } from "./album/useTransactionMap";
 import { useAlbumMetadata } from "./album/useAlbumMetadata";
 import { Album, Sticker } from "@/lib/types";
+import { useEffect } from "react";
 
 interface UseAlbumDataProps {
   selectedAlbumId: string;
@@ -41,6 +42,11 @@ export const useAlbumData = ({
     activeTab,
     showAllAlbumStickers
   });
+
+  // Add debugging
+  useEffect(() => {
+    console.log("[useAlbumData] Albums:", albums.length, "Loading:", isAlbumsLoading);
+  }, [albums, isAlbumsLoading]);
 
   // Is loading any data
   const isLoading = isAlbumsLoading || (selectedAlbumId && isStickersLoading) || isExchangesLoading;
