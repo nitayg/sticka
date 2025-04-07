@@ -5,12 +5,18 @@ import { getStickersByAlbumId, addStickersToInventory } from '@/lib/sticker-oper
 import { useIntakeLogStore } from './useIntakeLogStore';
 import { getAlbumById } from '@/lib/data';
 
+// Define a type for the cached stickers
+interface CachedStickersData {
+  data: any[];
+  timestamp: number;
+}
+
 interface InventoryDataState {
   // Data state
   selectedAlbumId: string;
   refreshKey: number;
   transactionMap: Record<string, { person: string, color: string }>;
-  cachedStickers: Record<string, any[]>; // Cache stickers by albumId to reduce egress
+  cachedStickers: Record<string, CachedStickersData | undefined>; // Updated type definition
   lastRefreshTimestamp: number; // Track last refresh time for throttling
   lastExchangeOffersRefresh: number; // Track exchange offers refresh time
   cachedExchangeOffers: any[] | null; // Cache exchange offers
@@ -126,7 +132,7 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
       
       if (cachedStickers[albumId]) {
         console.log(`Using cached stickers for album ${albumId}`);
-        albumStickers = cachedStickers[albumId].data;
+        albumStickers = cachedStickers[albumId]?.data;
       } else {
         console.log(`Fetching stickers for album ${albumId}`);
         albumStickers = getStickersByAlbumId(albumId);
