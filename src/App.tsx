@@ -77,10 +77,18 @@ function App() {
       <SyncProvider notifications={false}>
         <Suspense fallback={<LoadingIndicator text="טוען..." />}>
           <Routes>
-            <Route element={<Layout />}>
-              <Route path="/" element={<AlbumView />} />
-              <Route path="/add" element={<AddStickerForm />} />
-              <Route path="/teams" element={
+            <Route path="/" element={
+              <Layout>
+                <AlbumView />
+              </Layout>
+            } />
+            <Route path="/add" element={
+              <Layout>
+                <AddStickerForm />
+              </Layout>
+            } />
+            <Route path="/teams" element={
+              <Layout>
                 <TeamManagementTab 
                   teams={[]} 
                   teamLogos={{}} 
@@ -88,8 +96,8 @@ function App() {
                   selectedTeam="" 
                   onTeamsUpdate={() => {}}
                 />
-              } />
-            </Route>
+              </Layout>
+            } />
           </Routes>
         </Suspense>
         <Toaster />
