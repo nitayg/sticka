@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { importStickersFromCSV } from "@/lib/data";
@@ -39,10 +40,11 @@ export const useCSVImport = ({
       const parsed = parseCSV(text);
       setParsedData(parsed);
       
-      if (parsed.length > 200) {
+      // Reduced warning threshold to prevent egress issues
+      if (parsed.length > 100) {
         toast({
           title: "שים לב - קובץ גדול",
-          description: `קובץ מכיל ${parsed.length} רשומות. ייתכן שיש צורך לייבא בקבוצות קטנות יותר כדי להימנע ממגבלות של השרת.`,
+          description: `קובץ מכיל ${parsed.length} רשומות. ייבוא קבצים גדולים עלול לצרוך כמות משמעותית של תעבורת נתונים. מומלץ לייבא בקבוצות של עד 50-100 רשומות.`,
           variant: "destructive"
         });
       } else {
@@ -102,9 +104,10 @@ export const useCSVImport = ({
         throw new Error("לא נמצאו רשומות בקובץ");
       }
       
-      if (data.length > 200) {
+      // Reduced threshold for egress warnings
+      if (data.length > 100) {
         const shouldProceed = window.confirm(
-          `אזהרה: אתה מנסה לייבא ${data.length} רשומות. ייבוא גדול עלול לגרום לשגיאות בשל מגבלות השרת. מומלץ לייבא בקבוצות של עד 200 רשומות. להמשיך בכל זאת?`
+          `אזהרה: אתה מנסה לייבא ${data.length} רשומות. ייבוא גדול עלול לגרום לשגיאות וצריכת תעבורת נתונים גבוהה. מומלץ לייבא בקבוצות של עד 50-100 רשומות. להמשיך בכל זאת?`
         );
         
         if (!shouldProceed) {
@@ -114,27 +117,80 @@ export const useCSVImport = ({
         }
       }
       
+      // Slower update interval to reduce UI updates
       const importProgressInterval = setInterval(() => {
         setImportProgress(prev => {
-          const newProgress = Math.min(prev + 3, 95);
+          // Slower progress updates
+          const newProgress = Math.min(prev + 1, 95);
           return newProgress;
         });
-      }, 1000);
+      }, 2000); // Increased from 1000ms to 2000ms
       
       try {
-        const newStickers = await importStickersFromCSV(albumId, data);
-        clearInterval(importProgressInterval);
+        // Split data into smaller chunks to reduce egress
+        const MAX_CHUNK_SIZE = 50; // Reduced from implicit large size to 50
+        let importedCount = 0;
         
-        if (!newStickers || newStickers.length === 0) {
-          throw new Error("לא הצלחנו לייבא את המדבקות. ייתכן שהן כבר קיימות באלבום או שיש מגבלת שימוש בשרת.");
+        if (data.length > MAX_CHUNK_SIZE) {
+          // Process in smaller chunks
+          const chunks = [];
+          for (let i = 0; i < data.length; i += MAX_CHUNK_SIZE) {
+            chunks.push(data.slice(i, i + MAX_CHUNK_SIZE));
+          }
+          
+          console.log(`Processing import in ${chunks.length} chunks of max ${MAX_CHUNK_SIZE} stickers`);
+          
+          const allImported = [];
+          for (let i = 0; i < chunks.length; i++) {
+            console.log(`Processing chunk ${i+1}/${chunks.length}`);
+            
+            // Add delay between chunks to prevent egress limits
+            if (i > 0) {
+              toast({
+                title: `מעבד קבוצה ${i+1}/${chunks.length}`,
+                description: `הושלמו ${importedCount} מדבקות עד כה. אנא המתן...`
+              });
+              
+              await new Promise(resolve => setTimeout(resolve, 5000));
+            }
+            
+            const chunkStickers = await importStickersFromCSV(albumId, chunks[i]);
+            if (chunkStickers && chunkStickers.length > 0) {
+              allImported.push(...chunkStickers);
+              importedCount += chunkStickers.length;
+              
+              // Update progress based on chunks
+              setImportProgress(50 + Math.floor((i+1) * 45 / chunks.length));
+            }
+          }
+          
+          clearInterval(importProgressInterval);
+          setImportProgress(100);
+          
+          if (allImported.length === 0) {
+            throw new Error("לא הצלחנו לייבא את המדבקות. ייתכן שהן כבר קיימות באלבום או שיש מגבלת שימוש בשרת.");
+          }
+          
+          toast({
+            title: "הייבוא הושלם בהצלחה",
+            description: `יובאו ${allImported.length} מדבקות חדשות מתוך ${data.length} בקובץ`
+          });
+        } else {
+          // Small import, process normally
+          const newStickers = await importStickersFromCSV(albumId, data);
+          clearInterval(importProgressInterval);
+          
+          if (!newStickers || newStickers.length === 0) {
+            throw new Error("לא הצלחנו לייבא את המדבקות. ייתכן שהן כבר קיימות באלבום או שיש מגבלת שימוש בשרת.");
+          }
+          
+          setImportProgress(100);
+          
+          toast({
+            title: "הייבוא הושלם בהצלחה",
+            description: `יובאו ${newStickers.length} מדבקות חדשות מתוך ${data.length} בקובץ`
+          });
         }
-        
-        setImportProgress(100);
-        
-        toast({
-          title: "הייבוא הושלם בהצלחה",
-          description: `יובאו ${newStickers.length} מדבקות חדשות מתוך ${data.length} בקובץ`
-        });
 
         setFile(null);
         setParsedData(null);
@@ -148,7 +204,7 @@ export const useCSVImport = ({
         if (importError?.message?.includes("egress") || 
             importError?.message?.includes("exceeded") || 
             importError?.message?.includes("limit")) {
-          errorMessage = "שגיאה בייבוא: חריגה ממגבלות השימוש בשרת. נסה לייבא פחות מדבקות בכל פעם (עד 100-200) או לבצע ייבוא בהפרשי זמן של כמה דקות.";
+          errorMessage = "שגיאה בייבוא: חריגה ממגבלות תעבורת הנתונים בשרת. נסה לייבא פחות מדבקות בכל פעם (עד 50-100) או לבצע ייבוא בהפרשי זמן של כמה דקות.";
         }
         
         setErrorDetails(errorMessage);

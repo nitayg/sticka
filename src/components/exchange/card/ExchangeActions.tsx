@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -56,6 +57,7 @@ const ExchangeActions = ({ exchange, onRefresh }: ExchangeActionsProps) => {
 
   const handleStickerIntakeSubmit = async (albumId: string, stickerNumbers: number[]) => {
     try {
+      // Fix: await the promise to properly get the result object
       const result = await handleStickerIntake(albumId, stickerNumbers);
       
       toast({
@@ -63,7 +65,8 @@ const ExchangeActions = ({ exchange, onRefresh }: ExchangeActionsProps) => {
         description: `נוספו ${result.newlyOwned.length} מדבקות חדשות ועודכנו ${result.duplicatesUpdated.length} כפולות`,
       });
       
-      onRefresh();
+      // Use throttled refresh to reduce Egress
+      setTimeout(() => onRefresh(), 500);
     } catch (error) {
       toast({
         title: "שגיאה בקליטת מדבקות",

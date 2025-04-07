@@ -1,4 +1,3 @@
-
 import { ReactNode, useState, useEffect } from "react";
 import { Album, List, ArrowLeftRight, Home, Shield } from "lucide-react";
 import MobileHeader from "./MobileHeader";
@@ -7,6 +6,7 @@ import { NavigationItem } from "@/lib/types";
 import { useTheme } from "@/hooks/use-theme";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import EgressMonitor from "./EgressMonitor";
 
 interface LayoutProps {
   children: ReactNode;
@@ -19,26 +19,20 @@ const Layout = ({ children }: LayoutProps) => {
   const { theme } = useTheme();
   const location = useLocation();
   
-  // Track if we're on the main album view to control overflow behavior
   const isAlbumView = location.pathname === "/";
 
-  // Listen for album changes from children components
   useEffect(() => {
-    // Create a custom event listener to receive the current album ID
     const handleAlbumChange = (event: CustomEvent) => {
       setCurrentAlbumId(event.detail.albumId);
     };
 
-    // Add event listener
     window.addEventListener('albumChanged' as any, handleAlbumChange);
 
-    // Cleanup
     return () => {
       window.removeEventListener('albumChanged' as any, handleAlbumChange);
     };
   }, []);
 
-  // Handle scroll direction
   useEffect(() => {
     let lastScrollY = window.scrollY;
     
@@ -66,23 +60,16 @@ const Layout = ({ children }: LayoutProps) => {
     <div className={cn(
       "min-h-screen bg-background flex flex-col w-full", 
       isAlbumView && "prevent-scroll", 
-      "dir-rtl" // Ensure RTL direction
+      "dir-rtl"
     )}>
-      {/* Mobile Header */}
       <MobileHeader isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
-
-      {/* Mobile Menu */}
       <MobileMenu 
         isMenuOpen={isMenuOpen} 
         setIsMenuOpen={setIsMenuOpen} 
         navigation={navigation} 
       />
-
-      {/* Background gradient subtle effect */}
       <div className="fixed inset-0 bg-gradient-to-b from-slate-900/10 to-background z-[-1]" />
-
       <div className="flex flex-1">
-        {/* Main Content */}
         <main className={cn(
           "flex-1 pt-14 pb-24 w-full", 
           isAlbumView ? "main-content overflow-hidden" : "overflow-y-auto overflow-x-hidden"
@@ -92,8 +79,6 @@ const Layout = ({ children }: LayoutProps) => {
           </div>
         </main>
       </div>
-
-      {/* Footer navigation that hides when scrolling down */}
       <div className={`fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md text-foreground border-t border-border/40 transition-transform duration-300 ease-in-out ${isScrollingDown ? 'translate-y-full' : 'translate-y-0'} pb-5 safe-area-inset-bottom`}>
         <div className="w-full flex justify-between items-center px-6 py-2" dir="rtl">
           {navigation.map((item, index) => {
@@ -128,6 +113,7 @@ const Layout = ({ children }: LayoutProps) => {
           })}
         </div>
       </div>
+      <EgressMonitor />
     </div>
   );
 };

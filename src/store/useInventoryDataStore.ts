@@ -12,6 +12,8 @@ interface InventoryDataState {
   transactionMap: Record<string, { person: string, color: string }>;
   cachedStickers: Record<string, any[]>; // Cache stickers by albumId to reduce egress
   lastRefreshTimestamp: number; // Track last refresh time for throttling
+  lastExchangeOffersRefresh: number; // Track exchange offers refresh time
+  cachedExchangeOffers: any[] | null; // Cache exchange offers
   
   // Actions
   setSelectedAlbumId: (albumId: string) => void;
@@ -32,6 +34,8 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
   transactionMap: {},
   cachedStickers: {},
   lastRefreshTimestamp: 0,
+  lastExchangeOffersRefresh: 0,
+  cachedExchangeOffers: null,
   
   // Actions
   setSelectedAlbumId: (selectedAlbumId) => {
@@ -43,8 +47,8 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
     const now = Date.now();
     const { lastRefreshTimestamp } = get();
     
-    // Throttle refreshes to at most once every 1000ms to reduce egress
-    if (now - lastRefreshTimestamp < 1000) {
+    // Throttle refreshes to at most once every 3000ms to reduce egress (increased from 1000ms)
+    if (now - lastRefreshTimestamp < 3000) {
       console.log('Refresh throttled to reduce egress traffic');
       return;
     }
@@ -56,15 +60,24 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
     
     const { selectedAlbumId } = get();
     if (selectedAlbumId) {
-      // Clear cached data for this album to ensure fresh data
-      set(state => ({
-        cachedStickers: {
-          ...state.cachedStickers,
-          [selectedAlbumId]: undefined
-        }
-      }));
+      // Clear cached data for this album only after 5 minutes to ensure fresh data without excessive requests
+      const cachedData = get().cachedStickers[selectedAlbumId];
+      const cacheAge = cachedData?.timestamp ? now - cachedData.timestamp : Infinity;
       
-      get().updateTransactionMap(selectedAlbumId);
+      // Only clear cache if it's older than 5 minutes
+      if (!cachedData || cacheAge > 5 * 60 * 1000) {
+        console.log(`Cache for album ${selectedAlbumId} is old or doesn't exist, refreshing`);
+        set(state => ({
+          cachedStickers: {
+            ...state.cachedStickers,
+            [selectedAlbumId]: undefined
+          }
+        }));
+        
+        get().updateTransactionMap(selectedAlbumId);
+      } else {
+        console.log(`Using cached data for album ${selectedAlbumId}, cache age: ${Math.round(cacheAge/1000)}s`);
+      }
     }
   },
   
@@ -77,11 +90,28 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
     if (!albumId) return;
     
     const newTransactionMap: Record<string, { person: string, color: string }> = {};
+    const now = Date.now();
     
     try {
-      // Get exchange offers from Supabase - limit query to reduce egress
-      const exchangeOffers = await fetchExchangeOffers() || [];
-      console.log('Retrieved exchange offers for transaction map:', exchangeOffers);
+      // Check if we have cached exchange offers and if they're still fresh (less than 5 minutes old)
+      const { lastExchangeOffersRefresh, cachedExchangeOffers } = get();
+      const shouldRefreshExchanges = !cachedExchangeOffers || (now - lastExchangeOffersRefresh > 5 * 60 * 1000);
+      
+      let exchangeOffers;
+      if (shouldRefreshExchanges) {
+        console.log('Fetching fresh exchange offers from Supabase');
+        // Get exchange offers from Supabase - limit query to reduce egress
+        exchangeOffers = await fetchExchangeOffers() || [];
+        
+        // Cache the exchange offers
+        set({ 
+          cachedExchangeOffers: exchangeOffers,
+          lastExchangeOffersRefresh: now
+        });
+      } else {
+        console.log('Using cached exchange offers, age:', Math.round((now - lastExchangeOffersRefresh)/1000), 'seconds');
+        exchangeOffers = cachedExchangeOffers;
+      }
       
       // Get relevant exchanges for this album
       const relevantExchanges = exchangeOffers.filter(exchange => 
@@ -91,7 +121,27 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
       console.log(`Found ${relevantExchanges.length} relevant exchanges for album ${albumId}`);
       
       // Only fetch stickers once - caching to reduce egress
-      const albumStickers = getStickersByAlbumId(albumId);
+      const { cachedStickers } = get();
+      let albumStickers;
+      
+      if (cachedStickers[albumId]) {
+        console.log(`Using cached stickers for album ${albumId}`);
+        albumStickers = cachedStickers[albumId].data;
+      } else {
+        console.log(`Fetching stickers for album ${albumId}`);
+        albumStickers = getStickersByAlbumId(albumId);
+        
+        // Cache the stickers with timestamp
+        set(state => ({
+          cachedStickers: {
+            ...state.cachedStickers,
+            [albumId]: {
+              data: albumStickers,
+              timestamp: now
+            }
+          }
+        }));
+      }
       
       // Map stickers to their transactions
       relevantExchanges.forEach(exchange => {
@@ -121,7 +171,7 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
         });
       });
       
-      console.log('Updated transaction map:', newTransactionMap);
+      console.log('Updated transaction map');
       set({ transactionMap: newTransactionMap });
     } catch (error) {
       console.error('Error updating transaction map:', error);
@@ -130,7 +180,9 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
   
   handleStickerIntake: async (albumId, stickerNumbers) => {
     const result = addStickersToInventory(albumId, stickerNumbers);
-    get().handleRefresh();
+    
+    // Throttled refresh - delayed to let the DB operations complete
+    setTimeout(() => get().handleRefresh(), 500);
     
     // Get album for logging
     const album = getAlbumById(albumId);
@@ -163,9 +215,12 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
       });
     }
     
-    // Notify other components about the change
-    window.dispatchEvent(new CustomEvent('albumDataChanged'));
-    window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
+    // Throttle event dispatches to reduce processing overhead
+    // Use a setTimeout to let the operation complete and allow for batching
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('albumDataChanged'));
+      window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
+    }, 100);
     
     // Return the information about which stickers were processed
     return {

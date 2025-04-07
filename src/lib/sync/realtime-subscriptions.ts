@@ -3,14 +3,23 @@ import { supabase } from '../supabase';
 import { syncWithSupabase } from './sync-manager';
 import { StorageEvents } from './constants';
 
+// Global channel variable to ensure only one connection is maintained
+let globalChannel = null;
+
 // Set up real-time subscriptions to Supabase with improved error handling
 export const setupRealtimeSubscriptions = () => {
   console.log('Setting up real-time subscriptions...');
   
+  // If channel already exists, return it instead of creating a new one
+  if (globalChannel) {
+    console.log('Using existing realtime channel');
+    return globalChannel;
+  }
+  
   // Create a channel for all tables with improved configuration
-  const channel = supabase.channel('public:all-changes', {
+  globalChannel = supabase.channel('public:all-changes', {
     config: {
-      broadcast: { self: true },
+      broadcast: { self: false }, // Changed from true to false to reduce redundant traffic
       presence: { key: 'client-' + Math.floor(Math.random() * 1000000) },
     }
   })
@@ -48,7 +57,7 @@ export const setupRealtimeSubscriptions = () => {
   });
   
   // Add system level event handler for reconnection events
-  channel.on('system', { event: 'reconnect' }, () => {
+  globalChannel.on('system', { event: 'reconnect' }, () => {
     console.log('Reconnected to Supabase realtime server');
     // Trigger a sync to ensure data is up-to-date after reconnection
     syncWithSupabase();
@@ -56,7 +65,8 @@ export const setupRealtimeSubscriptions = () => {
   
   // Enhanced subscription with online/offline detection
   const subscribeToChannel = () => {
-    channel.subscribe((status) => {
+    console.log('Subscribing to Supabase channel');
+    globalChannel.subscribe((status) => {
       console.log('Supabase channel status:', status);
       switch (status) {
         case 'SUBSCRIBED':
@@ -98,26 +108,26 @@ export const setupRealtimeSubscriptions = () => {
   window.addEventListener('online', () => {
     console.log('Browser is online again, checking subscription...');
     // Check status and resubscribe if needed
-    if (channel.state !== 'joined') {
+    if (globalChannel.state !== 'joined') {
       subscribeToChannel();
     }
   });
   
-  window.addEventListener('offline', () => {
-    console.log('Browser is offline, realtime updates paused');
-    // No need to unsubscribe, the client will try to reconnect automatically
-    // when the connection is restored
-  });
-  
-  return channel;
+  return globalChannel;
 };
 
 // Helper function to manually reconnect channel (can be exported for manual reconnection)
-export const reconnectRealtimeChannel = (channel: ReturnType<typeof supabase.channel>) => {
-  if (channel.state !== 'joined') {
+export const reconnectRealtimeChannel = (channel) => {
+  if (!channel || channel.state !== 'joined') {
     console.log('Manually reconnecting realtime channel...');
-    channel.subscribe();
+    if (!globalChannel) {
+      globalChannel = setupRealtimeSubscriptions();
+    } else {
+      globalChannel.subscribe();
+    }
+    return globalChannel;
   } else {
     console.log('Channel already subscribed, no action needed');
+    return channel;
   }
 };

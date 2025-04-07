@@ -16,35 +16,31 @@ export async function processStickerBatches(
 
   console.log(`Adding ${newStickers.length} new stickers to server`);
   
-  // Log special stickers
-  const alphanumericStickers = newStickers.filter(s => 
+  // Log only a summary, not all special stickers
+  const alphanumericCount = newStickers.filter(s => 
     typeof s.number === 'string' && /^[A-Za-z]/.test(s.number.toString())
-  );
+  ).length;
   
-  if (alphanumericStickers.length > 0) {
-    console.log(`About to import ${alphanumericStickers.length} alphanumeric stickers:`);
-    console.log(alphanumericStickers.map(s => ({ number: s.number, name: s.name })));
+  if (alphanumericCount > 0) {
+    console.log(`About to import ${alphanumericCount} alphanumeric stickers`);
   }
   
-  console.log(`New stickers sample:`, newStickers.slice(0, 3).map(s => ({ number: s.number, name: s.name })));
+  console.log(`New stickers sample count: ${newStickers.length}`);
   
   // Process in smaller batches to avoid egress limits
-  const BATCH_SIZE = 5; // Reduced batch size for more reliable importing
+  const BATCH_SIZE = 3; // Reduced batch size for more reliable importing
   const savedStickers: Sticker[] = [];
+  
+  // Use adaptive delays based on batch size
+  const MIN_DELAY = 3000; // Minimum delay of 3 seconds
+  const BASE_DELAY_PER_STICKER = 500; // Base delay per sticker in milliseconds
   
   for (let i = 0; i < newStickers.length; i += BATCH_SIZE) {
     const batch = newStickers.slice(i, i + BATCH_SIZE);
     console.log(`Saving batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(newStickers.length/BATCH_SIZE)}, size: ${batch.length}`);
     
-    // Check for alphanumeric stickers in this batch
-    const batchAlphanumeric = batch.filter(s => 
-      typeof s.number === 'string' && /^[A-Za-z]/.test(s.number.toString())
-    );
-    
-    if (batchAlphanumeric.length > 0) {
-      console.log(`Batch ${Math.floor(i/BATCH_SIZE) + 1} contains ${batchAlphanumeric.length} alphanumeric stickers:`, 
-        batchAlphanumeric.map(s => ({ number: s.number, name: s.name })));
-    }
+    // Calculate specific delay for this batch based on size
+    const batchDelay = Math.max(MIN_DELAY, batch.length * BASE_DELAY_PER_STICKER);
     
     // Try to save with retries
     const MAX_RETRIES = 3;
@@ -55,7 +51,7 @@ export async function processStickerBatches(
       try {
         // If this is a retry, add progressively longer delay
         if (retries > 0) {
-          const backoffDelay = Math.min(1000 * Math.pow(2, retries - 1), 5000); // Exponential backoff up to 5s
+          const backoffDelay = Math.min(2000 * Math.pow(2, retries - 1), 10000); // Exponential backoff up to 10s
           console.log(`Retry ${retries}/${MAX_RETRIES}: Waiting ${backoffDelay}ms before retrying batch ${Math.floor(i/BATCH_SIZE) + 1}`);
           await new Promise(resolve => setTimeout(resolve, backoffDelay));
         }
@@ -68,11 +64,6 @@ export async function processStickerBatches(
           batchSaved = true;
           savedStickers.push(...batch);
           console.log(`Successfully saved batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(newStickers.length/BATCH_SIZE)}`);
-          
-          // Log successful alphanumeric saves
-          if (batchAlphanumeric.length > 0) {
-            console.log(`Successfully saved ${batchAlphanumeric.length} alphanumeric stickers in batch ${Math.floor(i/BATCH_SIZE) + 1}`);
-          }
         }
       } catch (error) {
         console.error(`Error saving batch ${Math.floor(i/BATCH_SIZE) + 1}, retry ${retries + 1}/${MAX_RETRIES}:`, error);
@@ -87,21 +78,9 @@ export async function processStickerBatches(
     
     // Add a delay between batches - CRITICAL for Supabase throttling
     if (i + BATCH_SIZE < newStickers.length) {
-      const betweenBatchDelay = 2500; // Increased from 2000ms to 2500ms
-      console.log(`Waiting ${betweenBatchDelay}ms between batches to avoid rate limits`);
-      await new Promise(resolve => setTimeout(resolve, betweenBatchDelay));
+      console.log(`Waiting ${batchDelay}ms between batches to avoid rate limits`);
+      await new Promise(resolve => setTimeout(resolve, batchDelay));
     }
-  }
-  
-  // Log about alphanumeric stickers in final result
-  const savedAlphanumeric = savedStickers.filter(s => 
-    typeof s.number === 'string' && /^[A-Za-z]/.test(s.number.toString())
-  );
-  
-  if (alphanumericStickers.length > 0 && savedAlphanumeric.length > 0) {
-    console.log(`Successfully saved ${savedAlphanumeric.length}/${alphanumericStickers.length} alphanumeric stickers`);
-  } else if (alphanumericStickers.length > 0) {
-    console.error(`Failed to save any of the ${alphanumericStickers.length} alphanumeric stickers!`);
   }
   
   console.log(`Successfully saved ${savedStickers.length}/${newStickers.length} stickers to Supabase`);
