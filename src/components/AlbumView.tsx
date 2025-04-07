@@ -1,15 +1,18 @@
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect } from "react";
 import { useAlbumStore } from "@/store/useAlbumStore";
-import AlbumHeader from "./album/AlbumHeader";
-import FilterControls from "./album/FilterControls";
 import AlbumEventHandler from "./album/AlbumEventHandler";
+import FilterControls from "./album/FilterControls";
 import { useAlbumData } from "@/hooks/useAlbumData";
-import EmptyState from "./EmptyState";
-import { Album } from "lucide-react";
 import AddAlbumForm from "./add-album-form";
 import FilteredStickerContainer from "./album/FilteredStickerContainer";
-import { toast } from "./ui/use-toast";
+import AlbumLoadingState from "./album/loading/AlbumLoadingState";
+import AlbumErrorState from "./album/error/AlbumErrorState";
+import AlbumEmptyState from "./album/empty/AlbumEmptyState";
+import { useAlbumRefresh } from "@/hooks/album/useAlbumRefresh";
+import { useAlbumSelection } from "@/hooks/album/useAlbumSelection";
+import { useAlbumLoadingEffects } from "@/hooks/album/useAlbumLoadingEffects";
+import { useInventoryChangeEvents } from "@/hooks/album/useInventoryChangeEvents";
 
 const AlbumView = () => {
   const {
@@ -19,13 +22,19 @@ const AlbumView = () => {
     setShowImages,
     selectedAlbumId,
     refreshKey,
-    handleRefresh,
     handleAlbumChange,
   } = useAlbumStore();
   
-  const [hasAttemptedRefresh, setHasAttemptedRefresh] = useState(false);
-  const [forceRefreshCount, setForceRefreshCount] = useState(0);
-  const [isLoadingTimeout, setIsLoadingTimeout] = useState(false);
+  // Use custom hooks for various functionalities
+  const {
+    throttledRefresh,
+    hasAttemptedRefresh,
+    setHasAttemptedRefresh,
+    forceRefreshCount,
+    isLoadingTimeout,
+    setIsLoadingTimeout,
+    resetRefresh
+  } = useAlbumRefresh();
   
   const { 
     albums = [], 
@@ -39,15 +48,32 @@ const AlbumView = () => {
     showAllAlbumStickers: false
   });
 
+  // Handle album selection
+  useAlbumSelection(albums);
+
+  // Handle loading effects
+  useAlbumLoadingEffects({
+    isLoading,
+    albums,
+    hasAttemptedRefresh,
+    setHasAttemptedRefresh,
+    throttledRefresh,
+    setIsLoadingTimeout
+  });
+
+  // Listen for inventory changes
+  useInventoryChangeEvents(throttledRefresh);
+
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   
+  // Set compact view mode for iOS
   useEffect(() => {
     if (isIOS) {
       setViewMode('compact');
     }
   }, [isIOS, setViewMode]);
   
-  // Improved logging to help troubleshoot
+  // Enhanced logging for debugging
   useEffect(() => {
     console.log("[AlbumView] Albums:", albums);
     console.log("[AlbumView] Selected album:", selectedAlbumId);
@@ -55,170 +81,28 @@ const AlbumView = () => {
     console.log("[AlbumView] Force refresh count:", forceRefreshCount);
   }, [albums, selectedAlbumId, isLoading, forceRefreshCount]);
   
-  // Enhanced error handling when selecting album
-  useEffect(() => {
-    if (albums.length > 0 && !selectedAlbumId) {
-      const lastSelectedAlbum = localStorage.getItem('lastSelectedAlbumId');
-      console.log("[AlbumView] Last selected album:", lastSelectedAlbum);
-      
-      if (lastSelectedAlbum && albums.some(album => album.id === lastSelectedAlbum)) {
-        console.log("[AlbumView] Restoring previous album selection:", lastSelectedAlbum);
-        handleAlbumChange(lastSelectedAlbum);
-      } else {
-        console.log("[AlbumView] Selecting first album:", albums[0].id);
-        handleAlbumChange(albums[0].id);
-      }
-    }
-  }, [albums, selectedAlbumId, handleAlbumChange]);
-  
-  // Throttled refresh function to prevent excessive API calls
-  const throttledRefresh = useCallback(() => {
-    const lastRefreshTime = parseInt(localStorage.getItem('lastRefreshTimestamp') || '0');
-    const now = Date.now();
-    
-    // Only allow refresh every 10 seconds to prevent EGRESS abuse
-    if (now - lastRefreshTime > 10000) {
-      localStorage.setItem('lastRefreshTimestamp', now.toString());
-      handleRefresh();
-      setForceRefreshCount(count => count + 1);
-      
-      // Show a toast only on explicit refreshes
-      if (forceRefreshCount > 1) {
-        toast({
-          title: "נסיון לטעון אלבומים",
-          description: "מנסה לטעון את האלבומים שלך...",
-        });
-      }
-    } else {
-      console.log("[AlbumView] Refresh throttled to prevent EGRESS abuse");
-    }
-  }, [forceRefreshCount, handleRefresh]);
-  
-  // Force a refresh if we have no albums but should have
-  useEffect(() => {
-    if (albums.length === 0 && !isLoading && !hasAttemptedRefresh) {
-      // Only try to force refresh once to avoid infinite loops
-      console.log("[AlbumView] No albums found, forcing refresh");
-      setHasAttemptedRefresh(true);
-      
-      // Add a small delay before refreshing
-      const timer = setTimeout(() => {
-        throttledRefresh();
-      }, 1500);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [albums, isLoading, throttledRefresh, hasAttemptedRefresh]);
-  
-  // Reset the refresh attempt flag if loading state changes or albums are loaded
-  useEffect(() => {
-    if (isLoading || albums.length > 0) {
-      setHasAttemptedRefresh(false);
-    }
-  }, [isLoading, albums]);
-  
-  // Set a timeout on loading to prevent infinite loading states
-  useEffect(() => {
-    if (isLoading) {
-      const timer = setTimeout(() => {
-        setIsLoadingTimeout(true);
-      }, 10000); // Show timeout message after 10 seconds of loading
-      
-      return () => clearTimeout(timer);
-    } else {
-      setIsLoadingTimeout(false);
-    }
-  }, [isLoading]);
-  
-  useEffect(() => {
-    if (selectedAlbumId) {
-      localStorage.setItem('lastSelectedAlbumId', selectedAlbumId);
-    }
-  }, [selectedAlbumId]);
-  
-  // Listen for inventory changes to refresh stickers
-  useEffect(() => {
-    const handleInventoryChanged = () => {
-      console.log("Inventory data changed event received in AlbumView");
-      throttledRefresh();
-    };
-    
-    window.addEventListener('inventoryDataChanged', handleInventoryChanged);
-    return () => {
-      window.removeEventListener('inventoryDataChanged', handleInventoryChanged);
-    };
-  }, [throttledRefresh]);
-  
-  // Show more detailed loading indicator with timeout
+  // Show loading state
   if (isLoading) {
-    return (
-      <div className="space-y-4 animate-fade-in">
-        <div className="flex items-center justify-center p-12 flex-col">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
-          <div className="text-sm text-muted-foreground">טוען אלבומים...</div>
-          
-          {isLoadingTimeout && (
-            <div className="mt-4 p-4 bg-amber-50 text-amber-700 rounded-md text-center max-w-md">
-              <p className="font-semibold">הטעינה אורכת זמן רב</p>
-              <p className="text-xs mt-1">ייתכן שיש בעיה בחיבור לשרת או בטעינת הנתונים.</p>
-              <button 
-                onClick={throttledRefresh}
-                className="mt-2 px-4 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-md text-sm font-medium transition-colors"
-              >
-                נסה שוב
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+    return <AlbumLoadingState 
+      isLoadingTimeout={isLoadingTimeout} 
+      throttledRefresh={throttledRefresh} 
+    />;
   }
   
-  // Show a different state after multiple refresh attempts
+  // Show error state
   if (albums.length === 0 && (forceRefreshCount >= 3 || isLoadingTimeout)) {
-    return (
-      <div className="space-y-4 animate-fade-in p-4">
-        <EmptyState
-          icon={<Album className="h-12 w-12" />}
-          title="לא ניתן לטעון אלבומים"
-          description="לא הצלחנו לטעון את האלבומים שלך. אנא נסה לרענן את הדף או להוסיף אלבום חדש."
-          action={
-            <div className="space-y-4">
-              <button 
-                onClick={() => {
-                  setForceRefreshCount(0);
-                  setHasAttemptedRefresh(false);
-                  throttledRefresh();
-                }}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-              >
-                נסה שוב
-              </button>
-              <div className="pt-2">
-                <AddAlbumForm onAlbumAdded={throttledRefresh} />
-              </div>
-            </div>
-          }
-        />
-      </div>
-    );
+    return <AlbumErrorState 
+      resetRefresh={resetRefresh}
+      throttledRefresh={throttledRefresh}
+    />;
   }
   
+  // Show empty state
   if (albums.length === 0) {
-    return (
-      <div className="space-y-4 animate-fade-in p-4">
-        <EmptyState
-          icon={<Album className="h-12 w-12" />}
-          title="אין אלבומים פעילים"
-          description="הוסף אלבום חדש כדי להתחיל"
-          action={
-            <AddAlbumForm onAlbumAdded={throttledRefresh} />
-          }
-        />
-      </div>
-    );
+    return <AlbumEmptyState onAlbumAdded={throttledRefresh} />;
   }
   
+  // Show loaded album view
   return (
     <div className="space-y-2 animate-fade-in">
       {selectedAlbumId && <AlbumEventHandler album={albums.find(a => a.id === selectedAlbumId)} />}
