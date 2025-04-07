@@ -73,7 +73,7 @@ const MobileHeader = ({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) => {
             </Button>
           </motion.div>
           
-          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: a0.9 }}>
+          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
             <SettingsButton iconOnly />
           </motion.div>
           

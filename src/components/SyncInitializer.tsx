@@ -1,17 +1,15 @@
-
 import { useEffect } from 'react';
-import { initializeFromStorage, StorageEvents } from '@/lib/sync';
+import { StorageEvents } from '@/lib/sync';
 import { setAlbumData } from '@/lib/album-operations';
 import { setStickerData } from '@/lib/sticker-operations';
 import { useToast } from './ui/use-toast';
 
+// This component is being replaced by SyncProvider, but we're keeping it for backward compatibility
+// We'll only listen to events here, not initialize storage
 const SyncInitializer = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Initialize storage event listeners
-    initializeFromStorage();
-
     // Listen for albums updated
     const handleAlbumsUpdated = (event: any) => {
       if (event.detail) {

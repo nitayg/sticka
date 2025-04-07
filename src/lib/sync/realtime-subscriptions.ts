@@ -19,7 +19,7 @@ export const setupRealtimeSubscriptions = () => {
   // Create a channel for all tables with improved configuration
   globalChannel = supabase.channel('public:all-changes', {
     config: {
-      broadcast: { self: false }, // Changed from true to false to reduce redundant traffic
+      broadcast: { self: false }, 
       presence: { key: 'client-' + Math.floor(Math.random() * 1000000) },
     }
   })
@@ -65,6 +65,12 @@ export const setupRealtimeSubscriptions = () => {
   
   // Enhanced subscription with online/offline detection
   const subscribeToChannel = () => {
+    // Check if channel is already subscribed
+    if (globalChannel.state === 'joined') {
+      console.log('Channel already subscribed, skipping subscription');
+      return;
+    }
+    
     console.log('Subscribing to Supabase channel');
     globalChannel.subscribe((status) => {
       console.log('Supabase channel status:', status);
@@ -123,7 +129,12 @@ export const reconnectRealtimeChannel = (channel) => {
     if (!globalChannel) {
       globalChannel = setupRealtimeSubscriptions();
     } else {
-      globalChannel.subscribe();
+      // Check if not already subscribed
+      if (globalChannel.state !== 'joined') {
+        globalChannel.subscribe();
+      } else {
+        console.log('Channel already subscribed, skipping subscription');
+      }
     }
     return globalChannel;
   } else {

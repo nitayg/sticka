@@ -62,6 +62,9 @@ const queryClient = new QueryClient({
   },
 });
 
+// Create a flag to ensure initialize only happens once
+let hasInitialized = false;
+
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [isAppReady, setIsAppReady] = useState(false);
@@ -81,9 +84,17 @@ const App = () => {
   
   // Initialize Supabase and synchronize data
   useEffect(() => {
+    // Check if already initialized to prevent duplicate initialization
+    if (hasInitialized) {
+      console.log('App already initialized, skipping initialization');
+      setIsAppReady(true);
+      return;
+    }
+    
     const initSupabase = async () => {
       try {
         setIsSyncing(true);
+        hasInitialized = true;
         await initializeFromStorage();
         setIsSyncing(false);
         setIsAppReady(true);
