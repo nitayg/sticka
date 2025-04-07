@@ -30,7 +30,7 @@ function App() {
     <SyncProvider notifications={false}>
       <Suspense fallback={<LoadingIndicator text="טוען..." />}>
         <Routes>
-          <Route element={<Layout />}>
+          <Route element={<Layout><div></div></Layout>}>
             <Route path="/" element={<AlbumView />} />
             <Route path="/add" element={<AddStickerForm />} />
             <Route path="/teams" element={<TeamManagementTab />} />

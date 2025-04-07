@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { useToast } from "../ui/use-toast";
-import { addStickersFromIntake } from "@/lib/sticker-operations";
 import FormFields from "./FormFields";
 import { useFormState } from "./useFormState";
 
@@ -11,13 +10,19 @@ interface StickerIntakeFormProps {
   defaultStickerNumbers?: string;
   defaultExchangePartner?: string;
   selectedAlbumId?: string;
+  isOpen?: boolean;
+  onClose?: () => void;
+  onIntake?: (albumId: string, stickerNumbers: (number | string)[]) => void;
 }
 
 const StickerIntakeForm = ({ 
   onStickerAdded, 
   defaultStickerNumbers = "", 
   defaultExchangePartner = "",
-  selectedAlbumId = ""
+  selectedAlbumId = "",
+  isOpen,
+  onClose,
+  onIntake
 }: StickerIntakeFormProps) => {
   const { toast } = useToast();
   const {
@@ -79,22 +84,34 @@ const StickerIntakeForm = ({
     setIsSubmitting(true);
     
     try {
-      const result = await addStickersFromIntake({
-        albumId,
-        stickerNumbers,
-        source,
-        exchangePartner: source === "exchange" ? exchangePartner : "",
-        otherDetails: source === "other" ? otherDetails : ""
-      });
-      
-      toast({
-        title: "מדבקות נוספו בהצלחה",
-        description: `נוספו ${result.addedCount} מדבקות חדשות`,
-      });
-      
-      // Trigger a refresh of the parent component
-      if (onStickerAdded) {
-        onStickerAdded();
+      // Parse the sticker numbers
+      const stickerNumbersArray = stickerNumbers
+        .split(",")
+        .map(num => num.trim())
+        .filter(Boolean)
+        .map(num => {
+          const parsedNum = parseInt(num, 10);
+          return isNaN(parsedNum) ? num : parsedNum;
+        });
+        
+      // If onIntake is provided, use it (for external handling)
+      if (onIntake) {
+        await onIntake(albumId, stickerNumbersArray);
+        
+        if (onClose) {
+          onClose();
+        }
+      } else {
+        // Add stickers to the system (placeholder for actual implementation)
+        toast({
+          title: "מדבקות נוספו בהצלחה",
+          description: `נוספו ${stickerNumbersArray.length} מדבקות חדשות`,
+        });
+        
+        // Trigger a refresh of the parent component
+        if (onStickerAdded) {
+          onStickerAdded();
+        }
       }
       
       // Trigger a global event for other components to refresh

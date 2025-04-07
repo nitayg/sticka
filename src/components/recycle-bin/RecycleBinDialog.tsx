@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Album } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Recycle, Trash, RotateCcw } from "lucide-react";
-import { getRecycleBinAlbums, restoreAlbumFromRecycleBin, deleteAlbumPermanently } from "@/lib/recycle-bin";
+import { getRecycleBin, restoreAlbumFromRecycleBin, deleteAlbumPermanently } from "@/lib/recycle-bin";
 import { useToast } from "@/components/ui/use-toast";
 import RecycleBinItem from "./RecycleBinItem";
 
@@ -22,7 +22,7 @@ const RecycleBinDialog = ({ open, onOpenChange }: RecycleBinDialogProps) => {
   const loadRecycleBinItems = async () => {
     setIsLoading(true);
     try {
-      const items = await getRecycleBinAlbums();
+      const items = await getRecycleBin();
       setRecycleBinItems(items);
     } catch (error) {
       console.error("Error loading recycle bin items:", error);

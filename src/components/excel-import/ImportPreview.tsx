@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
 import { Check, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
-import { addSticker, batchAddStickers } from "@/lib/sticker-operations";
+import { addSticker } from "@/lib/sticker-operations";
 import { Badge } from "../ui/badge";
 
 interface ImportPreviewProps {
@@ -57,9 +57,11 @@ const ImportPreview = ({
     setError(null);
     
     try {
-      // Use batch import for better performance
-      await batchAddStickers(stickersToImport);
-      setImportedCount(stickersToImport.length);
+      // Add stickers one by one as batch import isn't available
+      for (const sticker of stickersToImport) {
+        await addSticker(sticker);
+        setImportedCount(prev => prev + 1);
+      }
       
       // Trigger data refresh and notify the parent
       window.dispatchEvent(new CustomEvent('stickerDataChanged'));

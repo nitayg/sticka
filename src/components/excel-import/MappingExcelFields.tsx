@@ -5,16 +5,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Label } from "../ui/label";
 import { AlertCircle } from "lucide-react";
 
+interface MappingProps {
+  number: string;
+  name: string;
+  team: string;
+  isOwned: string;
+  isDuplicate: string;
+}
+
 interface MappingExcelFieldsProps {
   excelData: any[];
-  initialMappings: {
-    number: string;
-    name: string;
-    team: string;
-    isOwned: string;
-    isDuplicate: string;
-  };
-  onComplete: (mappings: typeof initialMappings) => void;
+  initialMappings: MappingProps;
+  onComplete: (mappings: MappingProps) => void;
 }
 
 const MappingExcelFields = ({ 
@@ -25,7 +27,7 @@ const MappingExcelFields = ({
   const [mappings, setMappings] = useState(initialMappings);
   const [error, setError] = useState<string | null>(null);
   
-  const handleMappingChange = (field: keyof typeof mappings, value: string) => {
+  const handleMappingChange = (field: keyof MappingProps, value: string) => {
     setMappings(prev => ({
       ...prev,
       [field]: value

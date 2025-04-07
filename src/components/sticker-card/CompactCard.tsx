@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import StickerImage from "../sticker-details/StickerImage";
 
 interface CompactCardProps {
-  sticker: Sticker;
+  sticker: Sticker & { albumName?: string };
   onClick?: () => void;
   showImages?: boolean;
   showAlbumInfo?: boolean;

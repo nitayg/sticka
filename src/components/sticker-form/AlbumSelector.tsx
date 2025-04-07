@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { getAlbums } from "@/lib/album-operations";
+import { getAllAlbums } from "@/lib/album-operations";
 import { Album } from "@/lib/types";
 
 interface AlbumSelectorProps {
@@ -15,7 +15,7 @@ const AlbumSelector = ({ albumId, setAlbumId }: AlbumSelectorProps) => {
   
   useEffect(() => {
     const loadAlbums = async () => {
-      const albumData = await getAlbums();
+      const albumData = await getAllAlbums();
       setAlbums(albumData);
       
       // Auto-select the first album if none is selected

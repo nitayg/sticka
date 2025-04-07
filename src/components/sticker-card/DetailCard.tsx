@@ -8,7 +8,7 @@ import { useState } from "react";
 import { useToast } from "../ui/use-toast";
 
 interface DetailCardProps {
-  sticker: Sticker;
+  sticker: Sticker & { albumName?: string };
   showActions?: boolean;
   showAlbumInfo?: boolean;
   showImages?: boolean;
