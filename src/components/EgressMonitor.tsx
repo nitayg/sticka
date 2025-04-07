@@ -7,7 +7,7 @@ import { AlertCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // Component to monitor and help reduce egress traffic
-const EgressMonitor = () => {
+const EgressMonitor = ({ inHeader = false }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [egressWarnings, setEgressWarnings] = useState(0);
   const { toast } = useToast();
@@ -46,23 +46,29 @@ const EgressMonitor = () => {
     });
   };
   
-  if (!isExpanded) {
+  // If included in header, only show icon
+  if (inHeader) {
     return (
       <Button 
-        variant="outline" 
-        size="sm" 
-        className="fixed bottom-4 left-4 z-50 flex items-center gap-2"
+        variant="ghost" 
+        size="icon"
+        className="h-9 w-9 rounded-full hover:bg-blue-500/10 hover:text-blue-400 transition-all duration-300"
         onClick={() => setIsExpanded(true)}
+        title="מונה תעבורת רשת"
       >
-        <AlertCircle className="h-4 w-4 text-red-500" />
+        <AlertCircle className="h-5 w-5 text-red-500" />
         {egressWarnings > 0 && (
-          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-100 text-xs text-red-600">
+          <span className="absolute -top-1 -right-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-100 text-xs text-red-600">
             {egressWarnings}
           </span>
         )}
-        מונה תעבורה
       </Button>
     );
+  }
+  
+  // Regular monitor with expandable panel
+  if (!isExpanded) {
+    return null; // Hide the button completely when not in header
   }
   
   return (
