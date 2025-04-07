@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { clearCache } from "@/lib/sync/sync-manager";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // Component to monitor and help reduce egress traffic
@@ -77,7 +77,7 @@ const EgressMonitor = ({ inHeader = false }) => {
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium">מונה תעבורת רשת</CardTitle>
           <Button variant="ghost" size="sm" onClick={() => setIsExpanded(false)}>
-            סגור
+            <X className="h-4 w-4" />
           </Button>
         </div>
         <CardDescription className="text-xs">
