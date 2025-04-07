@@ -1,4 +1,3 @@
-
 import { toast } from "@/hooks/use-toast";
 
 export interface NetworkStats {
@@ -16,7 +15,7 @@ export const monitorNetworkEvents = (
   const handleNetworkError = (event: ErrorEvent | PromiseRejectionEvent) => {
     const errorMessage = 
       'message' in event ? event.message : 
-      event.error?.message || '';
+      (event as PromiseRejectionEvent).reason?.message || '';
       
     if (errorMessage.includes('egress') || 
         errorMessage.includes('exceeded') || 
