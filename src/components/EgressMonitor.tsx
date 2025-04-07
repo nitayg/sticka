@@ -70,57 +70,56 @@ const EgressMonitor = ({ inHeader = false }) => {
     );
   }
   
-  // Regular monitor panel
-  if (!isExpanded) {
-    return null; // Hide when not expanded
-  }
-  
   return (
-    <Card className="fixed bottom-4 left-4 z-50 w-80 shadow-lg">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium">מונה תעבורת רשת</CardTitle>
-          <Button variant="ghost" size="sm" onClick={() => setIsExpanded(false)}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-        <CardDescription className="text-xs">
-          מסייע בצמצום תעבורת נתונים ועלויות
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <div className="text-sm">
-            <div className="mb-2">
-              <span className="font-semibold">אזהרות תעבורה:</span> {egressWarnings}
+    <>
+      {isExpanded && (
+        <Card className="fixed bottom-4 left-4 z-50 w-80 shadow-lg">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium">מונה תעבורת רשת</CardTitle>
+              <Button variant="ghost" size="sm" onClick={toggleExpanded}>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-            <p className="text-xs text-muted-foreground mb-4">
-              שים לב: תעבורה גבוהה מדי עלולה להוביל לעלויות נוספות בסופרבייס
-            </p>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              className="w-full"
-              onClick={handleClearCache}
-            >
-              <RefreshCw className="h-3 w-3 mr-1" />
-              נקה מטמון
-            </Button>
-          </div>
-          
-          <div className="text-xs text-muted-foreground mt-2">
-            <ul className="list-disc list-inside space-y-1">
-              <li>השתמש בפחות סנכרונים אוטומטיים</li>
-              <li>הגבל עדכוני זמן אמת לפי צורך</li>
-              <li>שמור נתונים מקומית במידת האפשר</li>
-            </ul>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+            <CardDescription className="text-xs">
+              מסייע בצמצום תעבורת נתונים ועלויות
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="text-sm">
+                <div className="mb-2">
+                  <span className="font-semibold">אזהרות תעבורה:</span> {egressWarnings}
+                </div>
+                <p className="text-xs text-muted-foreground mb-4">
+                  שים לב: תעבורה גבוהה מדי עלולה להוביל לעלויות נוספות בסופרבייס
+                </p>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={handleClearCache}
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  נקה מטמון
+                </Button>
+              </div>
+              
+              <div className="text-xs text-muted-foreground mt-2">
+                <ul className="list-disc list-inside space-y-1">
+                  <li>השתמש בפחות סנכרונים אוטומטיים</li>
+                  <li>הגבל עדכוני זמן אמת לפי צורך</li>
+                  <li>שמור נתונים מקומית במידת האפשר</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </>
   );
 };
 

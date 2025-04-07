@@ -7,6 +7,7 @@ import { NavigationItem } from "@/lib/types";
 import { useTheme } from "@/hooks/use-theme";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import EgressMonitor from "./EgressMonitor";
 
 interface LayoutProps {
   children: ReactNode;
@@ -113,6 +114,7 @@ const Layout = ({ children }: LayoutProps) => {
           })}
         </div>
       </div>
+      <EgressMonitor />
     </div>
   );
 };
