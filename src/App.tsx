@@ -126,7 +126,9 @@ const App = () => {
             if (entry.entryType === 'largest-contentful-paint') {
               console.log(`LCP: ${entry.startTime}`);
             } else if (entry.entryType === 'layout-shift') {
-              console.log(`CLS: ${entry.value}`);
+              // Cast entry to LayoutShift type to access the value property
+              const layoutShift = entry as LayoutShiftAttribution;
+              console.log(`CLS: ${layoutShift.value}`);
             }
           }
         });
@@ -180,5 +182,11 @@ const App = () => {
     </ThemeProvider>
   );
 };
+
+// Define the LayoutShift type to match the Web Performance API
+interface LayoutShiftAttribution extends PerformanceEntry {
+  value: number;
+  hadRecentInput: boolean;
+}
 
 export default App;
