@@ -25,8 +25,14 @@ const dataCache = {
   }
 };
 
-// Cache TTL in milliseconds (5 minutes)
-const CACHE_TTL = 5 * 60 * 1000;
+// Cache TTL in milliseconds (30 minutes - increased from 5)
+const CACHE_TTL = 30 * 60 * 1000;
+
+// Per-album sticker cache to avoid fetching all stickers
+const perAlbumStickerCache: Record<string, {
+  data: any[] | null;
+  timestamp: number;
+}> = {};
 
 // Initialize data directly from Supabase
 export const initializeFromStorage = async () => {
@@ -48,7 +54,7 @@ export const initializeFromStorage = async () => {
       setIsConnected(true);
       
       // Don't sync immediately, use a throttled approach
-      setTimeout(() => syncWithSupabase(), 2000);
+      setTimeout(() => syncWithSupabase(), 5000); // Increased from 2000
       
       // Reconnect realtime channel if it exists
       if (realtimeChannel) {
@@ -85,12 +91,62 @@ const isCacheValid = (entityType) => {
   return (now - lastFetch) < CACHE_TTL;
 };
 
+// IMPROVED: Get stickers for a specific album only (major reduction in egress)
+export const getAlbumStickers = async (albumId) => {
+  if (!albumId) return [];
+  
+  // Check if we have a fresh cache for this album
+  const now = Date.now();
+  if (perAlbumStickerCache[albumId] && 
+      now - perAlbumStickerCache[albumId].timestamp < CACHE_TTL) {
+    console.log(`Using cached stickers for album ${albumId}, age: ${Math.round((now - perAlbumStickerCache[albumId].timestamp)/1000)}s`);
+    return perAlbumStickerCache[albumId].data || [];
+  }
+  
+  // We had an egress error recently, use whatever data we have
+  if (lastEgressError && now - lastEgressError.getTime() < 300000) {
+    console.log(`Using potentially stale data due to recent egress error`);
+    return perAlbumStickerCache[albumId]?.data || [];
+  }
+  
+  try {
+    // Import function dynamically to reduce initial load
+    const { fetchStickersByAlbumId } = await import('../supabase/stickers');
+    
+    // Fetch only stickers for this specific album
+    console.log(`Fetching fresh stickers for album ${albumId} from Supabase`);
+    const data = await fetchStickersByAlbumId(albumId);
+    
+    // Cache the result
+    perAlbumStickerCache[albumId] = {
+      data,
+      timestamp: now
+    };
+    
+    return data || [];
+  } catch (error) {
+    console.error(`Error fetching stickers for album ${albumId}:`, error);
+    
+    // Check if this is an egress limit error
+    if (error?.message?.includes('egress') || 
+        error?.message?.includes('exceeded') || 
+        error?.message?.includes('limit') ||
+        error?.code === '429') {
+      lastEgressError = new Date();
+      console.warn('Egress limit detected, will throttle future requests');
+    }
+    
+    // Return cached data if available (even if stale)
+    return perAlbumStickerCache[albumId]?.data || [];
+  }
+};
+
 // Sync data directly with Supabase - only get data from cloud, not from local storage
 export const syncWithSupabase = async (isInitialSync = false) => {
   // If we had an egress error recently, wait before trying again
   if (lastEgressError) {
     const timeSinceError = new Date().getTime() - lastEgressError.getTime();
-    if (timeSinceError < 300000) { // 5 minute cooldown (increased from 1 min)
+    if (timeSinceError < 600000) { // 10 minute cooldown (increased from 5 min)
       console.log(`Skipping sync due to recent egress error (${Math.round(timeSinceError/1000)}s ago)`);
       return;
     }
@@ -110,11 +166,11 @@ export const syncWithSupabase = async (isInitialSync = false) => {
     window.dispatchEvent(new CustomEvent(StorageEvents.SYNC_START));
     
     // Import functions dynamically to reduce initial load
-    const { fetchAlbums, fetchStickers, fetchUsers, fetchExchangeOffers } = await import('../supabase');
+    const { fetchAlbums, fetchUsers, fetchExchangeOffers } = await import('../supabase');
     
     // Fetch only data that isn't cached or needs refreshing
     const promises = [];
-    let albumsData = null, stickersData = null, usersData = null, exchangeOffersData = null;
+    let albumsData = null, usersData = null, exchangeOffersData = null;
     
     if (!dataCache.albums || !isCacheValid('albums') || isInitialSync) {
       promises.push(fetchAlbums().then(data => {
@@ -129,18 +185,8 @@ export const syncWithSupabase = async (isInitialSync = false) => {
       albumsData = dataCache.albums;
     }
     
-    if (!dataCache.stickers || !isCacheValid('stickers') || isInitialSync) {
-      promises.push(fetchStickers().then(data => {
-        stickersData = data;
-        if (data) {
-          dataCache.stickers = data;
-          dataCache.lastFetched.stickers = new Date();
-        }
-      }));
-    } else {
-      console.log('Using cached stickers data');
-      stickersData = dataCache.stickers;
-    }
+    // IMPROVED: No longer fetching all stickers - will fetch per album as needed
+    // This is a major improvement to reduce egress
     
     if (!dataCache.users || !isCacheValid('users') || isInitialSync) {
       promises.push(fetchUsers().then(data => {
@@ -182,11 +228,7 @@ export const syncWithSupabase = async (isInitialSync = false) => {
       window.dispatchEvent(new CustomEvent(StorageEvents.ALBUMS, { detail: albumsData }));
     }
     
-    if (stickersData) {
-      setMemoryStorage('stickers', stickersData);
-      // Dispatch event to notify components
-      window.dispatchEvent(new CustomEvent(StorageEvents.STICKERS, { detail: stickersData }));
-    }
+    // No longer fetching all stickers at once
     
     if (usersData) {
       setMemoryStorage('users', usersData);
@@ -229,7 +271,7 @@ export const syncWithSupabase = async (isInitialSync = false) => {
     // If a sync was requested while we were syncing, do another one after a delay
     if (pendingSync) {
       pendingSync = false;
-      setTimeout(() => syncWithSupabase(), 5000); // Increased from 1000ms to 5000ms
+      setTimeout(() => syncWithSupabase(), 10000); // Increased from 5000ms to 10000ms
     }
   }
 };
@@ -248,7 +290,7 @@ export const isSyncInProgress = () => {
 export const isEgressLimitCooldown = () => {
   if (!lastEgressError) return false;
   const timeSinceError = new Date().getTime() - lastEgressError.getTime();
-  return timeSinceError < 300000; // 5 minute cooldown (increased from 1 min)
+  return timeSinceError < 600000; // 10 minute cooldown (increased from 5 min)
 };
 
 // Force a manual sync
@@ -265,6 +307,7 @@ export const getRealtimeChannel = () => realtimeChannel;
 // Clear cache to force fresh data on next sync
 export const clearCache = () => {
   console.log('Clearing data cache');
+  // Clear global cache
   dataCache.albums = null;
   dataCache.stickers = null;
   dataCache.users = null;
@@ -273,4 +316,15 @@ export const clearCache = () => {
   dataCache.lastFetched.stickers = null;
   dataCache.lastFetched.users = null;
   dataCache.lastFetched.exchangeOffers = null;
+  
+  // Clear album-specific sticker cache
+  for (const albumId in perAlbumStickerCache) {
+    delete perAlbumStickerCache[albumId];
+  }
+  
+  // Notify that cache was cleared
+  window.dispatchEvent(new CustomEvent(StorageEvents.CACHE_CLEARED));
 };
+
+// Export per-album sticker fetch to replace the older fetchAllStickers approach
+export { getAlbumStickers };

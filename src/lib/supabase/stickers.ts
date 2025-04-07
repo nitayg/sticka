@@ -4,6 +4,9 @@ import { Sticker, isSticker } from '../types';
 import { saveBatch } from './batch-operations';
 
 export async function fetchStickers() {
+  console.warn('DEPRECATED: fetchStickers() is loading all stickers at once which causes high egress');
+  console.warn('Consider using fetchStickersByAlbumId() instead to reduce egress');
+  
   console.log('Fetching stickers from Supabase...');
   const { data, error } = await supabase.from('stickers').select('*');
   if (error) {
@@ -28,6 +31,72 @@ export async function fetchStickers() {
   }));
 
   return adjustedData as Sticker[];
+}
+
+// IMPROVED: Fetch stickers only for a specific album
+export async function fetchStickersByAlbumId(albumId: string) {
+  if (!albumId) {
+    console.error('No albumId provided to fetchStickersByAlbumId');
+    return [];
+  }
+  
+  console.log(`Fetching stickers for album ${albumId} from Supabase`);
+  
+  // Optimize query to only select fields we need
+  const { data, error } = await supabase
+    .from('stickers')
+    .select('id, name, team, teamlogo, category, number, isowned, isduplicate, duplicatecount, albumid')
+    .eq('albumid', albumId)
+    .order('number');
+    
+  if (error) {
+    console.error(`Error fetching stickers for album ${albumId}:`, error);
+    return [];
+  }
+  
+  console.log(`Fetched ${data?.length || 0} stickers for album ${albumId}`);
+  
+  // Adjust data to the Sticker interface
+  const adjustedData = data.map((sticker) => ({
+    id: sticker.id,
+    name: sticker.name,
+    team: sticker.team,
+    teamLogo: sticker.teamlogo,
+    category: sticker.category,
+    imageUrl: '', // Don't load imageUrl by default to reduce data transfer
+    number: sticker.number,
+    isOwned: sticker.isowned,
+    isDuplicate: sticker.isduplicate,
+    duplicateCount: sticker.duplicatecount,
+    albumId: sticker.albumid,
+  }));
+
+  return adjustedData as Sticker[];
+}
+
+// Lazily fetch image URLs only when needed for specific stickers
+export async function fetchStickerImages(stickerIds: string[]) {
+  if (!stickerIds.length) return {};
+  
+  console.log(`Fetching image URLs for ${stickerIds.length} stickers`);
+  
+  const { data, error } = await supabase
+    .from('stickers')
+    .select('id, imageurl')
+    .in('id', stickerIds);
+    
+  if (error) {
+    console.error('Error fetching sticker images:', error);
+    return {};
+  }
+  
+  // Create a map of id -> imageUrl
+  const imageMap: Record<string, string> = {};
+  data.forEach(sticker => {
+    imageMap[sticker.id] = sticker.imageurl;
+  });
+  
+  return imageMap;
 }
 
 export async function saveSticker(sticker: Sticker) {
