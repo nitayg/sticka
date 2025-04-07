@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from "react";
 import { Album } from "@/lib/types";
 import { ChevronLeft, ChevronRight, PlusCircle } from "lucide-react";
@@ -11,30 +10,29 @@ interface AlbumCarouselGridProps {
   selectedAlbumId: string;
   onAlbumChange: (albumId: string) => void;
   onEdit: (albumId: string) => void;
+  onDelete: (albumId: string) => void;
 }
 
 const AlbumCarouselGrid = ({ 
   albums, 
   selectedAlbumId, 
   onAlbumChange,
-  onEdit
+  onEdit,
+  onDelete
 }: AlbumCarouselGridProps) => {
   const carouselRef = useRef<HTMLDivElement>(null);
   const isRtl = document.dir === 'rtl' || document.documentElement.lang === 'he';
   
-  // Check direction
   useEffect(() => {
     if (carouselRef.current) {
       carouselRef.current.dir = isRtl ? 'rtl' : 'ltr';
     }
   }, [isRtl]);
   
-  // Scroll to selected album when it changes
   useEffect(() => {
     if (carouselRef.current && selectedAlbumId) {
       const selectedElement = carouselRef.current.querySelector(`[data-album-id="${selectedAlbumId}"]`);
       if (selectedElement) {
-        // Calculate scroll position
         const containerWidth = carouselRef.current.offsetWidth;
         const elementOffset = isRtl 
           ? carouselRef.current.scrollWidth - selectedElement.getBoundingClientRect().right + carouselRef.current.getBoundingClientRect().right - containerWidth
@@ -49,7 +47,6 @@ const AlbumCarouselGrid = ({
     }
   }, [selectedAlbumId, isRtl]);
 
-  // Scroll functions
   const scrollCarousel = (direction: 'left' | 'right') => {
     if (carouselRef.current) {
       const scrollAmount = carouselRef.current.clientWidth * 0.75;
@@ -70,7 +67,6 @@ const AlbumCarouselGrid = ({
     scrollCarousel(isRtl ? 'left' : 'right');
   };
 
-  // Check if arrows should be shown
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(false);
 
@@ -80,7 +76,6 @@ const AlbumCarouselGrid = ({
         const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
         const maxScrollLeft = scrollWidth - clientWidth;
         
-        // Update arrow state based on RTL
         if (isRtl) {
           setShowLeftArrow(Math.abs(scrollLeft) < maxScrollLeft - 10);
           setShowRightArrow(scrollLeft < -10);
@@ -106,7 +101,6 @@ const AlbumCarouselGrid = ({
     };
   }, [isRtl]);
 
-  // Render albums in carousel style
   return (
     <div className="relative mt-2">
       <div 
@@ -114,7 +108,6 @@ const AlbumCarouselGrid = ({
         className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-2 py-1 px-1"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {/* Add Album Button */}
         <div className="relative min-w-[120px] h-[180px] flex-shrink-0 rounded-xl overflow-hidden border-2 border-dashed border-muted-foreground/30 flex items-center justify-center cursor-pointer group hover:border-primary/50 transition-colors">
           <AddAlbumForm iconOnly>
             <div className="flex flex-col items-center justify-center h-full w-full text-muted-foreground group-hover:text-primary transition-colors">
@@ -124,7 +117,6 @@ const AlbumCarouselGrid = ({
           </AddAlbumForm>
         </div>
         
-        {/* Album Items */}
         {albums.map((album) => (
           <div
             key={album.id}
@@ -138,12 +130,12 @@ const AlbumCarouselGrid = ({
               isSelected={selectedAlbumId === album.id}
               onSelect={() => onAlbumChange(album.id)}
               onEdit={() => onEdit(album.id)}
+              onDelete={() => onDelete(album.id)}
             />
           </div>
         ))}
       </div>
       
-      {/* Navigation buttons */}
       {showLeftArrow && (
         <Button
           size="icon"

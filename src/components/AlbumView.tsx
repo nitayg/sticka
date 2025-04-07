@@ -2,9 +2,7 @@
 import { useEffect } from "react";
 import { useAlbumStore } from "@/store/useAlbumStore";
 import AlbumEventHandler from "./album/AlbumEventHandler";
-import FilterControls from "./album/FilterControls";
 import { useAlbumData } from "@/hooks/useAlbumData";
-import AddAlbumForm from "./add-album-form";
 import FilteredStickerContainer from "./album/FilteredStickerContainer";
 import AlbumLoadingState from "./album/loading/AlbumLoadingState";
 import AlbumErrorState from "./album/error/AlbumErrorState";
@@ -13,6 +11,7 @@ import { useAlbumRefresh } from "@/hooks/album/useAlbumRefresh";
 import { useAlbumSelection } from "@/hooks/album/useAlbumSelection";
 import { useAlbumLoadingEffects } from "@/hooks/album/useAlbumLoadingEffects";
 import { useInventoryChangeEvents } from "@/hooks/album/useInventoryChangeEvents";
+import AlbumControls from "./album/AlbumControls";
 
 const AlbumView = () => {
   const {
@@ -107,7 +106,7 @@ const AlbumView = () => {
     <div className="space-y-2 animate-fade-in">
       {selectedAlbumId && <AlbumEventHandler album={albums.find(a => a.id === selectedAlbumId)} />}
       
-      <FilterControls
+      <AlbumControls
         albums={albums}
         selectedAlbum={selectedAlbumId}
         handleAlbumChange={handleAlbumChange}
