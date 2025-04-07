@@ -15,8 +15,10 @@ export const useAlbumFetch = (refreshKey: number) => {
     retryDelay: (attemptIndex) => Math.min(1000 * (2 ** attemptIndex), 10000), // Exponential backoff
     staleTime: 60000, // 1 minute
     refetchOnWindowFocus: false, // Prevent excessive refetching
-    onError: (error) => {
-      console.error("[useAlbumFetch] Error fetching albums:", error);
+    meta: {
+      onError: (error: Error) => {
+        console.error("[useAlbumFetch] Error fetching albums:", error);
+      }
     }
   });
   
@@ -30,8 +32,10 @@ export const useAlbumFetch = (refreshKey: number) => {
     retry: 2,
     enabled: albums.length > 0, // Only fetch exchanges if we have albums
     staleTime: 120000, // 2 minutes
-    onError: (error) => {
-      console.error("[useAlbumFetch] Error fetching exchange offers:", error);
+    meta: {
+      onError: (error: Error) => {
+        console.error("[useAlbumFetch] Error fetching exchange offers:", error);
+      }
     }
   });
 
