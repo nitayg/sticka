@@ -1,120 +1,77 @@
 
-import { Sticker } from "@/lib/data";
+import { Sticker } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { BookOpen, Shield } from "lucide-react";
-import { getAlbumById } from "@/lib/album-operations";
+import StickerImage from "../sticker-details/StickerImage";
 
 interface CompactCardProps {
   sticker: Sticker;
   onClick?: () => void;
-  showImages: boolean;
-  showAlbumInfo: boolean;
-  transaction?: { person: string; color: string };
+  showImages?: boolean;
+  showAlbumInfo?: boolean;
+  transaction?: { person: string, color: string } | null;
   isRecentlyAdded?: boolean;
   className?: string;
 }
 
-// Helper function to get first name only
-const getFirstName = (fullName: string): string => {
-  return fullName.split(' ')[0];
-};
-
 const CompactCard = ({
   sticker,
   onClick,
-  showImages,
-  showAlbumInfo,
+  showImages = true,
+  showAlbumInfo = false,
   transaction,
   isRecentlyAdded = false,
   className
 }: CompactCardProps) => {
-  // Get the album to use its image as a fallback
-  const album = getAlbumById(sticker.albumId);
-  const backgroundImageUrl = showImages && (sticker.imageUrl || album?.coverImage);
-  
   return (
-    <div 
+    <div
       onClick={onClick}
       className={cn(
-        "relative overflow-hidden rounded-xl aspect-[3/4] cursor-pointer",
-        "card-hover sticker-shadow",
-        "transition-all duration-300 ease-out",
-        "w-full h-full min-w-[120px] max-w-[160px]",
+        "rounded-lg border overflow-hidden cursor-pointer h-full transition-shadow duration-200",
+        "hover:shadow-md flex items-center gap-2 p-2",
+        transaction ? transaction.color : sticker.isOwned ? "bg-green-50 border-green-300" : "bg-card border-border",
         isRecentlyAdded && "border-yellow-400",
-        transaction ? transaction.color : "",
-        sticker.isOwned && !transaction ? "border-2 border-green-500" : "",
         className
       )}
-      style={backgroundImageUrl ? {
-        backgroundImage: `url('${backgroundImageUrl}')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center'
-      } : {
-        backgroundColor: 'hsl(var(--muted))'
-      }}
+      dir="rtl"
     >
-      {/* Overlay for cards without image */}
-      {!backgroundImageUrl && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className={cn(
-            "text-3xl",
-            sticker.isOwned && !transaction ? "text-green-600" : "text-muted-foreground"
-          )}>
-            {sticker.number}
-          </span>
+      {showImages && (
+        <div className="w-10 h-10 flex-shrink-0">
+          <StickerImage
+            imageUrl={sticker.imageUrl}
+            fallbackImage={sticker.teamLogo}
+            alt={sticker.name || `Sticker ${sticker.number}`}
+            stickerNumber={sticker.number}
+            showImage={showImages}
+            isOwned={sticker.isOwned}
+            isDuplicate={sticker.isDuplicate}
+            duplicateCount={sticker.duplicateCount}
+            inTransaction={!!transaction}
+            transactionColor={transaction?.color}
+            compactView={true}
+            transactionPerson={transaction?.person}
+            isRecentlyAdded={isRecentlyAdded}
+          />
         </div>
       )}
       
-      {/* Duplicate indicator */}
-      {(sticker.isDuplicate && sticker.isOwned) && (
-        <div className="absolute top-2 right-2 z-10">
-          <div className="flex items-center justify-center w-6 h-6 bg-interactive text-interactive-foreground rounded-full text-xs font-semibold">
-            {sticker.duplicateCount && sticker.duplicateCount > 0 ? (sticker.duplicateCount + 1) : '2+'}
-          </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline">
+          <span className="text-sm font-medium ml-1">#{sticker.number}</span>
+          <span className="text-xs truncate">{sticker.name}</span>
         </div>
-      )}
-      
-      {/* Album indicator */}
-      {showAlbumInfo && album && (
-        <div className="absolute top-2 left-2 z-10">
-          <div className="flex items-center justify-center px-2 py-0.5 bg-black/50 text-white rounded-full text-xs">
-            <BookOpen className="w-3 h-3 mr-1" />
-            {album.name}
-          </div>
+        <div className="text-xs text-muted-foreground truncate">
+          {sticker.team}
+          {showAlbumInfo && sticker.albumName && (
+            <span className="mr-1">({sticker.albumName})</span>
+          )}
         </div>
-      )}
-      
-      {/* Recently added indicator */}
-      {isRecentlyAdded && (
-        <div className="absolute top-0 left-0 w-0 h-0 border-solid border-t-[16px] border-t-yellow-400 border-r-[16px] border-r-transparent z-10"></div>
-      )}
-      
-      {/* Text content overlay at the bottom */}
-      <div className="absolute bottom-0 left-0 right-0 bg-black/50 dark:bg-gray-800/50 rounded-b-xl px-2 py-1.5">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-white dark:text-gray-300">
-            #{sticker.number}
-          </span>
-          <div className="flex items-center gap-1 text-xs font-medium text-white dark:text-gray-300">
-            {sticker.teamLogo ? (
-              <img src={sticker.teamLogo} alt={sticker.team} className="w-4 h-4 object-contain" />
-            ) : (
-              <Shield className="w-3 h-3 opacity-50" />
-            )}
-            <span>{sticker.team}</span>
-          </div>
-        </div>
-        <h3 className="font-semibold text-white dark:text-white line-clamp-1 text-sm">
-          {sticker.name}
-        </h3>
-        
-        {/* Transaction info */}
-        {transaction && (
-          <div className="mt-1 text-xs font-medium text-white bg-black/50 rounded-sm px-1 py-0.5 text-center truncate">
-            {getFirstName(transaction.person)}
-          </div>
-        )}
       </div>
+      
+      {sticker.isOwned && sticker.isDuplicate && (
+        <div className="h-5 w-5 rounded-full bg-yellow-100 text-yellow-800 flex items-center justify-center text-xs font-medium border border-yellow-200">
+          {sticker.duplicateCount && sticker.duplicateCount > 0 ? sticker.duplicateCount + 1 : '2+'}
+        </div>
+      )}
     </div>
   );
 };
