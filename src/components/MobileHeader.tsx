@@ -41,6 +41,7 @@ const MobileHeader = ({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) => {
         <div className="flex items-center space-x-1 rtl:space-x-reverse order-2">
           <SyncIndicator headerPosition={true} />
           
+          {/* משתמש בגלובל סטייט בתוך הקומפוננטה */}
           <EgressMonitor inHeader={true} />
           
           <Button

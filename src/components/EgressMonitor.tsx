@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // Component to monitor and help reduce egress traffic
 const EgressMonitor = ({ inHeader = false }) => {
+  // Use a shared state to track panel visibility
   const [isExpanded, setIsExpanded] = useState(false);
   const [egressWarnings, setEgressWarnings] = useState(0);
   const { toast } = useToast();
@@ -46,18 +47,23 @@ const EgressMonitor = ({ inHeader = false }) => {
     });
   };
   
+  // Toggle panel visibility
   const toggleExpanded = () => {
+    console.log("Toggle panel called. Current state:", isExpanded, "Will change to:", !isExpanded);
     setIsExpanded(prev => !prev);
   };
   
-  // If included in header, only show icon
+  // Header icon - shows button with alert icon
   if (inHeader) {
     return (
       <Button 
         variant="ghost" 
         size="icon"
         className="h-9 w-9 rounded-full hover:bg-blue-500/10 hover:text-blue-400 transition-all duration-300"
-        onClick={toggleExpanded}
+        onClick={() => {
+          console.log("Header button clicked");
+          setIsExpanded(prev => !prev);
+        }}
         title="מונה תעבורת רשת"
       >
         <AlertCircle className="h-5 w-5 text-red-500" />
@@ -70,10 +76,11 @@ const EgressMonitor = ({ inHeader = false }) => {
     );
   }
   
+  // This component renders the actual panel at the bottom of the layout
   return (
-    <>
+    <div className="egress-monitor-panel">
       {isExpanded && (
-        <Card className="fixed bottom-4 left-4 z-50 w-80 shadow-lg">
+        <Card className="fixed bottom-4 left-4 z-50 w-80 shadow-lg animate-in fade-in slide-in-from-bottom-5 duration-300">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium">מונה תעבורת רשת</CardTitle>
@@ -119,7 +126,7 @@ const EgressMonitor = ({ inHeader = false }) => {
           </CardContent>
         </Card>
       )}
-    </>
+    </div>
   );
 };
 
