@@ -1,4 +1,3 @@
-
 import { StorageEvents } from './constants';
 import { getFromStorage, saveToStorage, setIsConnected, getIsConnected, setMemoryStorage } from './storage-utils';
 import { mergeData } from './merge-utils';
@@ -305,25 +304,21 @@ export const forceSync = () => {
 export const getRealtimeChannel = () => realtimeChannel;
 
 // Clear cache to force fresh data on next sync
-export const clearCache = () => {
-  console.log('Clearing data cache');
-  // Clear global cache
-  dataCache.albums = null;
-  dataCache.stickers = null;
-  dataCache.users = null;
-  dataCache.exchangeOffers = null;
-  dataCache.lastFetched.albums = null;
-  dataCache.lastFetched.stickers = null;
-  dataCache.lastFetched.users = null;
-  dataCache.lastFetched.exchangeOffers = null;
+const clearCache = () => {
+  // Clear all caches
+  Object.keys(dataCache).forEach(key => {
+    if (key !== 'lastFetched') {
+      dataCache[key] = null;
+    }
+  });
   
-  // Clear album-specific sticker cache
-  for (const albumId in perAlbumStickerCache) {
-    delete perAlbumStickerCache[albumId];
-  }
+  // Clear per-album cache
+  Object.keys(perAlbumStickerCache).forEach(key => {
+    delete perAlbumStickerCache[key];
+  });
   
-  // Notify that cache was cleared
-  window.dispatchEvent(new CustomEvent(StorageEvents.CACHE_CLEARED));
+  console.log('All caches cleared');
+  window.dispatchEvent(new CustomEvent('cacheCleared'));
 };
 
 // Export per-album sticker fetch to replace the older fetchAllStickers approach

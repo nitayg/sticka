@@ -53,7 +53,7 @@ export const setStickerData = (data: Sticker[], options?: { albumId?: string, ac
 };
 
 // Get stickers by album ID with improved caching and egress reduction
-export const getStickersByAlbumId = async (albumId: string): Promise<Sticker[]> => {
+export const getStickersByAlbumId = (albumId: string): Sticker[] => {
   if (!albumId) return [];
   
   // Check if we have fresh data in the cache
@@ -65,6 +65,31 @@ export const getStickersByAlbumId = async (albumId: string): Promise<Sticker[]> 
   }
   
   try {
+    console.log(`Getting stickers for album ${albumId} from local storage`);
+    
+    // Use local storage data
+    const allStickers = getFromStorage('stickers', stickersData);
+    const filteredStickers = allStickers.filter(sticker => sticker.albumId === albumId);
+    
+    // Update our local cache
+    localStickerCache[albumId] = {
+      data: filteredStickers,
+      timestamp: now
+    };
+    
+    console.log(`Found ${filteredStickers.length} stickers for album ${albumId} (from local storage)`);
+    return filteredStickers;
+  } catch (error) {
+    console.error(`Error in getStickersByAlbumId for album ${albumId}:`, error);
+    return [];
+  }
+};
+
+// Get stickers by album ID asynchronously (for optimized egress reduction)
+export const getStickersByAlbumIdAsync = async (albumId: string): Promise<Sticker[]> => {
+  if (!albumId) return [];
+  
+  try {
     console.log(`Getting stickers for album ${albumId} using optimized fetch`);
     
     // Use the optimized function from sync-manager that already has caching built in
@@ -73,55 +98,22 @@ export const getStickersByAlbumId = async (albumId: string): Promise<Sticker[]> 
     // Update our local cache
     localStickerCache[albumId] = {
       data: stickers,
-      timestamp: now
+      timestamp: Date.now()
     };
     
     console.log(`Found ${stickers.length} stickers for album ${albumId} (optimized fetch)`);
     return stickers;
   } catch (error) {
-    console.error(`Error in getStickersByAlbumId for album ${albumId}:`, error);
+    console.error(`Error in getStickersByAlbumIdAsync for album ${albumId}:`, error);
     
-    // Fallback to local storage data if available
-    const allStickers = getFromStorage('stickers', stickersData);
-    if (!albumId) return [];
-    
-    const filteredStickers = allStickers.filter(sticker => sticker.albumId === albumId);
-    console.log(`Fallback: using local storage for ${filteredStickers.length} stickers from album ${albumId}`);
-    
-    // Cache even the fallback results
-    localStickerCache[albumId] = {
-      data: filteredStickers,
-      timestamp: now
-    };
-    
-    return filteredStickers;
+    // Fallback to sync version
+    return getStickersByAlbumId(albumId);
   }
 };
 
 // Expose a non-async version for backward compatibility
 export const getStickersByAlbumIdSync = (albumId: string): Sticker[] => {
-  if (!albumId) return [];
-  
-  // Check if we have fresh data in the cache
-  const now = Date.now();
-  if (localStickerCache[albumId] && 
-      now - localStickerCache[albumId].timestamp < CACHE_TTL) {
-    console.log(`Using local memory cache for album ${albumId} stickers (sync version)`);
-    return localStickerCache[albumId].data;
-  }
-  
-  // Fallback to local storage
-  const allStickers = getFromStorage('stickers', stickersData);
-  const filteredStickers = allStickers.filter(sticker => sticker.albumId === albumId);
-  
-  // Cache the results for next time
-  localStickerCache[albumId] = {
-    data: filteredStickers,
-    timestamp: now
-  };
-  
-  console.log(`Found ${filteredStickers.length} stickers for album ${albumId} (sync version)`);
-  return filteredStickers;
+  return getStickersByAlbumId(albumId);
 };
 
 // Clear the memory cache for specific album or all albums
