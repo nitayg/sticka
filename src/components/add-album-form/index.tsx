@@ -7,6 +7,7 @@ import { useToast } from "../ui/use-toast";
 import { addAlbum } from "@/lib/album-operations";
 import AlbumBasicInfo from "./AlbumBasicInfo";
 import AlbumImageUploader from "./AlbumImageUploader";
+import { v4 as uuidv4 } from "uuid";
 
 interface AddAlbumFormProps {
   onAlbumAdded: () => void;
@@ -42,6 +43,7 @@ const AddAlbumForm = ({ onAlbumAdded, iconOnly = false }: AddAlbumFormProps) => 
     
     try {
       await addAlbum({
+        id: uuidv4(),
         name,
         description,
         year,

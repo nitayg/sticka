@@ -6,19 +6,13 @@ import { Button } from "../ui/button";
 import { RotateCcw, Trash } from "lucide-react";
 
 interface RecycleBinItemProps {
-  album: Album;
+  album: Album & { deletedAt?: number };
   onRestore: () => void;
   onDelete: () => void;
 }
 
-// Extend the Album type locally to include a potential deletedAt field
-interface AlbumWithDeletedAt extends Album {
-  deletedAt?: number;
-}
-
 const RecycleBinItem = ({ album, onRestore, onDelete }: RecycleBinItemProps) => {
-  const albumWithDelete = album as AlbumWithDeletedAt;
-  const deletionDate = albumWithDelete.deletedAt ? new Date(albumWithDelete.deletedAt) : new Date();
+  const deletionDate = album.deletedAt ? new Date(album.deletedAt) : new Date();
   const timeAgo = formatDistanceToNow(deletionDate, { addSuffix: true, locale: he });
   
   return (

@@ -33,7 +33,15 @@ function App() {
           <Route element={<Layout><div></div></Layout>}>
             <Route path="/" element={<AlbumView />} />
             <Route path="/add" element={<AddStickerForm />} />
-            <Route path="/teams" element={<TeamManagementTab />} />
+            <Route path="/teams" element={
+              <TeamManagementTab 
+                teams={[]} 
+                teamLogos={{}} 
+                onTeamSelect={() => {}} 
+                selectedTeam="" 
+                onTeamsUpdate={() => {}}
+              />
+            } />
           </Route>
         </Routes>
       </Suspense>

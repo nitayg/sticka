@@ -61,8 +61,8 @@ const CompactCard = ({
         </div>
         <div className="text-xs text-muted-foreground truncate">
           {sticker.team}
-          {showAlbumInfo && sticker.albumName && (
-            <span className="mr-1">({sticker.albumName})</span>
+          {showAlbumInfo && (sticker as any).albumName && (
+            <span className="mr-1">({(sticker as any).albumName})</span>
           )}
         </div>
       </div>

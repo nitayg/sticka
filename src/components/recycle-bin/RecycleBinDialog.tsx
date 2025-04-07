@@ -22,8 +22,13 @@ const RecycleBinDialog = ({ open, onOpenChange }: RecycleBinDialogProps) => {
   const loadRecycleBinItems = async () => {
     setIsLoading(true);
     try {
-      const items = await getRecycleBin();
-      setRecycleBinItems(items);
+      const recycleItems = await getRecycleBin();
+      // Extract just the Album objects from RecycledItems
+      const albums = recycleItems.map(item => ({
+        ...item.item,
+        deletedAt: item.deletedAt // Keep the deletedAt property for UI purposes
+      }));
+      setRecycleBinItems(albums);
     } catch (error) {
       console.error("Error loading recycle bin items:", error);
     } finally {

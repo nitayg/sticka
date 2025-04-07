@@ -14,6 +14,7 @@ interface ImportPreviewProps {
     team: string;
     isOwned: string;
     isDuplicate: string;
+    category?: string; // Added category mapping
   };
   albumId: string;
   onImportComplete: () => void;
@@ -39,6 +40,7 @@ const ImportPreview = ({
       number: String(row[mappings.number]),
       name: mappings.name ? String(row[mappings.name]) : "",
       team: mappings.team ? String(row[mappings.team]) : "",
+      category: mappings.category ? String(row[mappings.category]) : "general", // Add default category
       albumId,
       isOwned,
       isDuplicate: isOwned && mappings.isDuplicate 
