@@ -46,6 +46,10 @@ const EgressMonitor = ({ inHeader = false }) => {
     });
   };
   
+  const toggleExpanded = () => {
+    setIsExpanded(prev => !prev);
+  };
+  
   // If included in header, only show icon
   if (inHeader) {
     return (
@@ -53,7 +57,7 @@ const EgressMonitor = ({ inHeader = false }) => {
         variant="ghost" 
         size="icon"
         className="h-9 w-9 rounded-full hover:bg-blue-500/10 hover:text-blue-400 transition-all duration-300"
-        onClick={() => setIsExpanded(true)}
+        onClick={toggleExpanded}
         title="מונה תעבורת רשת"
       >
         <AlertCircle className="h-5 w-5 text-red-500" />
@@ -66,9 +70,9 @@ const EgressMonitor = ({ inHeader = false }) => {
     );
   }
   
-  // Regular monitor with expandable panel
+  // Regular monitor panel
   if (!isExpanded) {
-    return null; // Hide the button completely when not in header
+    return null; // Hide when not expanded
   }
   
   return (

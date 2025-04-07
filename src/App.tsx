@@ -1,3 +1,4 @@
+
 import { Suspense, lazy, useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -45,7 +46,6 @@ const App = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [isAppReady, setIsAppReady] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [showEgressMonitor, setShowEgressMonitor] = useState(false);
   
   // Initialize Supabase and synchronize data
   useEffect(() => {
