@@ -4,32 +4,52 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png'
+  '/favicon.ico'
+  // Removed possibly missing resources that could be causing failures
 ];
 
-// התקנת service worker ושמירת המשאבים בקאש
+// Install service worker and cache resources with error handling
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Opened cache');
-        return cache.addAll(urlsToCache);
+        // Use cache.add for individual resources with error handling
+        return Promise.allSettled(
+          urlsToCache.map(url => 
+            cache.add(url).catch(error => {
+              console.warn(`Failed to cache resource: ${url}`, error);
+              // Continue despite the error
+              return Promise.resolve();
+            })
+          )
+        );
       })
   );
 });
 
-// אסטרטגיית הפעלה - נסה תחילה מהרשת, אם אין תקשורת תשתמש בקאש
+// Network-first strategy with fallback to cache
 self.addEventListener('fetch', event => {
   event.respondWith(
     fetch(event.request)
       .catch(() => {
-        return caches.match(event.request);
+        return caches.match(event.request)
+          .then(cachedResponse => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            // If resource is not in cache, return a basic offline response
+            if (event.request.mode === 'navigate') {
+              return caches.match('/');
+            }
+            // Return empty response for other resources
+            return new Response('', { status: 408, statusText: 'Offline' });
+          });
       })
   );
 });
 
-// ניקוי קאש ישן כאשר יש גרסה חדשה
+// Clean old caches when there's a new version
 self.addEventListener('activate', event => {
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
