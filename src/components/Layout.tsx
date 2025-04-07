@@ -1,4 +1,3 @@
-
 import { ReactNode, useState, useEffect } from "react";
 import { Album, List, ArrowLeftRight, Home, Shield } from "lucide-react";
 import MobileHeader from "./MobileHeader";
@@ -63,7 +62,6 @@ const Layout = ({ children }: LayoutProps) => {
     { name: "מועדונים", href: "/clubs", icon: Shield },
   ];
 
-  // Page transition direction (RTL friendly)
   const getDirection = () => {
     const pathIndex = (path: string) => {
       return navigation.findIndex(item => item.href === path);
@@ -72,7 +70,6 @@ const Layout = ({ children }: LayoutProps) => {
     const current = pathIndex(location.pathname);
     const previous = pathIndex(prevPath);
     
-    // RTL movement - for RTL app we need to reverse animation direction
     return current > previous ? -1 : 1;
   };
 

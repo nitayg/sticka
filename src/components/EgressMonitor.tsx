@@ -17,6 +17,11 @@ const EgressMonitor = () => {
   const { toast } = useToast();
   
   useEffect(() => {
+    // Listen for toggle events from the header button
+    const handleToggleFromHeader = () => {
+      setIsExpanded(prev => !prev);
+    };
+    
     // Track egress warnings by monitoring network errors
     const handleNetworkError = (event) => {
       const errorMessage = event.message || event.error?.message || '';
@@ -62,12 +67,14 @@ const EgressMonitor = () => {
       }, 30000);
     }
     
+    window.addEventListener('toggleEgressMonitor', handleToggleFromHeader);
     window.addEventListener('error', handleNetworkError);
     window.addEventListener('unhandledrejection', handleNetworkError);
     window.addEventListener('online', handleOnlineStatus);
     window.addEventListener('offline', handleOnlineStatus);
     
     return () => {
+      window.removeEventListener('toggleEgressMonitor', handleToggleFromHeader);
       window.removeEventListener('error', handleNetworkError);
       window.removeEventListener('unhandledrejection', handleNetworkError);
       window.removeEventListener('online', handleOnlineStatus);
@@ -94,36 +101,6 @@ const EgressMonitor = () => {
   
   return (
     <>
-      <AnimatePresence>
-        {!isExpanded && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="fixed bottom-4 left-4 z-50 flex items-center gap-2 shadow-md hover:shadow-lg transition-all duration-300"
-              onClick={() => setIsExpanded(true)}
-            >
-              {isOffline ? (
-                <WifiOff className="h-4 w-4 text-orange-500" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-blue-500" />
-              )}
-              {egressWarnings > 0 && (
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-100 text-xs text-red-600">
-                  {egressWarnings}
-                </span>
-              )}
-              מונה רשת
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
       <AnimatePresence>
         {isExpanded && (
           <motion.div
