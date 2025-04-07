@@ -159,3 +159,28 @@ export const fetchAlbumStats = async (albumId: string): Promise<{
     return { total: 0, owned: 0, needed: 0, duplicates: 0, percentage: 0 };
   }
 };
+
+// Add the missing fetchAllAlbums function
+export const fetchAllAlbums = async () => {
+  try {
+    const { data, error } = await supabase
+      .from("albums")
+      .select("*")
+      .eq("isDeleted", false)
+      .order("lastModified", { ascending: false });
+      
+    if (error) {
+      console.error(`[QUERY] Error fetching albums:`, error);
+      return [];
+    }
+    
+    if (!data) {
+      return [];
+    }
+    
+    return data;
+  } catch (error) {
+    console.error(`[QUERY] Critical error fetching albums:`, error);
+    return [];
+  }
+};

@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { getStats } from "@/lib/sticker-operations";
+import { getStats } from "@/lib/stickers/stats-operations";
 import { Button } from "./ui/button";
 import { ChartPieIcon, BarChartIcon } from "lucide-react";
 import CollectionStats from "./stats/CollectionStats";
@@ -16,7 +16,8 @@ const StatsPanel = ({ albumId }: StatsPanelProps) => {
   // Update stats when album changes or when inventory is updated
   useEffect(() => {
     const updateStats = () => {
-      const newStats = getStats();
+      if (!albumId) return;
+      const newStats = getStats(albumId);
       // Calculate needed stickers from total and owned
       const needed = newStats.total - newStats.owned;
       setStats({ ...newStats, needed });

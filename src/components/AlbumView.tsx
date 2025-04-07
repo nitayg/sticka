@@ -23,7 +23,7 @@ const AlbumView = () => {
   } = useAlbumStore();
   
   const { 
-    albums, 
+    albums = [], // Provide default empty array to fix TypeScript errors
     stickers, 
     transactionMap, 
     isLoading
@@ -108,9 +108,9 @@ const AlbumView = () => {
         onTeamsManage={() => {}} // Empty function since we're removing tabs
       />
       
-      <div className="pb-16"> {/* הוספת padding תחתון */}
+      <div className="pb-16">
         <FilteredStickerContainer
-          stickers={stickers}
+          stickers={stickers || []} // Provide default empty array
           selectedAlbumId={selectedAlbumId}
           viewMode={viewMode}
           showImages={showImages}

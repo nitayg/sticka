@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { getStats } from "@/lib/sticker-operations";
+import { getStats } from "@/lib/stickers/stats-operations";
 import { cn } from "@/lib/utils";
 
 interface CollectionStatsProps {
@@ -14,7 +14,8 @@ const CollectionStats = ({ albumId, className }: CollectionStatsProps) => {
   
   // Update stats when album changes
   useEffect(() => {
-    const newStats = getStats();
+    if (!albumId) return;
+    const newStats = getStats(albumId);
     // Calculate needed stickers from total and owned
     const needed = newStats.total - newStats.owned;
     setStats({ ...newStats, needed });
