@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchAllAlbums } from "@/lib/queries";
+import { fetchAllAlbums } from "@/lib/queries/album-queries";
 import { fetchExchangeOffers } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 

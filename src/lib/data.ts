@@ -36,6 +36,9 @@ export {
   updateTeamNameAcrossStickers
 } from './stickers';
 
+// Export queries
+export * from './queries';
+
 // Export recycle bin operations
 export {
   getRecycleBin,
