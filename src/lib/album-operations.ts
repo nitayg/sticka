@@ -1,11 +1,10 @@
-
 import { Album } from './types';
 import { v4 as uuidv4 } from 'uuid';
 import { saveToStorage, getFromStorage, StorageEvents } from './sync';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from './supabase';
 import { saveAlbum, deleteAlbumFromSupabase } from './supabase/albums';
-import { deleteStickersByAlbumId } from './sticker-operations';
+import { deleteStickersByAlbumId } from './stickers/crud-operations';
 
 // Storage for albums data
 let albumsData: Album[] = [];

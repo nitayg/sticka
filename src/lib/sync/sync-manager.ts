@@ -1,3 +1,4 @@
+
 import { StorageEvents } from './constants';
 import { getFromStorage, saveToStorage, setIsConnected, getIsConnected, setMemoryStorage } from './storage-utils';
 import { mergeData } from './merge-utils';
@@ -303,8 +304,8 @@ export const forceSync = () => {
 // Export the realtimeChannel for external access if needed
 export const getRealtimeChannel = () => realtimeChannel;
 
-// Clear cache to force fresh data on next sync
-const clearCache = () => {
+// Clear cache to force fresh data on next sync - export this function for external access
+export const clearCache = () => {
   // Clear all caches
   Object.keys(dataCache).forEach(key => {
     if (key !== 'lastFetched') {
@@ -321,5 +322,5 @@ const clearCache = () => {
   window.dispatchEvent(new CustomEvent('cacheCleared'));
 };
 
-// Export per-album sticker fetch to replace the older fetchAllStickers approach
-export { getAlbumStickers };
+// Export the album stickers fetch function (only once)
+// We removed the duplicate export to avoid conflicts
