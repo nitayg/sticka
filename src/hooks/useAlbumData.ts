@@ -46,7 +46,8 @@ export const useAlbumData = ({
   // Add debugging
   useEffect(() => {
     console.log("[useAlbumData] Albums:", albums.length, "Loading:", isAlbumsLoading);
-  }, [albums, isAlbumsLoading]);
+    console.log("[useAlbumData] Stickers:", stickers.length, "Loading:", isStickersLoading);
+  }, [albums, isAlbumsLoading, stickers, isStickersLoading]);
 
   // Is loading any data
   const isLoading = isAlbumsLoading || (selectedAlbumId && isStickersLoading) || isExchangesLoading;

@@ -13,6 +13,7 @@ interface AlbumState {
   
   // Data refresh
   refreshKey: number;
+  lastRefreshTime: number;
   
   // Actions
   setViewMode: (mode: ViewMode) => void;
@@ -23,7 +24,7 @@ interface AlbumState {
   handleAlbumChange: (albumId: string) => void;
 }
 
-export const useAlbumStore = create<AlbumState>((set) => ({
+export const useAlbumStore = create<AlbumState>((set, get) => ({
   // UI state
   viewMode: "compact",
   showImages: true,
@@ -33,14 +34,30 @@ export const useAlbumStore = create<AlbumState>((set) => ({
   
   // Data refresh
   refreshKey: 0,
+  lastRefreshTime: 0,
   
   // Actions
   setViewMode: (viewMode) => set({ viewMode }),
   setShowImages: (showImages) => set({ showImages }),
   setSelectedAlbumId: (selectedAlbumId) => set({ selectedAlbumId }),
   
-  handleRefresh: () => 
-    set((state) => ({ refreshKey: state.refreshKey + 1 })),
+  handleRefresh: () => {
+    const now = Date.now();
+    const lastRefreshTime = get().lastRefreshTime;
+    
+    // Prevent refreshing too frequently (more than once per second)
+    if (now - lastRefreshTime < 1000) {
+      console.log("[AlbumStore] Refresh throttled to prevent excess requests");
+      return;
+    }
+    
+    set((state) => ({ 
+      refreshKey: state.refreshKey + 1,
+      lastRefreshTime: now
+    }));
+    
+    console.log("[AlbumStore] Refresh triggered, new key:", get().refreshKey);
+  },
   
   handleAlbumChange: (albumId) => {
     set({
@@ -49,5 +66,7 @@ export const useAlbumStore = create<AlbumState>((set) => ({
     
     const event = new CustomEvent('albumChanged', { detail: { albumId } });
     window.dispatchEvent(event);
+    
+    console.log("[AlbumStore] Album changed to:", albumId);
   }
 }));

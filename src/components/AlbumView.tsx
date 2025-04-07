@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAlbumStore } from "@/store/useAlbumStore";
 import AlbumHeader from "./album/AlbumHeader";
 import FilterControls from "./album/FilterControls";
@@ -23,16 +23,19 @@ const AlbumView = () => {
     handleAlbumChange,
   } = useAlbumStore();
   
+  const [hasAttemptedRefresh, setHasAttemptedRefresh] = useState(false);
+  const [forceRefreshCount, setForceRefreshCount] = useState(0);
+  
   const { 
-    albums = [], // Provide default empty array to fix TypeScript errors
+    albums = [], 
     stickers, 
     transactionMap, 
     isLoading
   } = useAlbumData({ 
     selectedAlbumId, 
     refreshKey,
-    activeTab: "number", // Default to number tab
-    showAllAlbumStickers: false // Default not showing all album stickers
+    activeTab: "number",
+    showAllAlbumStickers: false
   });
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -48,7 +51,8 @@ const AlbumView = () => {
     console.log("[AlbumView] Albums:", albums);
     console.log("[AlbumView] Selected album:", selectedAlbumId);
     console.log("[AlbumView] isLoading:", isLoading);
-  }, [albums, selectedAlbumId, isLoading]);
+    console.log("[AlbumView] Force refresh count:", forceRefreshCount);
+  }, [albums, selectedAlbumId, isLoading, forceRefreshCount]);
   
   // Enhanced error handling when selecting album
   useEffect(() => {
@@ -68,16 +72,35 @@ const AlbumView = () => {
   
   // Force a refresh if we have no albums but should have
   useEffect(() => {
-    if (albums.length === 0 && !isLoading) {
-      // Try to force a refresh after a brief delay
+    if (albums.length === 0 && !isLoading && !hasAttemptedRefresh) {
+      // Only try to force refresh once to avoid infinite loops
+      console.log("[AlbumView] No albums found, forcing refresh");
+      setHasAttemptedRefresh(true);
+      
+      // Add a small delay before refreshing
       const timer = setTimeout(() => {
-        console.log("[AlbumView] No albums found, forcing refresh");
         handleRefresh();
-      }, 1000);
+        setForceRefreshCount(count => count + 1);
+        
+        // Show a toast to let the user know we're trying to fix the issue
+        if (forceRefreshCount > 1) {
+          toast({
+            title: "נסיון לטעון אלבומים",
+            description: "מנסה לטעון את האלבומים שלך...",
+          });
+        }
+      }, 1500);
       
       return () => clearTimeout(timer);
     }
-  }, [albums, isLoading, handleRefresh]);
+  }, [albums, isLoading, handleRefresh, hasAttemptedRefresh, forceRefreshCount]);
+  
+  // Reset the refresh attempt flag if loading state changes or albums are loaded
+  useEffect(() => {
+    if (isLoading || albums.length > 0) {
+      setHasAttemptedRefresh(false);
+    }
+  }, [isLoading, albums]);
   
   useEffect(() => {
     if (selectedAlbumId) {
@@ -98,12 +121,44 @@ const AlbumView = () => {
     };
   }, [handleRefresh]);
   
+  // Show more detailed loading indicator
   if (isLoading) {
     return (
       <div className="space-y-4 animate-fade-in">
-        <div className="flex items-center justify-center p-12">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        <div className="flex items-center justify-center p-12 flex-col">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
+          <div className="text-sm text-muted-foreground">טוען אלבומים...</div>
         </div>
+      </div>
+    );
+  }
+  
+  // Show a different state after multiple refresh attempts
+  if (albums.length === 0 && forceRefreshCount >= 3) {
+    return (
+      <div className="space-y-4 animate-fade-in p-4">
+        <EmptyState
+          icon={<Album className="h-12 w-12" />}
+          title="לא ניתן לטעון אלבומים"
+          description="לא הצלחנו לטעון את האלבומים שלך. אנא נסה לרענן את הדף או להוסיף אלבום חדש."
+          action={
+            <div className="space-y-4">
+              <button 
+                onClick={() => {
+                  setForceRefreshCount(0);
+                  setHasAttemptedRefresh(false);
+                  handleRefresh();
+                }}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+              >
+                נסה שוב
+              </button>
+              <div className="pt-2">
+                <AddAlbumForm onAlbumAdded={handleRefresh} />
+              </div>
+            </div>
+          }
+        />
       </div>
     );
   }
