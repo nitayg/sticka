@@ -1,49 +1,67 @@
 
-const CACHE_NAME = 'sticker-swapper-v1';
+const CACHE_NAME = 'sticker-swapper-v2';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/manifest.json',
-  '/favicon.ico'
-  // Removed possibly missing resources that could be causing failures
+  '/manifest.json'
 ];
 
-// Install service worker and cache resources with error handling
+// Install service worker and cache essential resources with improved error handling
 self.addEventListener('install', event => {
+  console.log('Service Worker installing...');
+  
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Opened cache');
-        // Use cache.add for individual resources with error handling
+        
+        // Use Promise.allSettled for more resilient caching
         return Promise.allSettled(
           urlsToCache.map(url => 
             cache.add(url).catch(error => {
               console.warn(`Failed to cache resource: ${url}`, error);
-              // Continue despite the error
-              return Promise.resolve();
+              return Promise.resolve(); // Continue despite errors
             })
           )
         );
       })
+      .catch(error => {
+        console.error('Cache installation failed:', error);
+      })
   );
 });
 
-// Network-first strategy with fallback to cache
+// Network-first strategy with robust fallback to cache
 self.addEventListener('fetch', event => {
+  // Don't try to handle non-GET requests or browser extensions
+  if (event.request.method !== 'GET' || event.request.url.startsWith('chrome-extension://')) {
+    return;
+  }
+  
   event.respondWith(
     fetch(event.request)
+      .then(response => {
+        // Only cache successful responses
+        if (response && response.status === 200) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseClone);
+          });
+        }
+        return response;
+      })
       .catch(() => {
         return caches.match(event.request)
           .then(cachedResponse => {
             if (cachedResponse) {
               return cachedResponse;
             }
-            // If resource is not in cache, return a basic offline response
+            // Return a basic offline response for navigation requests
             if (event.request.mode === 'navigate') {
               return caches.match('/');
             }
             // Return empty response for other resources
-            return new Response('', { status: 408, statusText: 'Offline' });
+            return new Response('', { status: 503, statusText: 'Service Unavailable (Offline)' });
           });
       })
   );
@@ -51,16 +69,27 @@ self.addEventListener('fetch', event => {
 
 // Clean old caches when there's a new version
 self.addEventListener('activate', event => {
+  console.log('Service Worker activating...');
+  
   const cacheWhitelist = [CACHE_NAME];
+  
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     })
   );
+});
+
+// Handle messages from the main thread
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

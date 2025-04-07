@@ -1,7 +1,7 @@
 
 import { Suspense, lazy, useState, useEffect } from "react";
 import { Toaster } from "./components/ui/toaster";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import SyncProvider from "./components/SyncProvider";
 import SyncInitializer from "./components/SyncInitializer";
@@ -17,22 +17,32 @@ const TeamManagementTab = lazy(() => import("./components/team-management"));
 function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
+  const [isTimeoutActive, setIsTimeoutActive] = useState(false);
   const { toast } = useToast();
 
-  // Use direct import for the SyncInitializer while we transition to the new SyncProvider
   useEffect(() => {
     // Initialize the app version
-    const appVersion = "1.1.0";
+    const appVersion = "1.1.1";
     console.log(`Album Stickers App version ${appVersion}`);
     
+    // Set a safety timeout to prevent the app from getting stuck indefinitely
+    const safetyTimeout = setTimeout(() => {
+      console.log("Safety timeout triggered - forcing app to load");
+      setShowSplash(false);
+      setIsTimeoutActive(true);
+    }, 8000); // 8 seconds timeout
+
+    // Log basic device info for debugging
     try {
-      // Log device info for debugging
       console.log("User agent:", navigator.userAgent);
-      console.log("Device memory:", (navigator as any).deviceMemory || "unknown");
       console.log("Platform:", navigator.platform);
     } catch (error) {
       console.error("Error getting device info:", error);
     }
+
+    return () => {
+      clearTimeout(safetyTimeout);
+    };
   }, []);
 
   const handleSplashComplete = () => {
@@ -72,6 +82,35 @@ function App() {
     );
   }
 
+  // If safety timeout was triggered, show simplified app with minimal dependencies
+  if (isTimeoutActive) {
+    return (
+      <BrowserRouter>
+        <div className="min-h-screen bg-background p-4">
+          <div className="max-w-md mx-auto mt-8 p-4 border rounded-lg bg-card">
+            <h2 className="text-xl font-semibold mb-4">מצב חירום - טעינה מהירה</h2>
+            <p className="mb-4">האפליקציה נטענת במצב חירום בשל בעיית טעינה.</p>
+            <div className="flex justify-center">
+              <button
+                className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 mr-2"
+                onClick={() => window.location.reload()}
+              >
+                טען מחדש
+              </button>
+              <button
+                className="bg-muted text-foreground px-4 py-2 rounded hover:bg-muted/90"
+                onClick={() => localStorage.clear()}
+              >
+                נקה נתונים
+              </button>
+            </div>
+          </div>
+        </div>
+        <Toaster />
+      </BrowserRouter>
+    );
+  }
+
   return (
     <BrowserRouter>
       <SyncProvider notifications={false}>
@@ -98,10 +137,14 @@ function App() {
                 />
               </Layout>
             } />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
         <Toaster />
-        <SyncInitializer />
+        {/* Load sync initializer with error handling */}
+        <div id="sync-container" style={{ display: 'none' }}>
+          <SyncInitializer onError={handleInitError} />
+        </div>
       </SyncProvider>
     </BrowserRouter>
   );
