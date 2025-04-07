@@ -1,3 +1,4 @@
+
 import { ReactNode, useState, useEffect } from "react";
 import { Album, List, ArrowLeftRight, Home, Shield } from "lucide-react";
 import MobileHeader from "./MobileHeader";
@@ -7,6 +8,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import EgressMonitor from "./EgressMonitor";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface LayoutProps {
   children: ReactNode;
@@ -16,10 +18,15 @@ const Layout = ({ children }: LayoutProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentAlbumId, setCurrentAlbumId] = useState<string | undefined>(undefined);
   const [isScrollingDown, setIsScrollingDown] = useState(false);
+  const [prevPath, setPrevPath] = useState('');
   const { theme } = useTheme();
   const location = useLocation();
   
   const isAlbumView = location.pathname === "/";
+
+  useEffect(() => {
+    setPrevPath(location.pathname);
+  }, [location.pathname]);
 
   useEffect(() => {
     const handleAlbumChange = (event: CustomEvent) => {
@@ -56,6 +63,40 @@ const Layout = ({ children }: LayoutProps) => {
     { name: "מועדונים", href: "/clubs", icon: Shield },
   ];
 
+  // Page transition direction (RTL friendly)
+  const getDirection = () => {
+    const pathIndex = (path: string) => {
+      return navigation.findIndex(item => item.href === path);
+    };
+    
+    const current = pathIndex(location.pathname);
+    const previous = pathIndex(prevPath);
+    
+    // RTL movement - for RTL app we need to reverse animation direction
+    return current > previous ? -1 : 1;
+  };
+
+  const pageVariants = {
+    initial: {
+      opacity: 0,
+      x: 20 * getDirection()
+    },
+    in: {
+      opacity: 1,
+      x: 0
+    },
+    out: {
+      opacity: 0,
+      x: -20 * getDirection()
+    }
+  };
+
+  const pageTransition = {
+    type: "tween",
+    ease: "anticipate",
+    duration: 0.5
+  };
+
   return (
     <div className={cn(
       "min-h-screen bg-background flex flex-col w-full", 
@@ -70,16 +111,32 @@ const Layout = ({ children }: LayoutProps) => {
       />
       <div className="fixed inset-0 bg-gradient-to-b from-slate-900/10 to-background z-[-1]" />
       <div className="flex flex-1">
-        <main className={cn(
-          "flex-1 pt-14 pb-24 w-full", 
-          isAlbumView ? "main-content overflow-hidden" : "overflow-y-auto overflow-x-hidden"
-        )}>
-          <div className="max-w-4xl mx-auto px-1 animate-fade-in">
-            {children}
-          </div>
-        </main>
+        <AnimatePresence mode="wait">
+          <motion.main
+            key={location.pathname}
+            className={cn(
+              "flex-1 pt-14 pb-24 w-full", 
+              isAlbumView ? "main-content overflow-hidden" : "overflow-y-auto overflow-x-hidden"
+            )}
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={pageVariants}
+            transition={pageTransition}
+          >
+            <div className="max-w-4xl mx-auto px-1">
+              {children}
+            </div>
+          </motion.main>
+        </AnimatePresence>
       </div>
-      <div className={`fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md text-foreground border-t border-border/40 transition-transform duration-300 ease-in-out ${isScrollingDown ? 'translate-y-full' : 'translate-y-0'} pb-5 safe-area-inset-bottom`}>
+      
+      <motion.div 
+        className={`fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md text-foreground border-t border-border/40 safe-area-inset-bottom`}
+        initial={{ y: 100 }}
+        animate={{ y: isScrollingDown ? 100 : 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      >
         <div className="w-full flex justify-between items-center px-6 py-2" dir="rtl">
           {navigation.map((item, index) => {
             const isActive = location.pathname === item.href;
@@ -90,12 +147,21 @@ const Layout = ({ children }: LayoutProps) => {
                 to={item.href}
                 className="flex flex-col items-center justify-center transition-all duration-300"
               >
-                <div className={cn(
-                  "relative flex flex-col items-center",
-                  isActive ? "text-interactive" : "text-muted-foreground hover:text-foreground"
-                )}>
+                <motion.div 
+                  className={cn(
+                    "relative flex flex-col items-center",
+                    isActive ? "text-interactive" : "text-muted-foreground hover:text-foreground"
+                  )}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
                   {isActive && (
-                    <div className="absolute inset-0 bg-interactive/20 rounded-full -m-1 animate-pulse" />
+                    <motion.div 
+                      className="absolute inset-0 bg-interactive/20 rounded-full -m-1" 
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                    />
                   )}
                   <item.icon className={cn(
                     "h-5 w-5 transition-all duration-300 mb-1",
@@ -107,12 +173,12 @@ const Layout = ({ children }: LayoutProps) => {
                   )}>
                     {item.name}
                   </span>
-                </div>
+                </motion.div>
               </Link>
             );
           })}
         </div>
-      </div>
+      </motion.div>
       <EgressMonitor />
     </div>
   );
