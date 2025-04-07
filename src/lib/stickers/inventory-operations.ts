@@ -1,31 +1,57 @@
 
 import { Sticker } from '../types';
-import { getStickerData, setStickerData, getStickersByAlbumId } from './basic-operations';
+import { getStickersByAlbumId } from './basic-operations';
 import { updateSticker } from './crud-operations';
 import { saveStickerBatch } from '../supabase/stickers';
 
 // Toggle owned status
 export const toggleStickerOwned = async (id: string): Promise<Sticker | null> => {
   try {
-    const stickers = getStickerData();
-    const sticker = stickers.find(s => s.id === id);
+    // Find the sticker in question first
+    let sticker: Sticker | undefined;
+    let albumId: string | undefined;
     
-    if (!sticker) {
-      console.error(`Sticker with ID ${id} not found`);
+    // Loop through albums until we find the sticker (only happens once per toggle)
+    const allAlbums = JSON.parse(localStorage.getItem('albums') || '[]');
+    for (const album of allAlbums) {
+      const stickers = getStickersByAlbumId(album.id);
+      sticker = stickers.find(s => s.id === id);
+      if (sticker) {
+        albumId = album.id;
+        break;
+      }
+    }
+    
+    if (!sticker || !albumId) {
+      console.error(`Sticker with ID ${id} not found in any album`);
       return null;
     }
     
     // Optimistically update local state before waiting for server response
     const updatedSticker = { ...sticker, isOwned: !sticker.isOwned };
     
-    // Get sticker album for more targeted refresh
-    const albumId = sticker.albumId;
+    // Get stickers from just this album for targeted update
+    const albumStickers = getStickersByAlbumId(albumId);
     
     // Update local state first
-    const updatedStickers = stickers.map(s => 
+    const updatedStickers = albumStickers.map(s => 
       s.id === id ? updatedSticker : s
     );
-    setStickerData(updatedStickers, { albumId, action: 'toggleOwned' });
+    
+    // We'll still need to get all stickers to update the full dataset
+    // but we only replace the ones for this particular album
+    const allStickers = [];
+    for (const alb of allAlbums) {
+      if (alb.id === albumId) {
+        allStickers.push(...updatedStickers);
+      } else {
+        allStickers.push(...getStickersByAlbumId(alb.id));
+      }
+    }
+    
+    // Use the basic operations to set the sticker data
+    const { setStickerData } = await import('./basic-operations');
+    setStickerData(allStickers, { albumId, action: 'toggleOwned' });
     
     // Dispatch event for immediate UI update
     window.dispatchEvent(new CustomEvent('forceRefresh'));
@@ -33,11 +59,12 @@ export const toggleStickerOwned = async (id: string): Promise<Sticker | null> =>
     // Then update the server (without waiting for response)
     updateSticker(id, { isOwned: !sticker.isOwned }).catch(error => {
       console.error(`Server update failed for toggling sticker owned status: ${error}`);
+      
       // If server update fails, revert local state
-      const revertedStickers = getStickerData().map(s => 
-        s.id === id ? sticker : s
-      );
-      setStickerData(revertedStickers, { albumId, action: 'revert' });
+      updateSticker(id, { isOwned: sticker.isOwned }).catch(e => {
+        console.error('Failed to revert sticker state:', e);
+      });
+      
       window.dispatchEvent(new CustomEvent('forceRefresh'));
     });
     
@@ -51,11 +78,23 @@ export const toggleStickerOwned = async (id: string): Promise<Sticker | null> =>
 // Toggle duplicate status
 export const toggleStickerDuplicate = async (id: string): Promise<Sticker | null> => {
   try {
-    const stickers = getStickerData();
-    const sticker = stickers.find(s => s.id === id);
+    // Find the sticker in question first
+    let sticker: Sticker | undefined;
+    let albumId: string | undefined;
     
-    if (!sticker) {
-      console.error(`Sticker with ID ${id} not found`);
+    // Loop through albums until we find the sticker (only happens once per toggle)
+    const allAlbums = JSON.parse(localStorage.getItem('albums') || '[]');
+    for (const album of allAlbums) {
+      const stickers = getStickersByAlbumId(album.id);
+      sticker = stickers.find(s => s.id === id);
+      if (sticker) {
+        albumId = album.id;
+        break;
+      }
+    }
+    
+    if (!sticker || !albumId) {
+      console.error(`Sticker with ID ${id} not found in any album`);
       return null;
     }
     
@@ -70,9 +109,6 @@ export const toggleStickerDuplicate = async (id: string): Promise<Sticker | null
     
     const isDuplicate = duplicateCount > 0;
     
-    // Get sticker album for more targeted refresh
-    const albumId = sticker.albumId;
-    
     // Optimistically update local state
     const updatedSticker = { 
       ...sticker, 
@@ -80,11 +116,28 @@ export const toggleStickerDuplicate = async (id: string): Promise<Sticker | null
       duplicateCount: isDuplicate ? duplicateCount : 0
     };
     
+    // Get stickers from just this album for targeted update
+    const albumStickers = getStickersByAlbumId(albumId);
+    
     // Update local state first for immediate visual feedback
-    const updatedStickers = stickers.map(s => 
+    const updatedAlbumStickers = albumStickers.map(s => 
       s.id === id ? updatedSticker : s
     );
-    setStickerData(updatedStickers, { albumId, action: 'toggleDuplicate' });
+    
+    // We'll still need to get all stickers to update the full dataset
+    // but we only replace the ones for this particular album
+    const allStickers = [];
+    for (const alb of allAlbums) {
+      if (alb.id === albumId) {
+        allStickers.push(...updatedAlbumStickers);
+      } else {
+        allStickers.push(...getStickersByAlbumId(alb.id));
+      }
+    }
+    
+    // Use the basic operations to set the sticker data
+    const { setStickerData } = await import('./basic-operations');
+    setStickerData(allStickers, { albumId, action: 'toggleDuplicate' });
     
     // Dispatch event for immediate UI update
     window.dispatchEvent(new CustomEvent('forceRefresh'));
@@ -95,11 +148,15 @@ export const toggleStickerDuplicate = async (id: string): Promise<Sticker | null
       duplicateCount: isDuplicate ? duplicateCount : 0 
     }).catch(error => {
       console.error(`Server update failed for toggling sticker duplicate status: ${error}`);
+      
       // If server update fails, revert local state
-      const revertedStickers = getStickerData().map(s => 
-        s.id === id ? sticker : s
-      );
-      setStickerData(revertedStickers, { albumId, action: 'revert' });
+      updateSticker(id, { 
+        isDuplicate: sticker.isDuplicate, 
+        duplicateCount: sticker.duplicateCount || 0 
+      }).catch(e => {
+        console.error('Failed to revert sticker state:', e);
+      });
+      
       window.dispatchEvent(new CustomEvent('forceRefresh'));
     });
     
@@ -116,8 +173,7 @@ export const addStickersToInventory = (albumId: string, stickerNumbers: (number 
   duplicatesUpdated: (number | string)[], 
   notFound: (number | string)[] 
 } => {
-  const stickers = getStickerData();
-  const albumStickers = stickers.filter(s => s.albumId === albumId);
+  const albumStickers = getStickersByAlbumId(albumId);
   
   const newlyOwned: (number | string)[] = [];
   const duplicatesUpdated: (number | string)[] = [];
@@ -154,13 +210,15 @@ export const addStickersToInventory = (albumId: string, stickerNumbers: (number 
   }
   
   try {
-    // Update local state immediately before server update
-    const updatedStickers = stickers.map(sticker => {
+    // Get all album stickers
+    const updatedAlbumStickers = albumStickers.map(sticker => {
       const updatedSticker = stickersToUpdate.find(s => s.id === sticker.id);
       return updatedSticker || sticker;
     });
     
-    setStickerData(updatedStickers, { albumId, action: 'bulkUpdate' });
+    // Use basic operations to set sticker data for this album only
+    const { setStickerData } = require('./basic-operations');
+    setStickerData(updatedAlbumStickers, { albumId, action: 'bulkUpdate' });
     
     // Trigger immediate UI refresh with multiple events for different components
     setTimeout(() => {

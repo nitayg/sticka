@@ -8,4 +8,3 @@ export const importStickersFromCSV = async (
   const { importStickersFromCSV: importFunc } = await import('../../data');
   return importFunc(albumId, data);
 };
-

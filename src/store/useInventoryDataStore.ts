@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { fetchExchangeOffers } from '@/lib/supabase';
 import { getStickersByAlbumId, addStickersToInventory } from '@/lib/sticker-operations';
 import { useIntakeLogStore } from './useIntakeLogStore';
-import { getAlbumById } from '@/lib/data';
+import { getAlbumById } from '@/lib/album-operations';
 
 // Define a type for the cached stickers
 interface CachedStickersData {
@@ -16,7 +16,7 @@ interface InventoryDataState {
   selectedAlbumId: string;
   refreshKey: number;
   transactionMap: Record<string, { person: string, color: string }>;
-  cachedStickers: Record<string, CachedStickersData | undefined>; // Updated type definition
+  cachedStickers: Record<string, CachedStickersData | undefined>; 
   lastRefreshTimestamp: number; // Track last refresh time for throttling
   lastExchangeOffersRefresh: number; // Track exchange offers refresh time
   cachedExchangeOffers: any[] | null; // Cache exchange offers
@@ -126,7 +126,7 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
       
       console.log(`Found ${relevantExchanges.length} relevant exchanges for album ${albumId}`);
       
-      // Only fetch stickers once - caching to reduce egress
+      // Only fetch stickers for this album - caching to reduce egress
       const { cachedStickers } = get();
       let albumStickers;
       

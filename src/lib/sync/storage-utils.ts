@@ -1,4 +1,6 @@
+
 import { StorageEvents } from './constants';
+import { saveToMemory, getFromMemory } from './memory-storage';
 
 // Filter out soft-deleted items for display
 export const filterDeleted = <T>(items: T[]): T[] => {
@@ -9,34 +11,40 @@ export const filterDeleted = <T>(items: T[]): T[] => {
   });
 };
 
-// Save data directly to Supabase without using localStorage
+// Save data to memory instead of localStorage
 export const saveToStorage = <T>(key: string, data: T): void => {
   try {
-    // Save to localStorage
-    localStorage.setItem(key, JSON.stringify(data));
+    // Save only to localStorage for small data (< 100KB) for cross-tab sync
+    // This helps prevent quota issues while still allowing basic cross-tab functionality
+    const serialized = JSON.stringify(data);
+    if (serialized.length < 100000) {
+      try {
+        localStorage.setItem(key, serialized);
+      } catch (error) {
+        console.warn(`Could not save to localStorage (likely quota exceeded): ${error}`);
+      }
+    }
+    
+    // Always save to in-memory storage
+    saveToMemory(key, data);
     
     // Update in-memory state
     setMemoryStorage(key, data);
     
-    // Dispatch event for cross-tab synchronization with proper typing
-    const event = new StorageEvent('storage', {
-      key: key,
-      newValue: JSON.stringify(data),
-      storageArea: localStorage
-    });
-    window.dispatchEvent(event);
-    
-    // Additional custom event for better reactivity
-    window.dispatchEvent(new CustomEvent(`${key}Updated`, { 
-      detail: {
-        data,
-        timestamp: Date.now()
+    // Dispatch event for cross-tab synchronization
+    if (typeof window !== 'undefined') {
+      // Custom event for better reactivity
+      window.dispatchEvent(new CustomEvent(`${key}Updated`, { 
+        detail: {
+          data,
+          timestamp: Date.now()
+        }
+      }));
+      
+      // Force refresh for all components that need it
+      if (key === 'stickers') {
+        window.dispatchEvent(new CustomEvent('forceRefresh'));
       }
-    }));
-    
-    // Force refresh for all components that need it
-    if (key === 'stickers') {
-      window.dispatchEvent(new CustomEvent('forceRefresh'));
     }
   } catch (error) {
     console.error(`Error saving to storage: ${error}`);
@@ -74,10 +82,6 @@ const dispatchDataChangeEvents = <T>(key: string, data: T): void => {
       window.dispatchEvent(new CustomEvent('stickerDataChanged'));
       window.dispatchEvent(new CustomEvent('forceRefresh'));
     }, 100);
-    
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('forceRefresh'));
-    }, 500);
   } 
   else if (key === 'albums') {
     console.log('Dispatching albumDataChanged event after saving albums');
@@ -112,6 +116,25 @@ export const getFromStorage = <T>(key: string, defaultValue: T, includeDeleted =
       return data;
     }
     
+    // Try to get from in-memory first (which is our primary storage now)
+    const memoryData = getFromMemory<T>(key, defaultValue);
+    if (memoryData !== defaultValue) {
+      return memoryData;
+    }
+
+    // If not in memory, try localStorage as fallback for small data
+    try {
+      const storedValue = localStorage.getItem(key);
+      if (storedValue) {
+        const parsedValue = JSON.parse(storedValue) as T;
+        // Also save to memory for future access
+        setMemoryStorage(key, parsedValue);
+        return parsedValue;
+      }
+    } catch (error) {
+      console.warn(`Error reading from localStorage: ${error}`);
+    }
+    
     return defaultValue;
   } catch (error) {
     console.error(`Error getting ${key} from storage:`, error);
@@ -122,6 +145,7 @@ export const getFromStorage = <T>(key: string, defaultValue: T, includeDeleted =
 // Set data to in-memory storage
 export const setMemoryStorage = <T>(key: string, data: T): void => {
   memoryStorage[key] = data;
+  saveToMemory(key, data);
 };
 
 // Track connection state
@@ -149,6 +173,9 @@ export const clearAllStorageData = (): void => {
       delete memoryStorage[key];
     }
     
+    // Also clear our dedicated memory storage
+    clearAllMemory();
+    
     console.log('Cleared all in-memory storage data');
     
     // Trigger a sync event to reload data from Supabase
@@ -168,6 +195,7 @@ import {
   saveExchangeOfferBatch
 } from '../supabase';
 import { Album, Sticker, User, ExchangeOffer } from '../types';
+import { clearAllMemory } from './memory-storage';
 
 // Sync data to Supabase
 export const sendToSupabase = async <T>(key: string, data: T): Promise<void> => {
