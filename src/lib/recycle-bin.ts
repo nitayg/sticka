@@ -5,7 +5,7 @@ import { saveToStorage, getFromStorage } from './sync';
 import { setAlbumData, getAlbumData } from './album-operations';
 import { getStickerData, setStickerData } from './sticker-operations';
 
-// RecycledItem type definition
+// נשמור אלבומים שנמחקו בסל המיחזור
 export type RecycledItem = {
   id: string;
   item: Album;
@@ -13,32 +13,32 @@ export type RecycledItem = {
   deletedAt: number;
 };
 
-// Get the recycle bin from storage or create a new one if it doesn't exist
+// קבל את סל המיחזור מהאחסון או צור חדש אם אינו קיים
 export const getRecycleBin = (): RecycledItem[] => {
   return getFromStorage<RecycledItem[]>('recycleBin', []);
 };
 
-// Save the recycle bin to storage
+// שמור את סל המיחזור באחסון
 export const saveRecycleBin = (recycleBin: RecycledItem[]): void => {
   saveToStorage('recycleBin', recycleBin);
 };
 
-// Move an album to the recycle bin and delete it from active data
+// העבר אלבום לסל המיחזור ומחק אותו מהנתונים הפעילים
 export const moveAlbumToRecycleBin = (albumId: string): void => {
-  // Find the album to move to the recycle bin
+  // מצא את האלבום שצריך להעביר לסל המיחזור
   const albums = getAlbumData();
   const albumToDelete = albums.find(album => album.id === albumId);
   
   if (!albumToDelete) {
-    console.error('Album not found:', albumId);
+    console.error('האלבום לא נמצא:', albumId);
     return;
   }
   
-  // Find all stickers related to this album
+  // מצא את כל המדבקות הקשורות לאלבום זה
   const stickers = getStickerData();
   const relatedStickers = stickers.filter(sticker => sticker.albumId === albumId);
   
-  // Add the album and its stickers to the recycle bin
+  // הוסף את האלבום והמדבקות שלו לסל המיחזור
   const recycleBin = getRecycleBin();
   recycleBin.push({
     id: albumId,
@@ -48,8 +48,8 @@ export const moveAlbumToRecycleBin = (albumId: string): void => {
   });
   saveRecycleBin(recycleBin);
   
-  // Remove the album and its stickers from active data
-  // but mark them as deleted instead of completely removing them
+  // הסר את האלבום והמדבקות שלו מהנתונים הפעילים
+  // אבל סמן אותם כמחוקים במקום למחוק לגמרי
   setAlbumData(albums.map(album => 
     album.id === albumId 
       ? { ...album, isDeleted: true, lastModified: Date.now() } 
@@ -62,23 +62,23 @@ export const moveAlbumToRecycleBin = (albumId: string): void => {
       : sticker
   ));
   
-  // Dispatch a custom event to notify components that album data has changed
+  // הפעל אירוע מותאם אישית כדי להודיע לרכיבים שנתוני האלבום השתנו
   window.dispatchEvent(new CustomEvent('albumDataChanged'));
   window.dispatchEvent(new CustomEvent('recycleBinChanged'));
 };
 
-// Permanently delete an album from the recycle bin
+// מחק אלבום לצמיתות מסל המיחזור
 export const deleteAlbumPermanently = (albumId: string): void => {
   const recycleBin = getRecycleBin();
   const updatedRecycleBin = recycleBin.filter(item => item.id !== albumId);
   saveRecycleBin(updatedRecycleBin);
   
-  // Make sure the album is actually deleted from album data
+  // וודא שהאלבום באמת נמחק מנתוני האלבומים
   const albums = getAlbumData();
   const albumToDelete = albums.find(album => album.id === albumId);
   
   if (albumToDelete) {
-    // Completely remove the album from the system
+    // מחק לגמרי את האלבום מהמערכת
     setAlbumData(albums.filter(album => album.id !== albumId));
     setStickerData(getStickerData().filter(sticker => sticker.albumId !== albumId));
   }
@@ -87,17 +87,17 @@ export const deleteAlbumPermanently = (albumId: string): void => {
   window.dispatchEvent(new CustomEvent('albumDataChanged'));
 };
 
-// Restore an album from the recycle bin
+// שחזר אלבום מסל המיחזור
 export const restoreAlbumFromRecycleBin = (albumId: string): void => {
   const recycleBin = getRecycleBin();
   const itemToRestore = recycleBin.find(item => item.id === albumId);
   
   if (!itemToRestore) {
-    console.error('Item not found in recycle bin:', albumId);
+    console.error('פריט לא נמצא בסל המיחזור:', albumId);
     return;
   }
   
-  // Restore the album and its stickers to active data
+  // שחזר את האלבום והמדבקות שלו לנתונים הפעילים
   const albums = getAlbumData();
   const restoredAlbum = { 
     ...itemToRestore.item, 
@@ -105,20 +105,20 @@ export const restoreAlbumFromRecycleBin = (albumId: string): void => {
     lastModified: Date.now() 
   };
   
-  // Check if the album exists in the system (in a deleted state)
+  // בדוק אם האלבום קיים במערכת (במצב מחוק)
   const existingAlbumIndex = albums.findIndex(album => album.id === albumId);
   
   if (existingAlbumIndex >= 0) {
-    // If the album exists, update its status
+    // אם האלבום קיים, עדכן את הסטטוס שלו
     const updatedAlbums = [...albums];
     updatedAlbums[existingAlbumIndex] = restoredAlbum;
     setAlbumData(updatedAlbums);
   } else {
-    // If the album doesn't exist, add it back
+    // אם האלבום לא קיים, הוסף אותו מחדש
     setAlbumData([...albums, restoredAlbum]);
   }
   
-  // Restore the stickers
+  // שחזר את המדבקות
   const stickers = getStickerData();
   const restoredStickers = itemToRestore.relatedStickers.map(sticker => ({
     ...sticker,
@@ -126,33 +126,33 @@ export const restoreAlbumFromRecycleBin = (albumId: string): void => {
     lastModified: Date.now()
   }));
   
-  // Add the restored stickers
+  // הוסף את המדבקות המשוחזרות
   const newStickers = [...stickers];
   
   for (const restoredSticker of restoredStickers) {
     const existingStickerIndex = newStickers.findIndex(s => s.id === restoredSticker.id);
     
     if (existingStickerIndex >= 0) {
-      // If the sticker exists, update its status
+      // אם המדבקה קיימת, עדכן את הסטטוס שלה
       newStickers[existingStickerIndex] = restoredSticker;
     } else {
-      // If the sticker doesn't exist, add it
+      // אם המדבקה לא קיימת, הוסף אותה
       newStickers.push(restoredSticker);
     }
   }
   
   setStickerData(newStickers);
   
-  // Remove the item from the recycle bin
+  // הסר את הפריט מסל המיחזור
   const updatedRecycleBin = recycleBin.filter(item => item.id !== albumId);
   saveRecycleBin(updatedRecycleBin);
   
-  // Dispatch custom events to notify components that data has changed
+  // הפעל אירועים מותאמים אישית כדי להודיע לרכיבים שהנתונים השתנו
   window.dispatchEvent(new CustomEvent('albumDataChanged'));
   window.dispatchEvent(new CustomEvent('recycleBinChanged'));
 };
 
-// Empty the recycle bin
+// נקה את סל המיחזור
 export const emptyRecycleBin = (): void => {
   saveRecycleBin([]);
   window.dispatchEvent(new CustomEvent('recycleBinChanged'));

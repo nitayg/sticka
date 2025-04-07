@@ -1,59 +1,49 @@
-
-import { useEffect, useState } from 'react';
-import { initializeFromStorage } from '../lib/sync';
+import { useEffect } from 'react';
+import { StorageEvents } from '@/lib/sync';
+import { setAlbumData } from '@/lib/album-operations';
+import { setStickerData } from '@/lib/sticker-operations';
 import { useToast } from './ui/use-toast';
 
-interface SyncInitializerProps {
-  onError?: (error: Error) => void;
-}
-
-const SyncInitializer = ({ onError }: SyncInitializerProps) => {
-  const [initStarted, setInitStarted] = useState(false);
+// This component is being replaced by SyncProvider, but we're keeping it for backward compatibility
+// We'll only listen to events here, not initialize storage
+const SyncInitializer = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Prevent multiple initialization attempts
-    if (initStarted) return;
-    
-    setInitStarted(true);
-    
-    // Set a safety timeout
-    const safetyTimeout = setTimeout(() => {
-      console.warn('Sync initialization timeout reached');
-      onError?.(new Error('Sync initialization timed out'));
-    }, 10000);
-    
-    // Initialize data sync
-    initializeFromStorage()
-      .then(() => {
-        clearTimeout(safetyTimeout);
-        console.log('Sync initialized successfully');
-      })
-      .catch(error => {
-        clearTimeout(safetyTimeout);
-        console.error('Error initializing sync:', error);
-        
-        // Call onError callback if provided
-        if (onError) {
-          onError(error);
-        }
-        
-        // Show error toast
-        toast({
-          title: 'שגיאת סנכרון',
-          description: 'אירעה שגיאה באתחול הסנכרון. האפליקציה תפעל במצב מנותק.',
-          variant: 'destructive',
-        });
-      });
-    
-    // Cleanup function
-    return () => {
-      clearTimeout(safetyTimeout);
+    // Listen for albums updated
+    const handleAlbumsUpdated = (event: any) => {
+      if (event.detail) {
+        setAlbumData(event.detail);
+        console.log('Albums updated from another tab/window');
+      }
     };
-  }, [onError, toast, initStarted]);
 
-  // This is a utility component, it doesn't render anything
-  return null;
+    // Listen for stickers updated
+    const handleStickersUpdated = (event: any) => {
+      if (event.detail) {
+        setStickerData(event.detail);
+        console.log('Stickers updated from another tab/window');
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener(StorageEvents.ALBUMS, handleAlbumsUpdated);
+    window.addEventListener(StorageEvents.STICKERS, handleStickersUpdated);
+
+    // Show sync ready toast
+    toast({
+      title: "סנכרון מוכן",
+      description: "נתונים יסונכרנו בין לשוניות ובין הפעלות מחדש",
+    });
+
+    // Cleanup event listeners
+    return () => {
+      window.removeEventListener(StorageEvents.ALBUMS, handleAlbumsUpdated);
+      window.removeEventListener(StorageEvents.STICKERS, handleStickersUpdated);
+    };
+  }, [toast]);
+
+  return null; // This component doesn't render anything
 };
 
 export default SyncInitializer;
