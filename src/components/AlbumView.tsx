@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAlbumStore } from "@/store/useAlbumStore";
 import AlbumHeader from "./album/AlbumHeader";
 import FilterControls from "./album/FilterControls";
@@ -25,6 +25,7 @@ const AlbumView = () => {
   
   const [hasAttemptedRefresh, setHasAttemptedRefresh] = useState(false);
   const [forceRefreshCount, setForceRefreshCount] = useState(0);
+  const [isLoadingTimeout, setIsLoadingTimeout] = useState(false);
   
   const { 
     albums = [], 
@@ -70,6 +71,29 @@ const AlbumView = () => {
     }
   }, [albums, selectedAlbumId, handleAlbumChange]);
   
+  // Throttled refresh function to prevent excessive API calls
+  const throttledRefresh = useCallback(() => {
+    const lastRefreshTime = parseInt(localStorage.getItem('lastRefreshTimestamp') || '0');
+    const now = Date.now();
+    
+    // Only allow refresh every 10 seconds to prevent EGRESS abuse
+    if (now - lastRefreshTime > 10000) {
+      localStorage.setItem('lastRefreshTimestamp', now.toString());
+      handleRefresh();
+      setForceRefreshCount(count => count + 1);
+      
+      // Show a toast only on explicit refreshes
+      if (forceRefreshCount > 1) {
+        toast({
+          title: "נסיון לטעון אלבומים",
+          description: "מנסה לטעון את האלבומים שלך...",
+        });
+      }
+    } else {
+      console.log("[AlbumView] Refresh throttled to prevent EGRESS abuse");
+    }
+  }, [forceRefreshCount, handleRefresh]);
+  
   // Force a refresh if we have no albums but should have
   useEffect(() => {
     if (albums.length === 0 && !isLoading && !hasAttemptedRefresh) {
@@ -79,21 +103,12 @@ const AlbumView = () => {
       
       // Add a small delay before refreshing
       const timer = setTimeout(() => {
-        handleRefresh();
-        setForceRefreshCount(count => count + 1);
-        
-        // Show a toast to let the user know we're trying to fix the issue
-        if (forceRefreshCount > 1) {
-          toast({
-            title: "נסיון לטעון אלבומים",
-            description: "מנסה לטעון את האלבומים שלך...",
-          });
-        }
+        throttledRefresh();
       }, 1500);
       
       return () => clearTimeout(timer);
     }
-  }, [albums, isLoading, handleRefresh, hasAttemptedRefresh, forceRefreshCount]);
+  }, [albums, isLoading, throttledRefresh, hasAttemptedRefresh]);
   
   // Reset the refresh attempt flag if loading state changes or albums are loaded
   useEffect(() => {
@@ -101,6 +116,19 @@ const AlbumView = () => {
       setHasAttemptedRefresh(false);
     }
   }, [isLoading, albums]);
+  
+  // Set a timeout on loading to prevent infinite loading states
+  useEffect(() => {
+    if (isLoading) {
+      const timer = setTimeout(() => {
+        setIsLoadingTimeout(true);
+      }, 10000); // Show timeout message after 10 seconds of loading
+      
+      return () => clearTimeout(timer);
+    } else {
+      setIsLoadingTimeout(false);
+    }
+  }, [isLoading]);
   
   useEffect(() => {
     if (selectedAlbumId) {
@@ -112,29 +140,42 @@ const AlbumView = () => {
   useEffect(() => {
     const handleInventoryChanged = () => {
       console.log("Inventory data changed event received in AlbumView");
-      handleRefresh();
+      throttledRefresh();
     };
     
     window.addEventListener('inventoryDataChanged', handleInventoryChanged);
     return () => {
       window.removeEventListener('inventoryDataChanged', handleInventoryChanged);
     };
-  }, [handleRefresh]);
+  }, [throttledRefresh]);
   
-  // Show more detailed loading indicator
+  // Show more detailed loading indicator with timeout
   if (isLoading) {
     return (
       <div className="space-y-4 animate-fade-in">
         <div className="flex items-center justify-center p-12 flex-col">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
           <div className="text-sm text-muted-foreground">טוען אלבומים...</div>
+          
+          {isLoadingTimeout && (
+            <div className="mt-4 p-4 bg-amber-50 text-amber-700 rounded-md text-center max-w-md">
+              <p className="font-semibold">הטעינה אורכת זמן רב</p>
+              <p className="text-xs mt-1">ייתכן שיש בעיה בחיבור לשרת או בטעינת הנתונים.</p>
+              <button 
+                onClick={throttledRefresh}
+                className="mt-2 px-4 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-md text-sm font-medium transition-colors"
+              >
+                נסה שוב
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
   }
   
   // Show a different state after multiple refresh attempts
-  if (albums.length === 0 && forceRefreshCount >= 3) {
+  if (albums.length === 0 && (forceRefreshCount >= 3 || isLoadingTimeout)) {
     return (
       <div className="space-y-4 animate-fade-in p-4">
         <EmptyState
@@ -147,14 +188,14 @@ const AlbumView = () => {
                 onClick={() => {
                   setForceRefreshCount(0);
                   setHasAttemptedRefresh(false);
-                  handleRefresh();
+                  throttledRefresh();
                 }}
                 className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
               >
                 נסה שוב
               </button>
               <div className="pt-2">
-                <AddAlbumForm onAlbumAdded={handleRefresh} />
+                <AddAlbumForm onAlbumAdded={throttledRefresh} />
               </div>
             </div>
           }
@@ -171,7 +212,7 @@ const AlbumView = () => {
           title="אין אלבומים פעילים"
           description="הוסף אלבום חדש כדי להתחיל"
           action={
-            <AddAlbumForm onAlbumAdded={handleRefresh} />
+            <AddAlbumForm onAlbumAdded={throttledRefresh} />
           }
         />
       </div>
@@ -195,7 +236,7 @@ const AlbumView = () => {
           selectedAlbumId={selectedAlbumId}
           viewMode={viewMode}
           showImages={showImages}
-          onRefresh={handleRefresh}
+          onRefresh={throttledRefresh}
           transactionMap={transactionMap}
           activeTab="number" // Default to number tab
           selectedRange={null}

@@ -1,6 +1,7 @@
 import { supabase } from "./supabase/client";
 import { Sticker } from "./types";
 import { getStickersByAlbumId } from "./stickers/basic-operations";
+import { getAllAlbums } from "./album-operations";
 
 // Optimized query to fetch stickers for a specific album
 export const fetchStickersByAlbumId = async (albumId: string): Promise<Sticker[]> => {
@@ -52,7 +53,7 @@ export const fetchStickersByAlbumId = async (albumId: string): Promise<Sticker[]
     console.log(`[QUERY] Fetched ${stickers.length} stickers from Supabase for album ${albumId}`);
     
     // Cache the stickers locally for future use
-    const { setStickerData } = require("./stickers/basic-operations");
+    const { setStickerData } = await import("./stickers/basic-operations");
     setStickerData(stickers, { albumId, action: 'fetch' });
     
     return stickers;
@@ -160,13 +161,12 @@ export const fetchAlbumStats = async (albumId: string): Promise<{
   }
 };
 
-// Add the missing fetchAllAlbums function
+// Updated fetchAllAlbums function without using require
 export const fetchAllAlbums = async () => {
   try {
     console.log("[QUERY] Fetching all albums");
     
     // First check if we have albums in memory cache
-    const { getAllAlbums } = require("./album-operations");
     const localAlbums = getAllAlbums();
     
     if (localAlbums && localAlbums.length > 0) {

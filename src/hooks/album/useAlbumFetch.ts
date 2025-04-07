@@ -2,11 +2,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllAlbums } from "@/lib/queries";
 import { fetchExchangeOffers } from "@/lib/supabase";
+import { useState, useEffect } from "react";
 
 /**
  * Custom hook for fetching album and exchange data
  */
 export const useAlbumFetch = (refreshKey: number) => {
+  const [localAlbums, setLocalAlbums] = useState<any[]>([]);
+  
   // Fetch albums with better error handling
   const { data: albums = [], isLoading: isAlbumsLoading } = useQuery({
     queryKey: ['albums', refreshKey],
@@ -22,6 +25,28 @@ export const useAlbumFetch = (refreshKey: number) => {
     }
   });
   
+  // Attempt to get albums from local cache if React Query fails
+  useEffect(() => {
+    if (albums.length === 0 && !isAlbumsLoading) {
+      // Try to get albums from localStorage as fallback
+      const cachedAlbums = localStorage.getItem('albums');
+      if (cachedAlbums) {
+        try {
+          const parsedAlbums = JSON.parse(cachedAlbums);
+          if (Array.isArray(parsedAlbums) && parsedAlbums.length > 0) {
+            console.log("[useAlbumFetch] Using cached albums from localStorage:", parsedAlbums.length);
+            setLocalAlbums(parsedAlbums);
+          }
+        } catch (e) {
+          console.error("[useAlbumFetch] Error parsing cached albums:", e);
+        }
+      }
+    }
+  }, [albums, isAlbumsLoading]);
+  
+  // Use local albums if available and React Query didn't return any
+  const effectiveAlbums = albums.length > 0 ? albums : localAlbums;
+  
   // Fetch exchange offers
   const { data: exchangeOffers = [], isLoading: isExchangesLoading } = useQuery({
     queryKey: ['exchangeOffers', refreshKey],
@@ -30,7 +55,7 @@ export const useAlbumFetch = (refreshKey: number) => {
       return offers.filter(offer => !offer.isDeleted);
     },
     retry: 2,
-    enabled: albums.length > 0, // Only fetch exchanges if we have albums
+    enabled: effectiveAlbums.length > 0, // Only fetch exchanges if we have albums
     staleTime: 120000, // 2 minutes
     meta: {
       onError: (error: Error) => {
@@ -39,12 +64,23 @@ export const useAlbumFetch = (refreshKey: number) => {
     }
   });
 
-  console.log("[useAlbumFetch] Albums loaded:", albums.length);
+  console.log("[useAlbumFetch] Albums loaded:", effectiveAlbums.length);
+
+  // Cache albums in localStorage for resilience
+  useEffect(() => {
+    if (albums.length > 0) {
+      try {
+        localStorage.setItem('albums', JSON.stringify(albums));
+      } catch (e) {
+        console.error("[useAlbumFetch] Error caching albums:", e);
+      }
+    }
+  }, [albums]);
 
   return {
-    albums,
+    albums: effectiveAlbums,
     exchangeOffers,
-    isAlbumsLoading,
+    isAlbumsLoading: isAlbumsLoading && localAlbums.length === 0,
     isExchangesLoading
   };
 };
