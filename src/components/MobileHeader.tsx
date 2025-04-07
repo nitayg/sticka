@@ -6,7 +6,6 @@ import SettingsButton from "./settings/SettingsButton";
 import ViewModeToggle from "./ViewModeToggle";
 import { useAlbumStore } from "@/store/useAlbumStore";
 import SyncIndicator from "./SyncIndicator";
-import EgressMonitor from "./EgressMonitor";
 
 interface MobileHeaderProps {
   isMenuOpen: boolean;
@@ -40,9 +39,6 @@ const MobileHeader = ({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) => {
         {/* Left side - Action buttons */}
         <div className="flex items-center space-x-1 rtl:space-x-reverse order-2">
           <SyncIndicator headerPosition={true} />
-          
-          {/* משתמש בגלובל סטייט בתוך הקומפוננטה */}
-          <EgressMonitor inHeader={true} />
           
           <Button
             variant="ghost"
