@@ -1,6 +1,6 @@
 
 import { lazy, Suspense, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Layout from "@/components/Layout";
 
 // Lazy-loaded components
@@ -35,22 +35,20 @@ const RouteChangeTracker = () => {
 
 const Index = () => {
   return (
-    <Router>
-      <Layout>
-        <RouteChangeTracker />
-        <Suspense fallback={<PageLoadingFallback />}>
-          <Routes>
-            <Route path="/" element={<AlbumView />} />
-            <Route path="/inventory" element={<InventoryView />} />
-            <Route path="/inventory/history" element={<IntakeHistoryView />} />
-            <Route path="/exchange" element={<ExchangeView />} />
-            <Route path="/scan" element={<ScanView />} />
-            <Route path="/clubs" element={<ClubsPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-      </Layout>
-    </Router>
+    <Layout>
+      <RouteChangeTracker />
+      <Suspense fallback={<PageLoadingFallback />}>
+        <Routes>
+          <Route path="/" element={<AlbumView />} />
+          <Route path="/inventory" element={<InventoryView />} />
+          <Route path="/inventory/history" element={<IntakeHistoryView />} />
+          <Route path="/exchange" element={<ExchangeView />} />
+          <Route path="/scan" element={<ScanView />} />
+          <Route path="/clubs" element={<ClubsPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
+    </Layout>
   );
 };
 

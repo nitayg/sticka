@@ -2,14 +2,14 @@
 import { Suspense, lazy } from "react";
 import { useEffect } from "react";
 import { Toaster } from "./components/ui/toaster";
-import { Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout";
 import SyncProvider from "./components/SyncProvider";
 import SyncInitializer from "./components/SyncInitializer";
 import LoadingIndicator from "./components/LoadingIndicator";
 
 // Lazy load main components for better performance
-const AlbumView = lazy(() => import("./components/album/AlbumView"));
+const AlbumView = lazy(() => import("./components/AlbumView"));
 const AddStickerForm = lazy(() => import("./components/AddStickerForm"));
 const TeamManagementTab = lazy(() => import("./components/team-management"));
 
@@ -27,27 +27,29 @@ function App() {
   }, []);
 
   return (
-    <SyncProvider notifications={false}>
-      <Suspense fallback={<LoadingIndicator text="טוען..." />}>
-        <Routes>
-          <Route element={<Layout><div></div></Layout>}>
-            <Route path="/" element={<AlbumView />} />
-            <Route path="/add" element={<AddStickerForm />} />
-            <Route path="/teams" element={
-              <TeamManagementTab 
-                teams={[]} 
-                teamLogos={{}} 
-                onTeamSelect={() => {}} 
-                selectedTeam="" 
-                onTeamsUpdate={() => {}}
-              />
-            } />
-          </Route>
-        </Routes>
-      </Suspense>
-      <Toaster />
-      <SyncInitializer />
-    </SyncProvider>
+    <BrowserRouter>
+      <SyncProvider notifications={false}>
+        <Suspense fallback={<LoadingIndicator text="טוען..." />}>
+          <Routes>
+            <Route element={<Layout><div></div></Layout>}>
+              <Route path="/" element={<AlbumView />} />
+              <Route path="/add" element={<AddStickerForm />} />
+              <Route path="/teams" element={
+                <TeamManagementTab 
+                  teams={[]} 
+                  teamLogos={{}} 
+                  onTeamSelect={() => {}} 
+                  selectedTeam="" 
+                  onTeamsUpdate={() => {}}
+                />
+              } />
+            </Route>
+          </Routes>
+        </Suspense>
+        <Toaster />
+        <SyncInitializer />
+      </SyncProvider>
+    </BrowserRouter>
   );
 }
 
