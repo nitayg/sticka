@@ -8,5 +8,8 @@ export const StorageEvents = {
   SYNC_COMPLETE: 'sync-complete',
   SYNC_START: 'sync-start',
   SYNC_ERROR: 'sync-error',
-  DATA_CHANGED: 'data-changed'
+  DATA_CHANGED: 'data-changed',
+  REALTIME_ERROR: 'realtime-error',
+  REALTIME_CONNECTED: 'realtime-connected',
+  IMPORT_COMPLETE: 'import-complete' // Add this new event for import completion
 };

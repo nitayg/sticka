@@ -3,6 +3,7 @@ import { Sticker } from '../../types';
 import { generateId } from '../../utils';
 import { getStickerData, setStickerData } from '../basic-operations';
 import { processStickerBatches } from './batch-processing';
+import { StorageEvents } from '../../sync/constants';
 
 // Import stickers from CSV
 export const importStickersFromCSV = async (albumId: string, data: [number | string, string, string][]): Promise<Sticker[]> => {
@@ -80,11 +81,24 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
       const updatedStickers = [...allStickers, ...savedStickers];
       setStickerData(updatedStickers);
       
-      // Trigger events
+      // Trigger events with improved sequence and explicit details
       if (typeof window !== 'undefined') {
         console.log(`Dispatching sticker data changed events for ${savedStickers.length} new stickers`);
         
-        // Dispatch the specific event
+        // Dispatch the import-specific event first (new)
+        window.dispatchEvent(new CustomEvent(StorageEvents.IMPORT_COMPLETE, { 
+          detail: { 
+            albumId, 
+            count: savedStickers.length 
+          } 
+        }));
+        
+        // Dispatch the general stickers updated event
+        window.dispatchEvent(new CustomEvent(StorageEvents.STICKERS, { 
+          detail: updatedStickers 
+        }));
+        
+        // Dispatch the specific event for UI components
         window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
           detail: { 
             albumId, 
@@ -95,6 +109,9 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
         
         // Dispatch a general refresh event
         window.dispatchEvent(new CustomEvent('forceRefresh'));
+        
+        // Fix: Ensure we also dispatch DATA_CHANGED event for broader system components
+        window.dispatchEvent(new CustomEvent(StorageEvents.DATA_CHANGED));
       }
       
       return savedStickers;
