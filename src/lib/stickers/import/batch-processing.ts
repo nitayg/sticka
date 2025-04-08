@@ -56,7 +56,10 @@ export async function processStickerBatches(
           await new Promise(resolve => setTimeout(resolve, backoffDelay));
         }
         
+        // Attempt to save the batch and capture detailed response
         const result = await saveStickerBatch(batch);
+        
+        // Improved error reporting
         if (!result) {
           console.error(`Failed to save batch ${Math.floor(i/BATCH_SIZE) + 1}, retry ${retries + 1}/${MAX_RETRIES}`);
           retries++;

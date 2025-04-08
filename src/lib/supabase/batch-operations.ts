@@ -29,17 +29,22 @@ export async function saveBatch<T extends { id: string }>(
           await new Promise(resolve => setTimeout(resolve, delayMs));
         }
 
-        const { error } = await supabase
+        // Detailed error catching for Supabase operation
+        const { data, error } = await supabase
           .from(tableName)
           .upsert(chunk, {
             onConflict: 'id',
             ignoreDuplicates: false,
           });
 
+        // Improved error logging with detailed information
         if (error) {
           console.error(
             `Error saving batch to ${tableName} (chunk ${Math.floor(i/chunkSize) + 1}/${Math.ceil(items.length/chunkSize)}):`,
-            error
+            error.message,
+            error.details,
+            error.hint,
+            error.code
           );
           
           // If we hit an egress limit or rate limit error, add a longer delay
@@ -50,7 +55,7 @@ export async function saveBatch<T extends { id: string }>(
           
           allSuccess = false;
         } else {
-          console.log(`Successfully saved chunk ${Math.floor(i/chunkSize) + 1}/${Math.ceil(items.length/chunkSize)} to ${tableName}`);
+          console.log(`Successfully saved chunk ${Math.floor(i/chunkSize) + 1}/${Math.ceil(items.length/chunkSize)} to ${tableName}, received: `, data?.length || 0, " rows");
         }
       } catch (chunkError) {
         console.error(`Exception in chunk ${Math.floor(i/chunkSize) + 1}/${Math.ceil(items.length/chunkSize)}:`, chunkError);

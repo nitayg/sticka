@@ -120,7 +120,7 @@ export async function saveSticker(sticker: Sticker) {
     .upsert(supabaseSticker, { onConflict: 'id' })
     .select('*');
   if (error) {
-    console.error('Error saving sticker:', error);
+    console.error('Error saving sticker:', error.message, error.details, error.hint);
     return false;
   }
   return true;
@@ -185,5 +185,30 @@ export async function saveStickerBatch(stickers: Sticker[]) {
     };
   });
   
-  return await saveBatch('stickers', adjustedItems);
+  // Try direct Supabase operation with explicit error reporting
+  try {
+    const { data, error } = await supabase
+      .from('stickers')
+      .upsert(adjustedItems, { onConflict: 'id' });
+    
+    if (error) {
+      console.error("ERROR SAVING STICKERS TO SUPABASE:", error.message);
+      console.error("ERROR DETAILS:", error.details);
+      console.error("ERROR HINT:", error.hint);
+      console.error("ERROR CODE:", error.code);
+      
+      // Fall back to batch operation which has retry logic
+      console.log("Falling back to batch operation with retries...");
+      return await saveBatch('stickers', adjustedItems);
+    } else {
+      console.log("SUPABASE SAVE SUCCESS! Saved", adjustedItems.length, "stickers directly");
+      return true;
+    }
+  } catch (directError) {
+    console.error("DIRECT SUPABASE ERROR:", directError);
+    
+    // Fall back to batch operation which has retry logic
+    console.log("Falling back to batch operation after exception...");
+    return await saveBatch('stickers', adjustedItems);
+  }
 }

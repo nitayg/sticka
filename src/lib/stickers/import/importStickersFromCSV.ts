@@ -64,7 +64,21 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
   });
   
   if (newStickers.length === 0) {
-    console.warn('No new stickers to import');
+    console.warn('No new stickers to import - all already exist in album');
+    
+    // Even with no new stickers, dispatch events so UI knows import completed
+    if (typeof window !== 'undefined') {
+      // Dispatch the import-specific event
+      window.dispatchEvent(new CustomEvent(StorageEvents.IMPORT_COMPLETE, { 
+        detail: { 
+          albumId, 
+          count: 0 
+        } 
+      }));
+      
+      window.dispatchEvent(new CustomEvent('forceRefresh'));
+    }
+    
     return [];
   }
   
@@ -115,11 +129,37 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
       }
       
       return savedStickers;
+    } else {
+      console.error("CRITICAL ERROR: No stickers were saved to Supabase despite processing");
+      
+      // Even with error, dispatch events so UI knows import completed (with error)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent(StorageEvents.IMPORT_COMPLETE, { 
+          detail: { 
+            albumId, 
+            count: 0,
+            error: true
+          } 
+        }));
+      }
+      
+      return [];
     }
-    
-    return [];
   } catch (error) {
     console.error(`Error importing stickers:`, error);
+    
+    // Dispatch error event
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(StorageEvents.IMPORT_COMPLETE, { 
+        detail: { 
+          albumId, 
+          count: 0,
+          error: true,
+          errorMessage: error?.message || "Unknown error during import"
+        } 
+      }));
+    }
+    
     throw error; 
   }
 };
