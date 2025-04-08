@@ -55,7 +55,9 @@ export async function saveBatch<T extends { id: string }>(
           
           allSuccess = false;
         } else {
-          console.log(`Successfully saved chunk ${Math.floor(i/chunkSize) + 1}/${Math.ceil(items.length/chunkSize)} to ${tableName}, received: `, data?.length || 0, " rows");
+          // Fix: Handle null data case properly with optional chaining and nullish coalescing
+          const rowCount = data?.length ?? 0;
+          console.log(`Successfully saved chunk ${Math.floor(i/chunkSize) + 1}/${Math.ceil(items.length/chunkSize)} to ${tableName}, received: ${rowCount} rows`);
         }
       } catch (chunkError) {
         console.error(`Exception in chunk ${Math.floor(i/chunkSize) + 1}/${Math.ceil(items.length/chunkSize)}:`, chunkError);
