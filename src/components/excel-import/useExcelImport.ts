@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { importStickersFromCSV } from "@/lib/stickers";
@@ -183,13 +182,24 @@ export const useExcelImport = ({ selectedAlbum, onImportComplete }: UseExcelImpo
             console.warn(`No stickers imported from batch ${batchNumber}`);
           }
         } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
           console.error(`Error importing batch ${batchNumber}:`, error);
-          // Continue with next batch even if this one fails
+          
+          // If this is a module loading error, show a more specific error
+          if (errorMessage.includes('Failed to fetch dynamically imported module') || 
+              errorMessage.includes('import') || 
+              errorMessage.includes('module')) {
+            setErrorMessage("שגיאה טכנית בטעינת מודול הייבוא. אנא נסו שוב או פנו לתמיכה.");
+            completeImport(false, allImportedStickers.length, dataToImport.length);
+            return; // Exit early on critical errors
+          }
+          
+          // Continue with next batch for non-critical errors
         }
       }
       
       if (allImportedStickers.length === 0) {
-        throw new Error("שגיאה בייבוא המדבקות לשרת. ייתכן שחלק מהמדבקות כבר קיימות או שיש בעיה בקובץ.");
+        throw new Error("שגיאה בייבוא המדבקות לשרת. אנא נסו שוב, ייתכן שיש בעיה זמנית.");
       }
       
       console.log(`Successfully imported ${allImportedStickers.length}/${dataToImport.length} stickers in total`);
@@ -199,11 +209,32 @@ export const useExcelImport = ({ selectedAlbum, onImportComplete }: UseExcelImpo
       
     } catch (error) {
       console.error("Error importing Excel:", error);
-      setErrorMessage(error instanceof Error ? error.message : "אירעה שגיאה בעת ייבוא המדבקות");
+      
+      // Provide more specific error messages based on error type
+      let errorDescription = "אירעה שגיאה בעת ייבוא המדבקות";
+      
+      if (error instanceof Error) {
+        const errorMessage = error.message;
+        
+        if (errorMessage.includes('Failed to fetch') || 
+            errorMessage.includes('import') || 
+            errorMessage.includes('module')) {
+          errorDescription = "שגיאה טכנית בטעינת מודול הייבוא. אנא נסו שוב או פנו לתמיכה.";
+        } else if (errorMessage.includes('exist') || 
+                 errorMessage.includes('duplicate')) {
+          errorDescription = "חלק מהמדבקות כבר קיימות באלבום.";
+        } else if (errorMessage.includes('limit') || 
+                 errorMessage.includes('egress') || 
+                 errorMessage.includes('exceeded')) {
+          errorDescription = "חריגה ממגבלות שימוש בשרת. נסו לייבא קובץ קטן יותר או לחכות מספר דקות ולנסות שוב.";
+        }
+      }
+      
+      setErrorMessage(errorDescription);
       
       toast({
         title: "שגיאה בייבוא",
-        description: error instanceof Error ? error.message : "אירעה שגיאה בעת ייבוא המדבקות",
+        description: errorDescription,
         variant: "destructive",
       });
       

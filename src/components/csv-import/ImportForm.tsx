@@ -9,6 +9,7 @@ import { ImportWarning } from "./ImportWarning";
 import { useCSVImport } from "@/hooks/useCSVImport";
 import { useState, useEffect } from "react";
 import { StorageEvents } from "@/lib/sync/constants";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface ImportFormProps {
   albumId: string;
@@ -92,7 +93,18 @@ export const ImportForm = ({
       )}
       
       {errorDetails && !isLoading && (
-        <ImportError errorMessage={errorDetails} />
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>שגיאה בייבוא</AlertTitle>
+          <AlertDescription>
+            {errorDetails}
+            {errorDetails.includes('טכנית') || errorDetails.includes('מודול') ? (
+              <div className="mt-2 text-xs">
+                בעיה טכנית במערכת הייבוא. אנא נסו שוב מאוחר יותר או פנו לתמיכה.
+              </div>
+            ) : null}
+          </AlertDescription>
+        </Alert>
       )}
       
       {importResult && !isLoading && (
