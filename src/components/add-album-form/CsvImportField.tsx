@@ -21,6 +21,7 @@ const CsvImportField = ({ csvContent, setCsvContent }: CsvImportFieldProps) => {
     totalLines: number;
     alphanumericCount: number;
     numericCount: number;
+    encoding?: string;
   } | null>(null);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,75 +43,124 @@ const CsvImportField = ({ csvContent, setCsvContent }: CsvImportFieldProps) => {
       return;
     }
     
+    // Read file as ArrayBuffer for proper encoding detection
     const reader = new FileReader();
-    reader.onload = (e) => {
+    
+    // First try to detect encoding from the file
+    const arrayBufferReader = new FileReader();
+    arrayBufferReader.onload = (arrEvent) => {
       try {
-        const content = e.target?.result as string;
+        const buffer = arrEvent.target?.result as ArrayBuffer;
         
-        // Clean up the content - handle different line breaks and separators
-        const cleanedContent = content
-          .replace(/\r\n/g, '\n')
-          .replace(/\r/g, '\n')
-          .trim();
+        // Simple encoding detection
+        const bytes = new Uint8Array(buffer);
+        let detectedEncoding = 'utf-8';
         
-        setCsvContent(cleanedContent);
-        
-        // Quick validation of content
-        const lines = cleanedContent.split('\n').filter(line => line.trim().length > 0);
-        setLineCount(lines.length);
-        setFileName(selectedFile.name);
-        
-        // Get additional stats about the content
-        let alphanumericCount = 0;
-        let numericCount = 0;
-        
-        // Sample a few lines and analyze
-        const sampleSize = Math.min(100, lines.length);
-        const sampleLines = lines.slice(0, sampleSize);
-        
-        sampleLines.forEach(line => {
-          const fields = line.split(/[,;\t]/).map(field => field.trim());
-          if (fields.length > 0) {
-            const numberStr = fields[0];
-            if (/[a-zA-Z]/.test(numberStr)) {
-              alphanumericCount++;
-            } else if (/^\d+$/.test(numberStr)) {
-              numericCount++;
+        // Check for UTF-8 BOM
+        if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+          detectedEncoding = 'utf-8';
+        } 
+        // Check for Hebrew Windows-1255 encoding (rough heuristic)
+        else {
+          let hebrewCharsCount = 0;
+          for (let i = 0; i < Math.min(bytes.length, 1000); i++) {
+            if (bytes[i] >= 0xE0 && bytes[i] <= 0xFA) {
+              hebrewCharsCount++;
             }
           }
-        });
-        
-        // Extrapolate for large files
-        if (lines.length > sampleSize) {
-          const ratio = lines.length / sampleSize;
-          alphanumericCount = Math.round(alphanumericCount * ratio);
-          numericCount = Math.round(numericCount * ratio);
+          
+          if (hebrewCharsCount > 10) {
+            detectedEncoding = 'windows-1255';
+          }
         }
         
-        setFileInfo({
-          totalLines: lines.length,
-          alphanumericCount,
-          numericCount,
-        });
+        console.log(`Detected encoding: ${detectedEncoding}`);
         
-        // Sample a few lines to show in the console for debugging
-        const logSampleLines = lines.slice(0, 5);
-        console.log("CSV Sample lines:", logSampleLines);
-        
-        if (lines.length === 0) {
+        // Now read content with the detected encoding
+        const decoder = new TextDecoder(detectedEncoding);
+        try {
+          const content = decoder.decode(buffer);
+          
+          // Clean up the content - handle different line breaks and separators
+          const cleanedContent = content
+            .replace(/\r\n/g, '\n')
+            .replace(/\r/g, '\n')
+            .trim();
+          
+          setCsvContent(cleanedContent);
+          
+          // Quick validation of content
+          const lines = cleanedContent.split('\n').filter(line => line.trim().length > 0);
+          setLineCount(lines.length);
+          setFileName(selectedFile.name);
+          
+          // Get additional stats about the content
+          let alphanumericCount = 0;
+          let numericCount = 0;
+          
+          // Sample a few lines and analyze
+          const sampleSize = Math.min(100, lines.length);
+          const sampleLines = lines.slice(0, sampleSize);
+          
+          sampleLines.forEach(line => {
+            const fields = line.split(/[,;\t]/).map(field => field.trim());
+            if (fields.length > 0) {
+              const numberStr = fields[0];
+              if (/[a-zA-Z]/.test(numberStr)) {
+                alphanumericCount++;
+              } else if (/^\d+$/.test(numberStr)) {
+                numericCount++;
+              }
+            }
+          });
+          
+          // Extrapolate for large files
+          if (lines.length > sampleSize) {
+            const ratio = lines.length / sampleSize;
+            alphanumericCount = Math.round(alphanumericCount * ratio);
+            numericCount = Math.round(numericCount * ratio);
+          }
+          
+          setFileInfo({
+            totalLines: lines.length,
+            alphanumericCount,
+            numericCount,
+            encoding: detectedEncoding
+          });
+          
+          // Sample a few lines to show in the console for debugging
+          const logSampleLines = lines.slice(0, 5);
+          console.log("CSV Sample lines:", logSampleLines);
+          
+          if (lines.length === 0) {
+            toast({
+              title: "קובץ ריק",
+              description: "הקובץ שהעלית נראה ריק. אנא בדוק את תוכן הקובץ.",
+              variant: "destructive",
+              duration: 3000,
+            });
+          } else {
+            toast({
+              title: "הקובץ נקלט בהצלחה",
+              description: `${selectedFile.name} מוכן לייבוא עם ${lines.length} שורות (קידוד: ${detectedEncoding}).`,
+              duration: 3000,
+            });
+          }
+        } catch (decodeError) {
+          console.error("Error decoding file with detected encoding:", decodeError);
+          // Fallback to UTF-8
+          const fallbackDecoder = new TextDecoder('utf-8');
+          const fallbackContent = fallbackDecoder.decode(buffer);
+          setCsvContent(fallbackContent);
+          
           toast({
-            title: "קובץ ריק",
-            description: "הקובץ שהעלית נראה ריק. אנא בדוק את תוכן הקובץ.",
+            title: "אזהרת קידוד",
+            description: "זיהוי הקידוד נכשל, משתמש בקידוד UTF-8 כברירת מחדל",
             variant: "destructive",
             duration: 3000,
           });
-        } else {
-          toast({
-            title: "הקובץ נקלט בהצלחה",
-            description: `${selectedFile.name} מוכן לייבוא עם ${lines.length} שורות.`,
-            duration: 3000,
-          });
         }
+        
       } catch (error) {
         console.error("Error processing file:", error);
         toast({
@@ -125,7 +175,7 @@ const CsvImportField = ({ csvContent, setCsvContent }: CsvImportFieldProps) => {
       }
     };
     
-    reader.onerror = () => {
+    arrayBufferReader.onerror = () => {
       toast({
         title: "שגיאה בקריאת הקובץ",
         description: "אירעה שגיאה בעת קריאת הקובץ. אנא נסה שוב.",
@@ -136,7 +186,7 @@ const CsvImportField = ({ csvContent, setCsvContent }: CsvImportFieldProps) => {
       setIsLoading(false);
     };
     
-    reader.readAsText(selectedFile);
+    arrayBufferReader.readAsArrayBuffer(selectedFile);
   };
 
   const resetFileInput = () => {
@@ -164,7 +214,7 @@ const CsvImportField = ({ csvContent, setCsvContent }: CsvImportFieldProps) => {
         />
         <p className="text-xs text-muted-foreground text-right">
           פורמט הקובץ: מספר, שם, קבוצה/סדרה בכל שורה. 
-          המערכת תזהה באופן אוטומטי שורת כותרת אם קיימת.
+          המערכת תזהה באופן אוטומטי שורת כותרת אם קיימת ותתמוך בקבצים עם קידוד UTF-8 ו-Windows-1255.
         </p>
         
         {isLoading && (
@@ -201,6 +251,9 @@ const CsvImportField = ({ csvContent, setCsvContent }: CsvImportFieldProps) => {
                 {fileInfo && (
                   <div className="text-xs mt-1 text-muted-foreground">
                     <p>{fileInfo.numericCount} מספרים רגילים, {fileInfo.alphanumericCount} מספרים מיוחדים</p>
+                    {fileInfo.encoding && (
+                      <p>קידוד שזוהה: {fileInfo.encoding}</p>
+                    )}
                   </div>
                 )}
               </div>

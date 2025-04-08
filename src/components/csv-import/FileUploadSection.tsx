@@ -35,7 +35,7 @@ export const FileUploadSection = ({
         disabled={isLoading}
       />
       <p className="text-sm text-muted-foreground mt-1">
-        פורמט: מספר מדבקה, שם שחקן, שם קבוצה
+        פורמט: מספר מדבקה, שם שחקן, שם קבוצה (תומך בקידוד UTF-8 ו-Windows-1255)
       </p>
       {file && (
         <FileInfo file={file} />

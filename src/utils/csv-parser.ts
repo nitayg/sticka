@@ -1,7 +1,50 @@
+
 export interface ParsedCsvRow {
   number: number | string;
   name: string;
   team: string;
+}
+
+// Helper to detect encoding based on content analysis
+function detectEncoding(content: ArrayBuffer): string {
+  // Look for UTF-8 BOM
+  const bytes = new Uint8Array(content);
+  
+  if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+    return 'utf-8';
+  }
+
+  // Check if content contains Hebrew characters in Windows-1255 encoding
+  // Windows-1255 Hebrew characters range roughly from 0xE0 to 0xFA
+  let hebrewCharsCount = 0;
+  for (let i = 0; i < Math.min(bytes.length, 1000); i++) {
+    if (bytes[i] >= 0xE0 && bytes[i] <= 0xFA) {
+      hebrewCharsCount++;
+    }
+  }
+
+  // If we detect a significant amount of potential Hebrew Windows-1255 characters
+  if (hebrewCharsCount > 10) {
+    return 'windows-1255';
+  }
+  
+  // Default to UTF-8
+  return 'utf-8';
+}
+
+// Decode content with appropriate encoding
+function decodeContent(content: ArrayBuffer): string {
+  const encoding = detectEncoding(content);
+  console.log(`Detected encoding: ${encoding}`);
+  
+  try {
+    const decoder = new TextDecoder(encoding);
+    return decoder.decode(content);
+  } catch (error) {
+    console.error(`Error decoding with ${encoding}:`, error);
+    // Fallback to UTF-8 if the detected encoding fails
+    return new TextDecoder('utf-8').decode(content);
+  }
 }
 
 export const parseCSV = (csvContent: string): ParsedCsvRow[] => {

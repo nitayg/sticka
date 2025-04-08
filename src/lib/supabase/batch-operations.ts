@@ -1,4 +1,3 @@
-
 import { supabase } from './client';
 
 export async function saveBatch<T extends { id: string }>(
@@ -56,7 +55,7 @@ export async function saveBatch<T extends { id: string }>(
           allSuccess = false;
         } else {
           // Fix: Handle null data case properly with optional chaining and nullish coalescing
-          const rowCount = data?.length ?? 0;
+          const rowCount = processBatchResponse(error, data);
           console.log(`Successfully saved chunk ${Math.floor(i/chunkSize) + 1}/${Math.ceil(items.length/chunkSize)} to ${tableName}, received: ${rowCount} rows`);
         }
       } catch (chunkError) {
@@ -85,3 +84,24 @@ export async function saveBatch<T extends { id: string }>(
     return false;
   }
 }
+
+// Fix TypeScript error by handling null data value
+const processBatchResponse = (error: any, data: any) => {
+  if (error) {
+    console.error('Error in batch operation:', error);
+    
+    // Improved error reporting
+    if (error.message && (
+        error.message.includes('egress') || 
+        error.message.includes('limit') || 
+        error.message.includes('quota')
+      )) {
+      throw new Error(`Service limits exceeded: ${error.message}`);
+    }
+    
+    throw error;
+  }
+  
+  // Use nullish coalescing to safely handle potential null data
+  return data?.length ?? 0;
+};

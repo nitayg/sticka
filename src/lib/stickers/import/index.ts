@@ -1,6 +1,6 @@
 
 // Export CSV import functions
-import { importStickersFromCSV as importFunc } from '../../stickers/import/importStickersFromCSV';
+import { importStickersFromCSV as importFunc } from './importStickersFromCSV';
 
 export const importStickersFromCSV = async (
   albumId: string, 

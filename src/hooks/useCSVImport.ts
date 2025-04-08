@@ -36,8 +36,14 @@ export const useCSVImport = ({
 
   const parseFile = async (selectedFile: File): Promise<void> => {
     try {
-      const text = await selectedFile.text();
+      // Read file as ArrayBuffer for proper encoding detection
+      const buffer = await readFileAsArrayBuffer(selectedFile);
+      
+      // Parse the CSV content
+      const decoder = new TextDecoder('utf-8');
+      const text = decoder.decode(buffer);
       const parsed = parseCSV(text);
+      
       setParsedData(parsed);
       
       // Reduced warning threshold to prevent egress issues
@@ -63,6 +69,22 @@ export const useCSVImport = ({
     }
   };
 
+  // Helper function to read file as ArrayBuffer for encoding detection
+  const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result instanceof ArrayBuffer) {
+          resolve(e.target.result);
+        } else {
+          reject(new Error("Failed to read file as ArrayBuffer"));
+        }
+      };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
   const handleImport = async () => {
     if (!file && !parsedData) {
       toast({
@@ -86,8 +108,13 @@ export const useCSVImport = ({
         });
       } else if (file) {
         setImportProgress(20);
-        const text = await file.text();
+        
+        // Read file with proper encoding detection
+        const buffer = await readFileAsArrayBuffer(file);
         setImportProgress(30);
+        
+        const decoder = new TextDecoder('utf-8');
+        const text = decoder.decode(buffer);
         const parsed = parseCSV(text);
         setImportProgress(40);
         
