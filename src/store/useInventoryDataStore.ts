@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { fetchExchangeOffers } from '@/lib/supabase';
 import { getStickersByAlbumId, addStickersToInventory } from '@/lib/sticker-operations';
@@ -53,8 +52,8 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
     const now = Date.now();
     const { lastRefreshTimestamp } = get();
     
-    // Throttle refreshes to at most once every 3000ms to reduce egress (increased from 1000ms)
-    if (now - lastRefreshTimestamp < 3000) {
+    // Reduce throttling time to 500ms for more responsive UI updates
+    if (now - lastRefreshTimestamp < 500) {
       console.log('Refresh throttled to reduce egress traffic');
       return;
     }
@@ -66,12 +65,12 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
     
     const { selectedAlbumId } = get();
     if (selectedAlbumId) {
-      // Clear cached data for this album only after 5 minutes to ensure fresh data without excessive requests
+      // Clear cached data for this album only after 2 minutes to ensure fresh data without excessive requests
       const cachedData = get().cachedStickers[selectedAlbumId];
       const cacheAge = cachedData?.timestamp ? now - cachedData.timestamp : Infinity;
       
-      // Only clear cache if it's older than 5 minutes
-      if (!cachedData || cacheAge > 5 * 60 * 1000) {
+      // Only clear cache if it's older than 2 minutes
+      if (!cachedData || cacheAge > 2 * 60 * 1000) {
         console.log(`Cache for album ${selectedAlbumId} is old or doesn't exist, refreshing`);
         set(state => ({
           cachedStickers: {
@@ -187,8 +186,8 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
   handleStickerIntake: async (albumId, stickerNumbers) => {
     const result = addStickersToInventory(albumId, stickerNumbers);
     
-    // Throttled refresh - delayed to let the DB operations complete
-    setTimeout(() => get().handleRefresh(), 500);
+    // Throttled refresh - reduced delay for quicker UI updates
+    setTimeout(() => get().handleRefresh(), 100);
     
     // Get album for logging
     const album = getAlbumById(albumId);
@@ -221,12 +220,10 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
       });
     }
     
-    // Throttle event dispatches to reduce processing overhead
-    // Use a setTimeout to let the operation complete and allow for batching
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('albumDataChanged'));
-      window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
-    }, 100);
+    // Dispatch events immediately for faster UI updates
+    window.dispatchEvent(new CustomEvent('albumDataChanged'));
+    window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
+    window.dispatchEvent(new CustomEvent('forceRefresh'));
     
     // Return the information about which stickers were processed
     return {

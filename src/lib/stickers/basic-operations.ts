@@ -11,8 +11,8 @@ const localStickerCache: Record<string, {
   timestamp: number;
 }> = {};
 
-// זמן תפוגה למטמון (10 דקות)
-const CACHE_TTL = 10 * 60 * 1000;
+// זמן תפוגה למטמון (2 דקות - קוצר להגברת תגובתיות)
+const CACHE_TTL = 2 * 60 * 1000;
 
 // Get all stickers data
 export const getStickerData = (): Sticker[] => {
@@ -33,22 +33,20 @@ export const setStickerData = (data: Sticker[], options?: { albumId?: string, ac
   
   // Dispatch additional events to ensure UI components update
   if (typeof window !== 'undefined') {
-    // Use setTimeout to ensure this runs after the current call stack is complete
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
-        detail: { 
-          action: options?.action || 'save', 
-          count: data.length,
-          albumId: options?.albumId 
-        } 
-      }));
-      
-      // Force refresh event to ensure immediate UI updates
-      window.dispatchEvent(new CustomEvent('forceRefresh'));
-      
-      // Additional specialized events for faster targeted updates
-      window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
-    }, 10);
+    // Dispatch events immediately for more responsive UI
+    window.dispatchEvent(new CustomEvent('stickerDataChanged', { 
+      detail: { 
+        action: options?.action || 'save', 
+        count: data.length,
+        albumId: options?.albumId 
+      } 
+    }));
+    
+    // Force refresh event to ensure immediate UI updates
+    window.dispatchEvent(new CustomEvent('forceRefresh'));
+    
+    // Additional specialized events for faster targeted updates
+    window.dispatchEvent(new CustomEvent('inventoryDataChanged'));
   }
 };
 

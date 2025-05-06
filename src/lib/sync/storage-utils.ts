@@ -1,4 +1,3 @@
-
 import { StorageEvents } from './constants';
 import { saveToMemory, getFromMemory } from './memory-storage';
 
