@@ -1,17 +1,26 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import { Album } from "@/lib/types";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, PlusCircle } from "lucide-react";
 import { Button } from "../ui/button";
-import { cn } from "@/lib/utils";
+import AlbumGridItem from "../album/AlbumGridItem";
+import AddAlbumForm from "@/components/add-album-form";
 
 interface AlbumCarouselProps {
   albums: Album[];
   selectedAlbumId: string;
   onAlbumChange: (albumId: string) => void;
+  onEdit?: (albumId: string) => void;
+  onDelete?: (albumId: string) => void;
 }
 
-const AlbumCarousel = ({ albums, selectedAlbumId, onAlbumChange }: AlbumCarouselProps) => {
+const AlbumCarousel = ({ 
+  albums, 
+  selectedAlbumId, 
+  onAlbumChange,
+  onEdit,
+  onDelete
+}: AlbumCarouselProps) => {
   const carouselRef = useRef<HTMLDivElement>(null);
   const isRtl = document.dir === 'rtl' || document.documentElement.lang === 'he';
   
@@ -27,7 +36,6 @@ const AlbumCarousel = ({ albums, selectedAlbumId, onAlbumChange }: AlbumCarousel
     if (carouselRef.current && selectedAlbumId) {
       const selectedElement = carouselRef.current.querySelector(`[data-album-id="${selectedAlbumId}"]`);
       if (selectedElement) {
-        // Calculate scroll position
         const containerWidth = carouselRef.current.offsetWidth;
         const elementOffset = isRtl 
           ? carouselRef.current.scrollWidth - selectedElement.getBoundingClientRect().right + carouselRef.current.getBoundingClientRect().right - containerWidth
@@ -99,7 +107,7 @@ const AlbumCarousel = ({ albums, selectedAlbumId, onAlbumChange }: AlbumCarousel
     };
   }, [isRtl]);
 
-  // Render albums in Facebook stories style
+  // Render albums in the same style as AlbumCarouselGrid
   return (
     <div className="relative mt-2">
       <div 
@@ -107,32 +115,34 @@ const AlbumCarousel = ({ albums, selectedAlbumId, onAlbumChange }: AlbumCarousel
         className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-2 py-1 px-1"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
+        <div className="relative min-w-[120px] h-[180px] flex-shrink-0 rounded-xl overflow-hidden border-2 border-dashed border-muted-foreground/30 flex items-center justify-center cursor-pointer group hover:border-primary/50 transition-colors">
+          <AddAlbumForm iconOnly>
+            <div className="flex flex-col items-center justify-center h-full w-full text-muted-foreground group-hover:text-primary transition-colors">
+              <PlusCircle className="h-14 w-14" />
+              <span className="text-sm mt-2">הוסף אלבום</span>
+            </div>
+          </AddAlbumForm>
+        </div>
+        
         {albums.map((album) => (
           <div
             key={album.id}
             data-album-id={album.id}
-            className={cn(
-              "fb-story-item min-w-[90px] h-[160px]",
-              selectedAlbumId === album.id ? "border-2 border-blue-500" : ""
-            )}
-            onClick={() => onAlbumChange(album.id)}
+            className="fb-story-item min-w-[120px] h-[180px]"
           >
-            {album.coverImage ? (
-              <img 
-                src={album.coverImage} 
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="h-full w-full bg-gray-800 flex items-center justify-center">
-                <span className="text-3xl text-gray-500">?</span>
-              </div>
-            )}
+            <AlbumGridItem
+              id={album.id}
+              name={album.name}
+              coverImage={album.coverImage}
+              isSelected={selectedAlbumId === album.id}
+              onSelect={() => onAlbumChange(album.id)}
+              onEdit={() => onEdit?.(album.id)}
+              onDelete={() => onDelete?.(album.id)}
+            />
           </div>
         ))}
       </div>
       
-      {/* Navigation buttons */}
       {showLeftArrow && (
         <Button
           size="icon"
