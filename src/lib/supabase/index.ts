@@ -1,6 +1,7 @@
 
 // Re-export the client
 export { supabase } from './client';
+export type { Database } from './types';
 
 // Re-export album operations
 export {

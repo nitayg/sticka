@@ -15,6 +15,10 @@ export const monitorNetworkEvents = (
   setIsOffline: (val: boolean) => void,
   toastFn: typeof toast
 ) => {
+  // Only monitor network events in development to avoid performance overhead
+  if (!import.meta.env.DEV) {
+    return () => {};
+  }
   // Track egress warnings by monitoring network errors
   const handleNetworkError = (event: ErrorEvent | PromiseRejectionEvent) => {
     const errorMessage = 
@@ -127,7 +131,7 @@ export const monitorNetworkEvents = (
 export const simulateNetworkUsage = (
   setBytesTransferred: (val: number | ((prev: number) => number)) => void
 ) => {
-  if (process.env.NODE_ENV !== 'development') return null;
+  if (!import.meta.env.DEV) return null;
   
   const intervalId = setInterval(() => {
     // סימולציה של תעבורת רשת לצורך הדגמה
