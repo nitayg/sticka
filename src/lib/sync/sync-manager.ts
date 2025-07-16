@@ -1,4 +1,9 @@
 
+/**
+ * Synchronization manager responsible for keeping local data in sync
+ * with Supabase. Most functions here are used by the UI to trigger
+ * manual or automatic sync operations.
+ */
 import { StorageEvents } from './constants';
 import { getFromStorage, saveToStorage, setIsConnected, getIsConnected, setMemoryStorage } from './storage-utils';
 import { mergeData } from './merge-utils';
@@ -34,7 +39,9 @@ const perAlbumStickerCache: Record<string, {
   timestamp: number;
 }> = {};
 
-// Initialize data directly from Supabase
+/**
+ * Load initial data from Supabase and register network event listeners.
+ */
 export const initializeFromStorage = async () => {
   try {
     console.log('Initializing data from Supabase...');
@@ -91,8 +98,11 @@ const isCacheValid = (entityType) => {
   return (now - lastFetch) < CACHE_TTL;
 };
 
-// IMPROVED: Get stickers for a specific album only (major reduction in egress)
-export const getAlbumStickers = async (albumId) => {
+/**
+ * Fetch stickers for a specific album. Results are cached per album
+ * to keep network usage low and avoid hitting egress limits.
+ */
+export const getAlbumStickers = async (albumId: string) => {
   if (!albumId) return [];
   
   // Check if we have a fresh cache for this album
@@ -141,7 +151,10 @@ export const getAlbumStickers = async (albumId) => {
   }
 };
 
-// Sync data directly with Supabase - only get data from cloud, not from local storage
+/**
+ * Perform a full sync with Supabase. Existing cached data is reused
+ * whenever possible to minimise network traffic.
+ */
 export const syncWithSupabase = async (isInitialSync = false) => {
   // If we had an egress error recently, wait before trying again
   if (lastEgressError) {
