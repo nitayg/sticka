@@ -38,15 +38,15 @@ export const useSyncStatus = (): SyncStatus => {
     };
     
     // רישום למאזינים
-    window.addEventListener(StorageEvents.SYNC_START, handleSyncStart);
-    window.addEventListener(StorageEvents.SYNC_COMPLETE, handleSyncComplete);
-    window.addEventListener(StorageEvents.SYNC_ERROR, handleSyncError);
+    window.addEventListener(StorageEvents.SYNC_START as any, handleSyncStart);
+    window.addEventListener(StorageEvents.SYNC_COMPLETE as any, handleSyncComplete);
+    window.addEventListener(StorageEvents.SYNC_ERROR as any, handleSyncError);
     
     // ניקוי מאזינים
     return () => {
-      window.removeEventListener(StorageEvents.SYNC_START, handleSyncStart);
-      window.removeEventListener(StorageEvents.SYNC_COMPLETE, handleSyncComplete);
-      window.removeEventListener(StorageEvents.SYNC_ERROR, handleSyncError);
+      window.removeEventListener(StorageEvents.SYNC_START as any, handleSyncStart);
+      window.removeEventListener(StorageEvents.SYNC_COMPLETE as any, handleSyncComplete);
+      window.removeEventListener(StorageEvents.SYNC_ERROR as any, handleSyncError);
     };
   }, []);
 

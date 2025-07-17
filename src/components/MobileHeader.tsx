@@ -26,7 +26,7 @@ const MobileHeader = ({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) => {
 
   useEffect(() => {
     // Track egress warnings by monitoring network errors
-    const handleNetworkError = (event) => {
+    const handleNetworkError = (event: any) => {
       const errorMessage = event.message || event.error?.message || '';
       if (errorMessage.includes('egress') || 
           errorMessage.includes('exceeded') || 

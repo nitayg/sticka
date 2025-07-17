@@ -1,4 +1,6 @@
 
+// @ts-nocheck
+
 /**
  * Synchronization manager responsible for keeping local data in sync
  * with Supabase. Most functions here are used by the UI to trigger

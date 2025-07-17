@@ -169,7 +169,7 @@ const ExchangeActions = ({ exchange, onRefresh }: ExchangeActionsProps) => {
       <StickerIntakeForm
         isOpen={isIntakeFormOpen}
         onClose={() => setIntakeFormOpen(false)}
-        onIntake={handleStickerIntakeSubmit}
+        onIntake={(albumId: string, stickerNumbers: (string | number)[]) => handleStickerIntakeSubmit(albumId, stickerNumbers.map(n => typeof n === 'string' ? parseInt(n) : n))}
         defaultStickerNumbers={exchange.wantedStickerId.join(", ")}
         defaultExchangePartner={exchange.userName}
       />

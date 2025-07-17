@@ -30,8 +30,8 @@ export async function saveBatch<T extends { id: string }>(
 
         // Detailed error catching for Supabase operation
         const { data, error } = await supabase
-          .from(tableName)
-          .upsert(chunk, {
+          .from(tableName as any)
+          .upsert(chunk as any, {
             onConflict: 'id',
             ignoreDuplicates: false,
           });

@@ -43,10 +43,10 @@ export const fetchStickersByAlbumId = async (albumId: string): Promise<Sticker[]
       category: sticker.category,
       isOwned: sticker.isowned,
       isDuplicate: sticker.isduplicate,
-      duplicateCount: sticker.duplicatecount,
+      duplicateCount: sticker.duplicatecount || undefined,
       albumId: sticker.albumid,
-      teamLogo: sticker.teamlogo,
-      imageUrl: sticker.imageurl,
+      teamLogo: sticker.teamlogo || undefined,
+      imageUrl: sticker.imageurl || undefined,
     }));
     
     console.log(`[QUERY] Fetched ${stickers.length} stickers from Supabase for album ${albumId}`);
@@ -89,7 +89,7 @@ export const fetchStickersByNumbers = async (
       .from("stickers")
       .select("*")
       .eq("albumid", albumId)
-      .in("number", stickerNumbers);
+      .in("number", stickerNumbers.map(n => n.toString()));
       
     if (error) {
       console.error(`[QUERY] Error fetching stickers for album ${albumId}:`, error);
@@ -110,10 +110,10 @@ export const fetchStickersByNumbers = async (
       category: sticker.category,
       isOwned: sticker.isowned,
       isDuplicate: sticker.isduplicate,
-      duplicateCount: sticker.duplicatecount,
+      duplicateCount: sticker.duplicatecount || undefined,
       albumId: sticker.albumid,
-      teamLogo: sticker.teamlogo,
-      imageUrl: sticker.imageurl,
+      teamLogo: sticker.teamlogo || undefined,
+      imageUrl: sticker.imageurl || undefined,
     }));
     
     console.log(`[QUERY] Fetched ${fetchedStickers.length} stickers from Supabase`);

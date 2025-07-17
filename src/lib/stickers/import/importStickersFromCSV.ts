@@ -155,7 +155,7 @@ export const importStickersFromCSV = async (albumId: string, data: [number | str
           albumId, 
           count: 0,
           error: true,
-          errorMessage: error?.message || "Unknown error during import"
+          errorMessage: (error as any)?.message || "Unknown error during import"
         } 
       }));
     }

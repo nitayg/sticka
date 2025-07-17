@@ -104,7 +104,7 @@ const AlbumView = () => {
   // Show loaded album view
   return (
     <div className="space-y-2 animate-fade-in">
-      {selectedAlbumId && <AlbumEventHandler album={albums.find(a => a.id === selectedAlbumId)} />}
+      {selectedAlbumId && albums.find(a => a.id === selectedAlbumId) && <AlbumEventHandler album={albums.find(a => a.id === selectedAlbumId)!} />}
       
       <AlbumControls
         albums={albums}

@@ -127,7 +127,7 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
       
       // Only fetch stickers for this album - caching to reduce egress
       const { cachedStickers } = get();
-      let albumStickers;
+      let albumStickers: any;
       
       if (cachedStickers[albumId]) {
         console.log(`Using cached stickers for album ${albumId}`);
@@ -152,19 +152,19 @@ export const useInventoryDataStore = create<InventoryDataState>((set, get) => ({
       relevantExchanges.forEach(exchange => {
         // Find stickers that the user will receive
         const stickerNumbers = Array.isArray(exchange.wantedStickerId) 
-          ? exchange.wantedStickerId.map(id => {
+          ? exchange.wantedStickerId.map((id: any) => {
               return typeof id === 'string' ? 
                 (/^\d+$/.test(id) ? parseInt(id) : id) : id;
             })
           : [];
         
-        stickerNumbers.forEach(number => {
+        stickerNumbers.forEach((number: any) => {
           if (typeof number === 'number' && isNaN(number)) {
             console.warn(`Invalid sticker number in exchange ${exchange.id}:`, number);
             return;
           }
           
-          const sticker = albumStickers.find(s => s.number === number);
+          const sticker = albumStickers.find((s: any) => s.number === number);
           if (sticker) {
             newTransactionMap[sticker.id] = {
               person: exchange.userName,

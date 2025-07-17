@@ -57,7 +57,7 @@ const DialogContent = React.forwardRef<
             ref.current = node;
           }
           if (contentRef) {
-            contentRef.current = node;
+            (contentRef as any).current = node;
           }
         }}
         className={cn(

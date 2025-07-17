@@ -4,7 +4,7 @@ import { syncWithSupabase } from './sync-manager';
 import { StorageEvents } from './constants';
 
 // Global channel variable to ensure only one connection is maintained
-let globalChannel = null;
+let globalChannel: any = null;
 
 // Set up real-time subscriptions to Supabase with improved error handling
 export const setupRealtimeSubscriptions = () => {
@@ -72,7 +72,7 @@ export const setupRealtimeSubscriptions = () => {
     }
     
     console.log('Subscribing to Supabase channel');
-    globalChannel.subscribe((status) => {
+    globalChannel.subscribe((status: any) => {
       console.log('Supabase channel status:', status);
       switch (status) {
         case 'SUBSCRIBED':
@@ -123,7 +123,7 @@ export const setupRealtimeSubscriptions = () => {
 };
 
 // Helper function to manually reconnect channel (can be exported for manual reconnection)
-export const reconnectRealtimeChannel = (channel) => {
+export const reconnectRealtimeChannel = (channel: any) => {
   if (!channel || channel.state !== 'joined') {
     console.log('Manually reconnecting realtime channel...');
     if (!globalChannel) {

@@ -104,8 +104,8 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
             title="מקבל"
             exchangeColor={exchange.color}
             exchangeUserName={exchange.userName}
-            onStickerClick={handleStickerClick}
-            onStickerDetails={handleStickerDetails}
+            onStickerClick={(number: string | number) => handleStickerClick(typeof number === 'string' ? parseInt(number) : number)}
+            onStickerDetails={(number: string | number) => handleStickerDetails(typeof number === 'string' ? parseInt(number) : number)}
             selectedStickerId={selectedSticker?.id || null}
             isDialogOpen={isDialogOpen}
             handleCloseDialog={handleCloseDialog}
@@ -117,8 +117,8 @@ const ExchangeCard = ({ exchange, onRefresh }: ExchangeCardProps) => {
             title="נותן"
             exchangeColor={exchange.color}
             exchangeUserName={exchange.userName}
-            onStickerClick={handleStickerClick}
-            onStickerDetails={handleStickerDetails}
+            onStickerClick={(number: string | number) => handleStickerClick(typeof number === 'string' ? parseInt(number) : number)}
+            onStickerDetails={(number: string | number) => handleStickerDetails(typeof number === 'string' ? parseInt(number) : number)}
             selectedStickerId={selectedSticker?.id || null}
             isDialogOpen={isDialogOpen}
             handleCloseDialog={handleCloseDialog}

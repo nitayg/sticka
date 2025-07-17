@@ -93,7 +93,7 @@ export async function fetchStickerImages(stickerIds: string[]) {
   // Create a map of id -> imageUrl
   const imageMap: Record<string, string> = {};
   data.forEach(sticker => {
-    imageMap[sticker.id] = sticker.imageurl;
+    imageMap[sticker.id] = sticker.imageurl || '';
   });
   
   return imageMap;
@@ -117,7 +117,7 @@ export async function saveSticker(sticker: Sticker) {
   
   const { data, error } = await supabase
     .from('stickers')
-    .upsert(supabaseSticker, { onConflict: 'id' })
+    .upsert(supabaseSticker as any, { onConflict: 'id' })
     .select('*');
   if (error) {
     console.error('Error saving sticker:', error.message, error.details, error.hint);
@@ -189,7 +189,7 @@ export async function saveStickerBatch(stickers: Sticker[]) {
   try {
     const { data, error } = await supabase
       .from('stickers')
-      .upsert(adjustedItems, { onConflict: 'id' });
+      .upsert(adjustedItems as any, { onConflict: 'id' });
     
     if (error) {
       console.error("ERROR SAVING STICKERS TO SUPABASE:", error.message);
